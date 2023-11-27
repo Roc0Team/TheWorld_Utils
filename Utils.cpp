@@ -225,8 +225,8 @@ namespace TheWorld_Utils
 		//memset(extraValues.dirtTexName_b, 0, sizeof(extraValues.dirtTexName_b));
 		//memset(extraValues.rocksTexName_a, 0, sizeof(extraValues.rocksTexName_a));
 		extraValues.splatmapNeedRegen = true;
-		extraValues.emptyColormap = true;
-		extraValues.emptyGlobalmap = true;
+		extraValues.colormapNeedRegen = true;
+		extraValues.globalmapNeedRegen = true;
 	}
 
 	bool TerrainEdit::operator==(const TerrainEdit& o) const
@@ -271,9 +271,9 @@ namespace TheWorld_Utils
 			return false;
 		if (extraValues.splatmapNeedRegen != o.extraValues.splatmapNeedRegen)
 			return false;
-		if (extraValues.emptyColormap != o.extraValues.emptyColormap)
+		if (extraValues.colormapNeedRegen != o.extraValues.colormapNeedRegen)
 			return false;
-		if (extraValues.emptyGlobalmap != o.extraValues.emptyGlobalmap)
+		if (extraValues.globalmapNeedRegen != o.extraValues.globalmapNeedRegen)
 			return false;
 		return true;
 	}

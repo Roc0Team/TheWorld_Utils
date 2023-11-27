@@ -363,9 +363,17 @@ namespace TheWorld_Utils
 			char dirtTexName_b[51];
 			char rocksTexName_a[51];
 			bool splatmapNeedRegen;
-			bool emptyColormap;
-			bool emptyGlobalmap;
+			bool colormapNeedRegen;
+			bool globalmapNeedRegen;
+			float slopeVerticalFactor = 4.0f;
+			float slopeFlatFactor = 1.0f;
+			float dirtOnRocksFactor = 2.0f;
+			float highElevationFactor = 4.0f;
+			float lowElevationFactor = 2.0f;
+			size_t splatMapMode = 1;
 		} extraValues;
+
+		// WARNING: this struct can safely grow appending new data at the end
 
 		__declspec(dllexport) TerrainEdit(enum class TerrainEdit::TerrainType terrainType = TerrainEdit::TerrainType::campaign_1);
 		__declspec(dllexport) void setTextureNameForTerrainType(enum class TerrainEdit::TextureType textureType);
