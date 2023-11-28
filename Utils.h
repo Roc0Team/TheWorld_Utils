@@ -337,6 +337,7 @@ namespace TheWorld_Utils
 			, high_mountains_2 = 10
 			, high_mountains_2_grow = 11
 			, noise_1 = 12
+			, flat = 13
 		};
 
 		__declspec(dllexport) static std::string getDefaultTextureNameForTerrainType(enum class TerrainType terrainType, enum class TextureType textureType);
@@ -375,7 +376,7 @@ namespace TheWorld_Utils
 
 		// WARNING: this struct can safely grow appending new data at the end
 
-		__declspec(dllexport) TerrainEdit(enum class TerrainEdit::TerrainType terrainType = TerrainEdit::TerrainType::campaign_1);
+		__declspec(dllexport) TerrainEdit(enum class TerrainEdit::TerrainType terrainType = TerrainEdit::TerrainType::flat);
 		__declspec(dllexport) void setTextureNameForTerrainType(enum class TerrainEdit::TextureType textureType);
 		__declspec(dllexport) void init(enum class TerrainEdit::TerrainType terrainType);
 		__declspec(dllexport) void serialize(TheWorld_Utils::MemoryBuffer& buffer);

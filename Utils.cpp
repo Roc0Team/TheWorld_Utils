@@ -287,6 +287,11 @@ namespace TheWorld_Utils
 			return "noise_1";
 		}
 		break;
+		case TerrainEdit::TerrainType::flat:
+		{
+			return "flat";
+		}
+		break;
 		case TerrainEdit::TerrainType::campaign_1:
 		{
 			return "campaign_1";
@@ -349,6 +354,8 @@ namespace TheWorld_Utils
 	{
 		if (terrainType == "noise_1")
 			return TerrainEdit::TerrainType::noise_1;
+		else if (terrainType == "flat")
+			return TerrainEdit::TerrainType::flat;
 		else if (terrainType == "campaign_1")
 			return TerrainEdit::TerrainType::campaign_1;
 		else if (terrainType == "plateau_1")
@@ -1307,160 +1314,188 @@ namespace TheWorld_Utils
 		vectGridHeights.clear();
 		vectGridHeights.resize(numVerticesPerSize * numVerticesPerSize);
 
+		if (terrainEdit->terrainType == TheWorld_Utils::TerrainEdit::TerrainType::flat)
 		{
-			//TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer generateHeights 1.1 ") + __FUNCTION__, "Generate jag");
+			//TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer generateHeights 1.2 ") + __FUNCTION__, "Generate flat Heights");
 
-			TheWorld_Utils::TerrainEdit terrainEdit(TheWorld_Utils::TerrainEdit::TerrainType::jagged_1);
-			
-			FastNoiseLite noiseLite(terrainEdit.noise.noiseSeed);
-			noiseLite.SetNoiseType((enum FastNoiseLite::NoiseType)terrainEdit.noise.noiseType);
-			noiseLite.SetFrequency(terrainEdit.noise.frequency);
-			noiseLite.SetFractalType((enum FastNoiseLite::FractalType)terrainEdit.noise.fractalType);
-			noiseLite.SetFractalOctaves(terrainEdit.noise.fractalOctaves);
-			noiseLite.SetFractalLacunarity(terrainEdit.noise.fractalLacunarity);
-			noiseLite.SetFractalGain(terrainEdit.noise.fractalGain);
-			noiseLite.SetFractalWeightedStrength(terrainEdit.noise.fractalWeightedStrength);
-			noiseLite.SetFractalPingPongStrength(terrainEdit.noise.fractalPingPongStrength);
+			terrainEdit->minHeight = 0;
+			terrainEdit->maxHeight = 0;
+			terrainEdit->eastSideXPlus.minHeight = 0;
+			terrainEdit->eastSideXPlus.maxHeight = 0;
+			terrainEdit->westSideXMinus.minHeight = 0;
+			terrainEdit->westSideXMinus.maxHeight = 0;
+			terrainEdit->southSideZPlus.minHeight = 0;
+			terrainEdit->southSideZPlus.maxHeight = 0;
+			terrainEdit->northSideZMinus.minHeight = 0;
+			terrainEdit->northSideZMinus.maxHeight = 0;
 
-			size_t idx = 0;
-			for (int z = 0; z < numVerticesPerSize; z++)
-				for (int x = 0; x < numVerticesPerSize; x++)
-				{
-					float altitude = 0.0f;
-
-					{
-						//TheWorld_Utils::GuardProfiler profiler(std::string("EditGenerate 1.1.2 ") + __FUNCTION__, "GetNoise");
-
-						float xf = (lowerXGridVertex + (x * gridStepInWU));
-						float zf = (lowerZGridVertex + (z * gridStepInWU));
-						altitude = noiseLite.GetNoise(xf, zf);
-						// noises are value in range -1 to 1 we need to interpolate with amplitude
-						altitude *= (terrainEdit.noise.amplitude / 2);
-					}
-
-					vectGridHeights[idx] = altitude;
-
-					idx++;
-				}		
-		}
-
-		{
-			//TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer generateHeights 1.2 ") + __FUNCTION__, "Generate Heights");
-
-			FastNoiseLite noiseLite(terrainEdit->noise.noiseSeed);
-			noiseLite.SetNoiseType((enum FastNoiseLite::NoiseType)terrainEdit->noise.noiseType);
-			//noiseLite.SetRotationType3D();
-			noiseLite.SetFrequency(terrainEdit->noise.frequency);
-			noiseLite.SetFractalType((enum FastNoiseLite::FractalType)terrainEdit->noise.fractalType);
-			noiseLite.SetFractalOctaves(terrainEdit->noise.fractalOctaves);
-			noiseLite.SetFractalLacunarity(terrainEdit->noise.fractalLacunarity);
-			noiseLite.SetFractalGain(terrainEdit->noise.fractalGain);
-			noiseLite.SetFractalWeightedStrength(terrainEdit->noise.fractalWeightedStrength);
-			noiseLite.SetFractalPingPongStrength(terrainEdit->noise.fractalPingPongStrength);
-			//noiseLite.SetCellularDistanceFunction();
-			//noiseLite.SetCellularReturnType();
-			//noiseLite.SetCellularJitter()
-
-			terrainEdit->minHeight = FLT_MAX;
-			terrainEdit->maxHeight = -FLT_MAX;
-			terrainEdit->eastSideXPlus.minHeight = FLT_MAX;
-			terrainEdit->eastSideXPlus.maxHeight = -FLT_MAX;
-			terrainEdit->westSideXMinus.minHeight = FLT_MAX;
-			terrainEdit->westSideXMinus.maxHeight = -FLT_MAX;
-			terrainEdit->southSideZPlus.minHeight = FLT_MAX;
-			terrainEdit->southSideZPlus.maxHeight = -FLT_MAX;
-			terrainEdit->northSideZMinus.minHeight = FLT_MAX;
-			terrainEdit->northSideZMinus.maxHeight = -FLT_MAX;
-
+			float altitude = 0.0f;
 			size_t maxIndex = numVerticesPerSize - 1;
-			
 			size_t idx = 0;
 			for (int z = 0; z < numVerticesPerSize; z++)
 				for (int x = 0; x < numVerticesPerSize; x++)
 				{
-					float altitude = 0.0f;
-
-					{
-						//TheWorld_Utils::GuardProfiler profiler(std::string("EditGenerate 1.2.2 ") + __FUNCTION__, "GetNoise main");
-
-						float xf = (lowerXGridVertex + (x * gridStepInWU)) * terrainEdit->noise.scaleFactor;
-						float zf = (lowerZGridVertex + (z * gridStepInWU)) * terrainEdit->noise.scaleFactor;
-						altitude = noiseLite.GetNoise(xf, zf);
-						// noises are value in range -1 to 1 we need to interpolate with amplitude
-						altitude *= (terrainEdit->noise.amplitude / 2);
-
-						if (altitude < terrainEdit->minHeight)
-							terrainEdit->minHeight = altitude;
-						if (altitude > terrainEdit->maxHeight)
-							terrainEdit->maxHeight = altitude;
-
-						if (x == 0)
-						{
-							if (altitude < terrainEdit->westSideXMinus.minHeight)
-								terrainEdit->westSideXMinus.minHeight = altitude;
-							if (altitude > terrainEdit->westSideXMinus.maxHeight)
-								terrainEdit->westSideXMinus.maxHeight = altitude;
-						}
-
-						if (z == 0)
-						{
-							if (altitude < terrainEdit->northSideZMinus.minHeight)
-								terrainEdit->northSideZMinus.minHeight = altitude;
-							if (altitude > terrainEdit->northSideZMinus.maxHeight)
-								terrainEdit->northSideZMinus.maxHeight = altitude;
-						}
-
-						if (x == maxIndex)
-						{
-							if (altitude < terrainEdit->eastSideXPlus.minHeight)
-								terrainEdit->eastSideXPlus.minHeight = altitude;
-							if (altitude > terrainEdit->eastSideXPlus.maxHeight)
-								terrainEdit->eastSideXPlus.maxHeight = altitude;
-						}
-
-						if (z == maxIndex)
-						{
-							if (altitude < terrainEdit->southSideZPlus.minHeight)
-								terrainEdit->southSideZPlus.minHeight = altitude;
-							if (altitude > terrainEdit->southSideZPlus.maxHeight)
-								terrainEdit->southSideZPlus.maxHeight = altitude;
-						}
-					}
-
 					vectGridHeights[idx] += altitude;
-
 					idx++;
 				}
 		}
-
+		else
 		{
-			//TheWorld_Utils::GuardProfiler profiler(std::string("EditGenerate 1.3 ") + __FUNCTION__, "Adjust desidered min height");
+			//{
+			//	//TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer generateHeights 1.1 ") + __FUNCTION__, "Generate jag");
 
-			if (terrainEdit->noise.desideredMinHeight != FLT_MIN)
+			//	TheWorld_Utils::TerrainEdit terrainEdit(TheWorld_Utils::TerrainEdit::TerrainType::jagged_1);
+
+			//	FastNoiseLite noiseLite(terrainEdit.noise.noiseSeed);
+			//	noiseLite.SetNoiseType((enum FastNoiseLite::NoiseType)terrainEdit.noise.noiseType);
+			//	noiseLite.SetFrequency(terrainEdit.noise.frequency);
+			//	noiseLite.SetFractalType((enum FastNoiseLite::FractalType)terrainEdit.noise.fractalType);
+			//	noiseLite.SetFractalOctaves(terrainEdit.noise.fractalOctaves);
+			//	noiseLite.SetFractalLacunarity(terrainEdit.noise.fractalLacunarity);
+			//	noiseLite.SetFractalGain(terrainEdit.noise.fractalGain);
+			//	noiseLite.SetFractalWeightedStrength(terrainEdit.noise.fractalWeightedStrength);
+			//	noiseLite.SetFractalPingPongStrength(terrainEdit.noise.fractalPingPongStrength);
+
+			//	size_t idx = 0;
+			//	for (int z = 0; z < numVerticesPerSize; z++)
+			//		for (int x = 0; x < numVerticesPerSize; x++)
+			//		{
+			//			float altitude = 0.0f;
+
+			//			{
+			//				//TheWorld_Utils::GuardProfiler profiler(std::string("EditGenerate 1.1.2 ") + __FUNCTION__, "GetNoise");
+
+			//				float xf = (lowerXGridVertex + (x * gridStepInWU));
+			//				float zf = (lowerZGridVertex + (z * gridStepInWU));
+			//				altitude = noiseLite.GetNoise(xf, zf);
+			//				// noises are value in range -1 to 1 we need to interpolate with amplitude
+			//				altitude *= (terrainEdit.noise.amplitude / 2);
+			//			}
+
+			//			vectGridHeights[idx] = altitude;
+
+			//			idx++;
+			//		}
+			//}
+
 			{
-				float corrector = terrainEdit->noise.desideredMinHeight - terrainEdit->minHeight;
+				//TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer generateHeights 1.2 ") + __FUNCTION__, "Generate Heights");
+
+				FastNoiseLite noiseLite(terrainEdit->noise.noiseSeed);
+				noiseLite.SetNoiseType((enum FastNoiseLite::NoiseType)terrainEdit->noise.noiseType);
+				//noiseLite.SetRotationType3D();
+				noiseLite.SetFrequency(terrainEdit->noise.frequency);
+				noiseLite.SetFractalType((enum FastNoiseLite::FractalType)terrainEdit->noise.fractalType);
+				noiseLite.SetFractalOctaves(terrainEdit->noise.fractalOctaves);
+				noiseLite.SetFractalLacunarity(terrainEdit->noise.fractalLacunarity);
+				noiseLite.SetFractalGain(terrainEdit->noise.fractalGain);
+				noiseLite.SetFractalWeightedStrength(terrainEdit->noise.fractalWeightedStrength);
+				noiseLite.SetFractalPingPongStrength(terrainEdit->noise.fractalPingPongStrength);
+				//noiseLite.SetCellularDistanceFunction();
+				//noiseLite.SetCellularReturnType();
+				//noiseLite.SetCellularJitter()
+
+				terrainEdit->minHeight = FLT_MAX;
+				terrainEdit->maxHeight = -FLT_MAX;
+				terrainEdit->eastSideXPlus.minHeight = FLT_MAX;
+				terrainEdit->eastSideXPlus.maxHeight = -FLT_MAX;
+				terrainEdit->westSideXMinus.minHeight = FLT_MAX;
+				terrainEdit->westSideXMinus.maxHeight = -FLT_MAX;
+				terrainEdit->southSideZPlus.minHeight = FLT_MAX;
+				terrainEdit->southSideZPlus.maxHeight = -FLT_MAX;
+				terrainEdit->northSideZMinus.minHeight = FLT_MAX;
+				terrainEdit->northSideZMinus.maxHeight = -FLT_MAX;
+
+				size_t maxIndex = numVerticesPerSize - 1;
+
 				size_t idx = 0;
 				for (int z = 0; z < numVerticesPerSize; z++)
 					for (int x = 0; x < numVerticesPerSize; x++)
 					{
-						vectGridHeights[idx] += corrector;
+						float altitude = 0.0f;
+
+						{
+							//TheWorld_Utils::GuardProfiler profiler(std::string("EditGenerate 1.2.2 ") + __FUNCTION__, "GetNoise main");
+
+							float xf = (lowerXGridVertex + (x * gridStepInWU)) * terrainEdit->noise.scaleFactor;
+							float zf = (lowerZGridVertex + (z * gridStepInWU)) * terrainEdit->noise.scaleFactor;
+							altitude = noiseLite.GetNoise(xf, zf);
+							// noises are value in range -1 to 1 we need to interpolate with amplitude
+							altitude *= (terrainEdit->noise.amplitude / 2);
+
+							if (altitude < terrainEdit->minHeight)
+								terrainEdit->minHeight = altitude;
+							if (altitude > terrainEdit->maxHeight)
+								terrainEdit->maxHeight = altitude;
+
+							if (x == 0)
+							{
+								if (altitude < terrainEdit->westSideXMinus.minHeight)
+									terrainEdit->westSideXMinus.minHeight = altitude;
+								if (altitude > terrainEdit->westSideXMinus.maxHeight)
+									terrainEdit->westSideXMinus.maxHeight = altitude;
+							}
+
+							if (z == 0)
+							{
+								if (altitude < terrainEdit->northSideZMinus.minHeight)
+									terrainEdit->northSideZMinus.minHeight = altitude;
+								if (altitude > terrainEdit->northSideZMinus.maxHeight)
+									terrainEdit->northSideZMinus.maxHeight = altitude;
+							}
+
+							if (x == maxIndex)
+							{
+								if (altitude < terrainEdit->eastSideXPlus.minHeight)
+									terrainEdit->eastSideXPlus.minHeight = altitude;
+								if (altitude > terrainEdit->eastSideXPlus.maxHeight)
+									terrainEdit->eastSideXPlus.maxHeight = altitude;
+							}
+
+							if (z == maxIndex)
+							{
+								if (altitude < terrainEdit->southSideZPlus.minHeight)
+									terrainEdit->southSideZPlus.minHeight = altitude;
+								if (altitude > terrainEdit->southSideZPlus.maxHeight)
+									terrainEdit->southSideZPlus.maxHeight = altitude;
+							}
+						}
+
+						vectGridHeights[idx] += altitude;
+
 						idx++;
 					}
+			}
 
-				terrainEdit->minHeight += corrector;
-				terrainEdit->maxHeight += corrector;
+			{
+				//TheWorld_Utils::GuardProfiler profiler(std::string("EditGenerate 1.3 ") + __FUNCTION__, "Adjust desidered min height");
 
-				terrainEdit->eastSideXPlus.minHeight += corrector;
-				terrainEdit->eastSideXPlus.maxHeight += corrector;
+				if (terrainEdit->noise.desideredMinHeight != FLT_MIN)
+				{
+					float corrector = terrainEdit->noise.desideredMinHeight - terrainEdit->minHeight;
+					size_t idx = 0;
+					for (int z = 0; z < numVerticesPerSize; z++)
+						for (int x = 0; x < numVerticesPerSize; x++)
+						{
+							vectGridHeights[idx] += corrector;
+							idx++;
+						}
 
-				terrainEdit->westSideXMinus.minHeight += corrector;
-				terrainEdit->westSideXMinus.maxHeight += corrector;
+					terrainEdit->minHeight += corrector;
+					terrainEdit->maxHeight += corrector;
 
-				terrainEdit->southSideZPlus.minHeight += corrector;
-				terrainEdit->southSideZPlus.maxHeight += corrector;
+					terrainEdit->eastSideXPlus.minHeight += corrector;
+					terrainEdit->eastSideXPlus.maxHeight += corrector;
 
-				terrainEdit->northSideZMinus.minHeight += corrector;
-				terrainEdit->northSideZMinus.maxHeight += corrector;
+					terrainEdit->westSideXMinus.minHeight += corrector;
+					terrainEdit->westSideXMinus.maxHeight += corrector;
+
+					terrainEdit->southSideZPlus.minHeight += corrector;
+					terrainEdit->southSideZPlus.maxHeight += corrector;
+
+					terrainEdit->northSideZMinus.minHeight += corrector;
+					terrainEdit->northSideZMinus.maxHeight += corrector;
+				}
 			}
 		}
 	}
