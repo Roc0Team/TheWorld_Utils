@@ -545,7 +545,7 @@ namespace TheWorld_Utils
 		__declspec(dllexport) static uint16_t halfFromFloat(uint32_t f);
 		__declspec(dllexport) static uint32_t halfToFloat(uint16_t f);
 
-		static std::string cacheDir(std::string cacheDir, std::string mapName, float gridStepInWU, size_t numVerticesPerSize, int level);
+		__declspec(dllexport) static std::string cacheDir(std::string cacheDir, std::string mapName, float gridStepInWU, size_t numVerticesPerSize, int level);
 		__declspec(dllexport) static std::string generateNewMeshId(void);
 		__declspec(dllexport) static std::string generateNewMeshIdForEmptyBuffer(void);
 		__declspec(dllexport) static bool isEmptyBuffer(std::string meshId);
