@@ -577,12 +577,26 @@ namespace TheWorld_Utils
 		__declspec(dllexport) void deprecated_generateNormals(size_t numVerticesPerSize, float gridStepInWU, std::vector<float>& vectGridHeights, TheWorld_Utils::MemoryBuffer& normalsBuffer);
 		__declspec(dllexport) void deprecated_generateNormals(size_t numVerticesPerSize, float gridStepInWU, std::vector<float>& vectGridHeights, BYTE* normalsBuffer, const size_t normalsBufferSize, size_t& usedBufferSize);
 		__declspec(dllexport) void calcMinMaxHeight(size_t numVerticesPerSize, TheWorld_Utils::TerrainEdit* terrainEdit, TheWorld_Utils::MemoryBuffer& heights32Buffer);
+		__declspec(dllexport) bool checkBlendingQuadrantNeeded(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
+			CacheQuadrantData& data,
+			CacheQuadrantData& northData,
+			CacheQuadrantData& southData,
+			CacheQuadrantData& westData,
+			CacheQuadrantData& eastData,
+			CacheQuadrantData& northwestData,
+			CacheQuadrantData& northeastData,
+			CacheQuadrantData& southwestData,
+			CacheQuadrantData& southeastData);
 		__declspec(dllexport) bool blendBorders(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
 			CacheQuadrantData& data,
 			CacheQuadrantData& northData,
 			CacheQuadrantData& southData,
 			CacheQuadrantData& westData,
-			CacheQuadrantData& eastData);
+			CacheQuadrantData& eastData,
+			CacheQuadrantData& northwestData,
+			CacheQuadrantData& northeastData,
+			CacheQuadrantData& southwestData,
+			CacheQuadrantData& southeastData);
 		__declspec(dllexport) bool blendQuadrant(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
 			CacheQuadrantData& data,
 			CacheQuadrantData& northData,

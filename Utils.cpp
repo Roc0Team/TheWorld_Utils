@@ -2597,6 +2597,20 @@ namespace TheWorld_Utils
 		m_meshId = meshId;
 	}
 
+	bool MeshCacheBuffer::checkBlendingQuadrantNeeded(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
+		CacheQuadrantData& data,
+		CacheQuadrantData& northData,
+		CacheQuadrantData& southData,
+		CacheQuadrantData& westData,
+		CacheQuadrantData& eastData,
+		CacheQuadrantData& northwestData,
+		CacheQuadrantData& northeastData,
+		CacheQuadrantData& southwestData,
+		CacheQuadrantData& southeastData)
+	{
+		return true;
+	}
+
 	bool MeshCacheBuffer::blendQuadrant(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
 		CacheQuadrantData& data,
 		CacheQuadrantData& northData,
@@ -2614,51 +2628,111 @@ namespace TheWorld_Utils
 		//if (!terrainEdit->northSideZMinus.needBlend && !terrainEdit->southSideZPlus.needBlend && !terrainEdit->eastSideXPlus.needBlend && !terrainEdit->westSideXMinus.needBlend)
 		//	return updated;
 		
+		//	NW	N	NE
+		//		_
+		//	W	D	E
+		//
+		//	SW	S	SE
 		if (blendQuadrantOnNorthSide(numVerticesPerSize, gridStepInWU, lastPhase, data, northData, southData, westData, eastData, northwestData, northeastData, southwestData, southeastData))
 			updated = true;
 
+		//	NW	N	NE
+		//		
+		//	W	D	E
+		//		-
+		//	SW	S	SE
 		if (blendQuadrantOnSouthSide(numVerticesPerSize, gridStepInWU, lastPhase, data, northData, southData, westData, eastData, northwestData, northeastData, southwestData, southeastData))
 			updated = true;
 
+		//	NW	N	NE
+		//		
+		//	W	|D	E
+		//		
+		//	SW	S	SE
 		if (blendQuadrantOnWestSide(numVerticesPerSize, gridStepInWU, lastPhase, data, northData, southData, westData, eastData, northwestData, northeastData, southwestData, southeastData))
 			updated = true;
 
+		//	NW	N	NE
+		//		
+		//	W	D|	E
+		//		
+		//	SW	S	SE
 		if (blendQuadrantOnEastSide(numVerticesPerSize, gridStepInWU, lastPhase, data, northData, southData, westData, eastData, northwestData, northeastData, southwestData, southeastData))
 			updated = true;
 
 		CacheQuadrantData emptyData;
 
-		if (blendQuadrantOnWestSide(numVerticesPerSize, gridStepInWU, lastPhase, northData, 
+		//	NW	|N	NE
+		//		
+		//	W	D	E
+		//		
+		//	SW	S	SE
+		if (blendQuadrantOnWestSide(numVerticesPerSize, gridStepInWU, lastPhase, northData,
 			emptyData /*N*/, data /*S*/, northwestData /*W*/, northeastData /*E*/, emptyData /*NW*/, emptyData /*NE*/, westData /*SW*/, eastData /*SE*/))
 			updated = true;
+		//	NW	N|	NE
+		//		
+		//	W	D	E
+		//		
+		//	SW	S	SE
 		if (blendQuadrantOnEastSide(numVerticesPerSize, gridStepInWU, lastPhase, northData,
 			emptyData /*N*/, data /*S*/, northwestData /*W*/, northeastData /*E*/, emptyData /*NW*/, emptyData /*NE*/, westData /*SW*/, eastData /*SE*/))
 			updated = true;
 
+		//	NW	N	NE
+		//		
+		//	W	D	E
+		//		
+		//	SW	|S	SE
 		if (blendQuadrantOnWestSide(numVerticesPerSize, gridStepInWU, lastPhase, southData,
 			data /*N*/, emptyData /*S*/, southwestData /*W*/, southeastData /*E*/, westData /*NW*/, eastData /*NE*/, emptyData /*SW*/, emptyData /*SE*/))
 			updated = true;
+		//	NW	N	NE
+		//		
+		//	W	D	E
+		//		
+		//	SW	S|	SE
 		if (blendQuadrantOnEastSide(numVerticesPerSize, gridStepInWU, lastPhase, southData,
 			data /*N*/, emptyData /*S*/, southwestData /*W*/, southeastData /*E*/, westData /*NW*/, eastData /*NE*/, emptyData /*SW*/, emptyData /*SE*/))
 			updated = true;
 
+		//	NW	N	NE
+		//	_	
+		//	W	D	E
+		//		
+		//	SW	S	SE
 		if (blendQuadrantOnNorthSide(numVerticesPerSize, gridStepInWU, lastPhase, westData,
 			northwestData /*N*/, southwestData /*S*/, emptyData /*W*/, data /*E*/, emptyData /*NW*/, northData /*NE*/, emptyData /*SW*/, southData /*SE*/))
 			updated = true;
+		//	NW	N	NE
+		//		
+		//	W	D	E
+		//	-	
+		//	SW	S	SE
 		if (blendQuadrantOnSouthSide(numVerticesPerSize, gridStepInWU, lastPhase, westData,
 			northwestData /*N*/, southwestData /*S*/, emptyData /*W*/, data /*E*/, emptyData /*NW*/, northData /*NE*/, emptyData /*SW*/, southData /*SE*/))
 			updated = true;
 
+		//	NW	N	NE
+		//			_
+		//	W	D	E
+		//		
+		//	SW	S	SE
 		if (blendQuadrantOnNorthSide(numVerticesPerSize, gridStepInWU, lastPhase, eastData,
 			northeastData /*N*/, southeastData /*S*/, data /*W*/, emptyData /*E*/, northData /*NW*/, emptyData /*NE*/, southData /*SW*/, emptyData /*SE*/))
 			updated = true;
+		//	NW	N	NE
+		//		
+		//	W	D	E
+		//			-
+		//	SW	S	SE
 		if (blendQuadrantOnSouthSide(numVerticesPerSize, gridStepInWU, lastPhase, eastData,
 			northeastData /*N*/, southeastData /*S*/, data /*W*/, emptyData /*E*/, northData /*NW*/, emptyData /*NE*/, southData /*SW*/, emptyData /*SE*/))
 			updated = true;
 
 		if (lastPhase)
 		{
-			if(blendBorders(numVerticesPerSize, gridStepInWU, lastPhase, data, northData, southData, westData, eastData))
+			if(blendBorders(numVerticesPerSize, gridStepInWU, lastPhase, data, northData, southData, westData, eastData, northwestData,	northeastData, southwestData, southeastData))
 				updated = true;
 		}
 
@@ -2723,7 +2797,11 @@ namespace TheWorld_Utils
 		CacheQuadrantData& northData,
 		CacheQuadrantData& southData,
 		CacheQuadrantData& westData,
-		CacheQuadrantData& eastData)
+		CacheQuadrantData& eastData,
+		CacheQuadrantData& northwestData,
+		CacheQuadrantData& northeastData,
+		CacheQuadrantData& southwestData,
+		CacheQuadrantData& southeastData)
 	{
 		bool updated = false;
 
@@ -2745,15 +2823,71 @@ namespace TheWorld_Utils
 					data.heightsUpdated = true;
 					northData.heightsUpdated = true;
 
-					if (dataUpperBorderHeight > northDataLowerBorderHeight)
+					float height32 = dataUpperBorderHeight;
+					northData.heights32Buffer->at<float>(x, maxIndex, numVerticesPerSize) = height32;
+					uint16_t height16 = data.heights16Buffer->at<uint16_t>(x, 0, numVerticesPerSize);
+					northData.heights16Buffer->at<uint16_t>(x, maxIndex, numVerticesPerSize) = height16;
+					//if (dataUpperBorderHeight > northDataLowerBorderHeight)
+					//{
+					//	height32 = northDataLowerBorderHeight;
+					//	data.heights32Buffer->at<float>(x, 0, numVerticesPerSize) = height32;
+					//	height16 = northData.heights16Buffer->at<uint16_t>(x, maxIndex, numVerticesPerSize);
+					//	data.heights16Buffer->at<uint16_t>(x, 0, numVerticesPerSize) = height16;
+					//}
+					//else
+					//{
+					//	height32 = dataUpperBorderHeight;
+					//	northData.heights32Buffer->at<float>(x, maxIndex, numVerticesPerSize) = height32;
+					//	height16 = data.heights16Buffer->at<uint16_t>(x, 0, numVerticesPerSize);
+					//	northData.heights16Buffer->at<uint16_t>(x, maxIndex, numVerticesPerSize) = height16;
+					//}
+
+					if (x == 0)
 					{
-						data.heights32Buffer->at<float>(x, 0, numVerticesPerSize) = northDataLowerBorderHeight;
-						data.heights16Buffer->at<uint16_t>(x, 0, numVerticesPerSize) = northData.heights16Buffer->at<uint16_t>(x, maxIndex, numVerticesPerSize);
+						if (westData.heights32Buffer != nullptr)
+						{
+							if (westData.heights32Buffer->at<float>(maxIndex, 0, numVerticesPerSize) != height32)
+							{
+								updated = true;
+								westData.heightsUpdated = true;
+								westData.heights32Buffer->at<float>(maxIndex, 0, numVerticesPerSize) = height32;
+								westData.heights16Buffer->at<uint16_t>(maxIndex, 0, numVerticesPerSize) = height16;
+							}
+						}
+						if (northwestData.heights32Buffer != nullptr)
+						{
+							if (northwestData.heights32Buffer->at<float>(maxIndex, maxIndex, numVerticesPerSize) != height32)
+							{
+								updated = true;
+								northwestData.heightsUpdated = true;
+								northwestData.heights32Buffer->at<float>(maxIndex, maxIndex, numVerticesPerSize) = height32;
+								northwestData.heights16Buffer->at<uint16_t>(maxIndex, maxIndex, numVerticesPerSize) = height16;
+							}
+						}
 					}
-					else
+
+					if (x == maxIndex)
 					{
-						northData.heights32Buffer->at<float>(x, maxIndex, numVerticesPerSize) = dataUpperBorderHeight;
-						northData.heights16Buffer->at<uint16_t>(x, maxIndex, numVerticesPerSize) = data.heights16Buffer->at<uint16_t>(x, 0, numVerticesPerSize);
+						if (eastData.heights32Buffer != nullptr)
+						{
+							if (eastData.heights32Buffer->at<float>(0, 0, numVerticesPerSize) != height32)
+							{
+								updated = true;
+								eastData.heightsUpdated = true;
+								eastData.heights32Buffer->at<float>(0, 0, numVerticesPerSize) = height32;
+								eastData.heights16Buffer->at<uint16_t>(0, 0, numVerticesPerSize) = height16;
+							}
+						}
+						if (northeastData.heights32Buffer != nullptr)
+						{
+							if (northeastData.heights32Buffer->at<float>(0, maxIndex, numVerticesPerSize) != height32)
+							{
+								updated = true;
+								northeastData.heightsUpdated = true;
+								northeastData.heights32Buffer->at<float>(0, maxIndex, numVerticesPerSize) = height32;
+								northeastData.heights16Buffer->at<uint16_t>(0, maxIndex, numVerticesPerSize) = height16;
+							}
+						}
 					}
 				}
 			}
@@ -2772,15 +2906,70 @@ namespace TheWorld_Utils
 					data.heightsUpdated = true;
 					southData.heightsUpdated = true;
 
-					if (dataLowerBorderHeight > southDataUpperBorderHeight)
+					float height32 = dataLowerBorderHeight;
+					southData.heights32Buffer->at<float>(x, 0, numVerticesPerSize) = height32;
+					uint16_t height16 = data.heights16Buffer->at<uint16_t>(x, maxIndex, numVerticesPerSize);
+					southData.heights16Buffer->at<uint16_t>(x, 0, numVerticesPerSize) = height16;
+					//if (dataLowerBorderHeight > southDataUpperBorderHeight)
+					//{
+					//	height32 = southDataUpperBorderHeight;
+					//	data.heights32Buffer->at<float>(x, maxIndex, numVerticesPerSize) = height32;
+					//	height16 = southData.heights16Buffer->at<uint16_t>(x, 0, numVerticesPerSize);
+					//	data.heights16Buffer->at<uint16_t>(x, maxIndex, numVerticesPerSize) = height16;
+					//}
+					//else
+					//{
+					//	height32 = dataLowerBorderHeight;
+					//	southData.heights32Buffer->at<float>(x, 0, numVerticesPerSize) = height32;
+					//	height16 = data.heights16Buffer->at<uint16_t>(x, maxIndex, numVerticesPerSize);
+					//	southData.heights16Buffer->at<uint16_t>(x, 0, numVerticesPerSize) = height16;
+					//}
+					if (x == 0)
 					{
-						data.heights32Buffer->at<float>(x, maxIndex, numVerticesPerSize) = southDataUpperBorderHeight;
-						data.heights16Buffer->at<uint16_t>(x, maxIndex, numVerticesPerSize) = southData.heights16Buffer->at<uint16_t>(x, 0, numVerticesPerSize);
+						if (westData.heights32Buffer != nullptr)
+						{
+							if (westData.heights32Buffer->at<float>(maxIndex, maxIndex, numVerticesPerSize) != height32)
+							{
+								updated = true;
+								westData.heightsUpdated = true;
+								westData.heights32Buffer->at<float>(maxIndex, maxIndex, numVerticesPerSize) = height32;
+								westData.heights16Buffer->at<uint16_t>(maxIndex, maxIndex, numVerticesPerSize) = height16;
+							}
+						}
+						if (southwestData.heights32Buffer != nullptr)
+						{
+							if (southwestData.heights32Buffer->at<float>(maxIndex, 0, numVerticesPerSize) != height32)
+							{
+								updated = true;
+								southwestData.heightsUpdated = true;
+								southwestData.heights32Buffer->at<float>(maxIndex, 0, numVerticesPerSize) = height32;
+								southwestData.heights16Buffer->at<uint16_t>(maxIndex, 0, numVerticesPerSize) = height16;
+							}
+						}
 					}
-					else
+
+					if (x == maxIndex)
 					{
-						southData.heights32Buffer->at<float>(x, 0, numVerticesPerSize) = dataLowerBorderHeight;
-						southData.heights16Buffer->at<uint16_t>(x, 0, numVerticesPerSize) = data.heights16Buffer->at<uint16_t>(x, maxIndex, numVerticesPerSize);
+						if (eastData.heights32Buffer != nullptr)
+						{
+							if (eastData.heights32Buffer->at<float>(0, maxIndex, numVerticesPerSize) != height32)
+							{
+								updated = true;
+								eastData.heightsUpdated = true;
+								eastData.heights32Buffer->at<float>(0, maxIndex, numVerticesPerSize) = height32;
+								eastData.heights16Buffer->at<uint16_t>(0, maxIndex, numVerticesPerSize) = height16;
+							}
+						}
+						if (southeastData.heights32Buffer != nullptr)
+						{
+							if (southeastData.heights32Buffer->at<float>(0, 0, numVerticesPerSize) != height32)
+							{
+								updated = true;
+								southeastData.heightsUpdated = true;
+								southeastData.heights32Buffer->at<float>(0, 0, numVerticesPerSize) = height32;
+								southeastData.heights16Buffer->at<uint16_t>(0, 0, numVerticesPerSize) = height16;
+							}
+						}
 					}
 				}
 			}
@@ -2799,16 +2988,24 @@ namespace TheWorld_Utils
 					data.heightsUpdated = true;
 					westData.heightsUpdated = true;
 
-					if (dataLeftBorderHeight > westDataRightBorderHeight)
-					{
-						data.heights32Buffer->at<float>(0, z, numVerticesPerSize) = westDataRightBorderHeight;
-						data.heights16Buffer->at<uint16_t>(0, z, numVerticesPerSize) = westData.heights16Buffer->at<uint16_t>(maxIndex, z, numVerticesPerSize);
-					}
-					else
-					{
-						westData.heights32Buffer->at<float>(maxIndex, z, numVerticesPerSize) = dataLeftBorderHeight;
-						westData.heights16Buffer->at<uint16_t>(maxIndex, z, numVerticesPerSize) = data.heights16Buffer->at<uint16_t>(0, z, numVerticesPerSize);
-					}
+					float height32 = dataLeftBorderHeight;
+					westData.heights32Buffer->at<float>(maxIndex, z, numVerticesPerSize) = height32;
+					uint16_t height16 = data.heights16Buffer->at<uint16_t>(0, z, numVerticesPerSize);
+					westData.heights16Buffer->at<uint16_t>(maxIndex, z, numVerticesPerSize) = height16;
+					//if (dataLeftBorderHeight > westDataRightBorderHeight)
+					//{
+					//	height32 = westDataRightBorderHeight;
+					//	data.heights32Buffer->at<float>(0, z, numVerticesPerSize) = height32;
+					//	height16 = westData.heights16Buffer->at<uint16_t>(maxIndex, z, numVerticesPerSize);
+					//	data.heights16Buffer->at<uint16_t>(0, z, numVerticesPerSize) = height16;
+					//}
+					//else
+					//{
+					//	height32 = dataLeftBorderHeight;
+					//	westData.heights32Buffer->at<float>(maxIndex, z, numVerticesPerSize) = height32;
+					//	height16 = data.heights16Buffer->at<uint16_t>(0, z, numVerticesPerSize);
+					//	westData.heights16Buffer->at<uint16_t>(maxIndex, z, numVerticesPerSize) = height16;
+					//}
 				}
 			}
 		}
@@ -2826,16 +3023,24 @@ namespace TheWorld_Utils
 					data.heightsUpdated = true;
 					eastData.heightsUpdated = true;
 
-					if (dataRightBorderHeight > eastDataLeftBorderHeight)
-					{
-						data.heights32Buffer->at<float>(maxIndex, z, numVerticesPerSize) = eastDataLeftBorderHeight;
-						data.heights16Buffer->at<uint16_t>(maxIndex, z, numVerticesPerSize) = eastData.heights16Buffer->at<uint16_t>(0, z, numVerticesPerSize);
-					}
-					else
-					{
-						eastData.heights32Buffer->at<float>(0, z, numVerticesPerSize) = dataRightBorderHeight;
-						eastData.heights16Buffer->at<uint16_t>(0, z, numVerticesPerSize) = data.heights16Buffer->at<uint16_t>(maxIndex, z, numVerticesPerSize);
-					}
+					float height32 = dataRightBorderHeight;
+					eastData.heights32Buffer->at<float>(0, z, numVerticesPerSize) = height32;
+					uint16_t height16 = data.heights16Buffer->at<uint16_t>(maxIndex, z, numVerticesPerSize);
+					eastData.heights16Buffer->at<uint16_t>(0, z, numVerticesPerSize) = height16;
+					//if (dataRightBorderHeight > eastDataLeftBorderHeight)
+					//{
+					//	height32 = eastDataLeftBorderHeight;
+					//	data.heights32Buffer->at<float>(maxIndex, z, numVerticesPerSize) = height32;
+					//	height16 = eastData.heights16Buffer->at<uint16_t>(0, z, numVerticesPerSize);
+					//	data.heights16Buffer->at<uint16_t>(maxIndex, z, numVerticesPerSize) = height16;
+					//}
+					//else
+					//{
+					//	height32 = dataRightBorderHeight;
+					//	eastData.heights32Buffer->at<float>(0, z, numVerticesPerSize) = height32;
+					//	height16 = data.heights16Buffer->at<uint16_t>(maxIndex, z, numVerticesPerSize);
+					//	eastData.heights16Buffer->at<uint16_t>(0, z, numVerticesPerSize) = height16;
+					//}
 				}
 			}
 		}
@@ -2945,7 +3150,7 @@ namespace TheWorld_Utils
 
 		size_t maxIndex = numVerticesPerSize - 1;
 
-		if (northData.heights32Buffer != nullptr && northTerrainEdit != nullptr && (terrainEdit->northSideZMinus.needBlend || northTerrainEdit->southSideZPlus.needBlend))
+		if (northData.heights32Buffer != nullptr && northTerrainEdit != nullptr /* && (terrainEdit->northSideZMinus.needBlend || northTerrainEdit->southSideZPlus.needBlend)*/)
 		{
 			// moving on north side: every x with z = 0 
 			for (size_t x = 0; x < numVerticesPerSize; x++)
@@ -2996,7 +3201,7 @@ namespace TheWorld_Utils
 						// if last phase we need to reconcile vertices on the border of modified quadrants
 						if (x == 0)
 						{
-							if (westData.heights32Buffer != nullptr && westTerrainEdit != nullptr && !westTerrainEdit->eastSideXPlus.needBlend && !terrainEdit->westSideXMinus.needBlend)
+							if (westData.heights32Buffer != nullptr && westTerrainEdit != nullptr /* && !westTerrainEdit->eastSideXPlus.needBlend && !terrainEdit->westSideXMinus.needBlend*/)
 							{
 								if (lastPhase)
 								{
@@ -3011,7 +3216,7 @@ namespace TheWorld_Utils
 									westTerrainEdit->eastSideXPlus.needBlend = true;
 								}
 							}
-							if (northwestData.heights32Buffer != nullptr && northwestTerrainEdit  != nullptr && !northwestTerrainEdit->eastSideXPlus.needBlend && northTerrainEdit!= nullptr && !northTerrainEdit->westSideXMinus.needBlend)
+							if (northwestData.heights32Buffer != nullptr && northwestTerrainEdit  != nullptr /* && !northwestTerrainEdit->eastSideXPlus.needBlend && northTerrainEdit != nullptr && !northTerrainEdit->westSideXMinus.needBlend*/)
 							{
 								if (lastPhase)
 								{
@@ -3031,7 +3236,7 @@ namespace TheWorld_Utils
 						// if last phase we need to reconcile vertices on the border of modified quadrants
 						if (x == maxIndex)
 						{
-							if (eastData.heights32Buffer != nullptr && eastTerrainEdit != nullptr && !eastTerrainEdit->westSideXMinus.needBlend && !terrainEdit->eastSideXPlus.needBlend)
+							if (eastData.heights32Buffer != nullptr && eastTerrainEdit != nullptr /* && !eastTerrainEdit->westSideXMinus.needBlend && !terrainEdit->eastSideXPlus.needBlend*/)
 							{
 								if (lastPhase)
 								{
@@ -3046,7 +3251,7 @@ namespace TheWorld_Utils
 									eastTerrainEdit->westSideXMinus.needBlend = true;
 								}
 							}
-							if (northeastData.heights32Buffer != nullptr && northeastTerrainEdit != nullptr && !northeastTerrainEdit->westSideXMinus.needBlend && northTerrainEdit != nullptr && !northTerrainEdit->eastSideXPlus.needBlend)
+							if (northeastData.heights32Buffer != nullptr && northeastTerrainEdit != nullptr /* && !northeastTerrainEdit->westSideXMinus.needBlend && northTerrainEdit != nullptr && !northTerrainEdit->eastSideXPlus.needBlend*/)
 							{
 								if (lastPhase)
 								{
@@ -3117,7 +3322,7 @@ namespace TheWorld_Utils
 
 		size_t maxIndex = numVerticesPerSize - 1;
 
-		if (southData.heights32Buffer != nullptr && southTerrainEdit != nullptr && (terrainEdit->southSideZPlus.needBlend || southTerrainEdit->northSideZMinus.needBlend))
+		if (southData.heights32Buffer != nullptr && southTerrainEdit != nullptr /* && (terrainEdit->southSideZPlus.needBlend || southTerrainEdit->northSideZMinus.needBlend)*/)
 		{
 			// moving on south side: every x with z = 0 
 			for (size_t x = 0; x < numVerticesPerSize; x++)
@@ -3163,7 +3368,7 @@ namespace TheWorld_Utils
 						// if last phase we need to reconcile vertices on the border of modified quadrants
 						if (x == 0)
 						{
-							if (westData.heights32Buffer != nullptr && westTerrainEdit != nullptr && !westTerrainEdit->eastSideXPlus.needBlend && !terrainEdit->westSideXMinus.needBlend)
+							if (westData.heights32Buffer != nullptr && westTerrainEdit != nullptr /* && !westTerrainEdit->eastSideXPlus.needBlend && !terrainEdit->westSideXMinus.needBlend*/)
 							{
 								if (lastPhase)
 								{
@@ -3178,7 +3383,7 @@ namespace TheWorld_Utils
 									westTerrainEdit->eastSideXPlus.needBlend = true;
 								}
 							}
-							if (southwestData.heights32Buffer != nullptr && southwestTerrainEdit != nullptr && !southwestTerrainEdit->eastSideXPlus.needBlend && southTerrainEdit != nullptr && !southTerrainEdit->westSideXMinus.needBlend)
+							if (southwestData.heights32Buffer != nullptr && southwestTerrainEdit != nullptr /* && !southwestTerrainEdit->eastSideXPlus.needBlend && southTerrainEdit != nullptr && !southTerrainEdit->westSideXMinus.needBlend*/)
 							{
 								if (lastPhase)
 								{
@@ -3198,7 +3403,7 @@ namespace TheWorld_Utils
 						// if last phase we need to reconcile vertices on the border of modified quadrants
 						if (x == maxIndex)
 						{
-							if (eastData.heights32Buffer != nullptr && eastTerrainEdit != nullptr && !eastTerrainEdit->westSideXMinus.needBlend && !terrainEdit->eastSideXPlus.needBlend)
+							if (eastData.heights32Buffer != nullptr && eastTerrainEdit != nullptr /* && !eastTerrainEdit->westSideXMinus.needBlend && !terrainEdit->eastSideXPlus.needBlend*/)
 							{
 								if (lastPhase)
 								{
@@ -3213,7 +3418,7 @@ namespace TheWorld_Utils
 									eastTerrainEdit->westSideXMinus.needBlend = true;
 								}
 							}
-							if (southeastData.heights32Buffer != nullptr && southeastTerrainEdit != nullptr && !southeastTerrainEdit->westSideXMinus.needBlend && southTerrainEdit != nullptr && !southTerrainEdit->eastSideXPlus.needBlend)
+							if (southeastData.heights32Buffer != nullptr && southeastTerrainEdit != nullptr /* && !southeastTerrainEdit->westSideXMinus.needBlend && southTerrainEdit != nullptr && !southTerrainEdit->eastSideXPlus.needBlend*/)
 							{
 								if (lastPhase)
 								{
@@ -3284,7 +3489,7 @@ namespace TheWorld_Utils
 
 		size_t maxIndex = numVerticesPerSize - 1;
 
-		if (westData.heights32Buffer != nullptr && westTerrainEdit != nullptr && (terrainEdit->westSideXMinus.needBlend || westTerrainEdit->eastSideXPlus.needBlend))
+		if (westData.heights32Buffer != nullptr && westTerrainEdit != nullptr /*&& (terrainEdit->westSideXMinus.needBlend || westTerrainEdit->eastSideXPlus.needBlend)*/)
 		{
 			// moving on west side: every z with x = 0 
 			for (size_t z = 0; z < numVerticesPerSize; z++)
@@ -3330,7 +3535,7 @@ namespace TheWorld_Utils
 						// if last phase we need to reconcile vertices on the border of modified quadrants
 						if (z == 0)
 						{
-							if (northData.heights32Buffer != nullptr && northTerrainEdit != nullptr && !northTerrainEdit->southSideZPlus.needBlend && !terrainEdit->northSideZMinus.needBlend)
+							if (northData.heights32Buffer != nullptr && northTerrainEdit != nullptr /*&& !northTerrainEdit->southSideZPlus.needBlend && !terrainEdit->northSideZMinus.needBlend*/)
 							{
 								if (lastPhase)
 								{
@@ -3345,7 +3550,7 @@ namespace TheWorld_Utils
 									northTerrainEdit->southSideZPlus.needBlend = true;
 								}
 							}
-							if (northwestData.heights32Buffer != nullptr && northwestTerrainEdit != nullptr && !northwestTerrainEdit->southSideZPlus.needBlend && westTerrainEdit != nullptr && !westTerrainEdit->northSideZMinus.needBlend)
+							if (northwestData.heights32Buffer != nullptr && northwestTerrainEdit != nullptr /*&& !northwestTerrainEdit->southSideZPlus.needBlend && westTerrainEdit != nullptr && !westTerrainEdit->northSideZMinus.needBlend*/)
 							{
 								if (lastPhase)
 								{
@@ -3365,7 +3570,7 @@ namespace TheWorld_Utils
 						// if last phase we need to reconcile vertices on the border of modified quadrants
 						if (z == maxIndex)
 						{
-							if (southData.heights32Buffer != nullptr && southTerrainEdit != nullptr && !southTerrainEdit->northSideZMinus.needBlend && !terrainEdit->southSideZPlus.needBlend)
+							if (southData.heights32Buffer != nullptr && southTerrainEdit != nullptr /*&& !southTerrainEdit->northSideZMinus.needBlend && !terrainEdit->southSideZPlus.needBlend*/)
 							{
 								if (lastPhase)
 								{
@@ -3380,7 +3585,7 @@ namespace TheWorld_Utils
 									southTerrainEdit->northSideZMinus.needBlend = true;
 								}
 							}
-							if (southwestData.heights32Buffer != nullptr && southwestTerrainEdit != nullptr && !southwestTerrainEdit->northSideZMinus.needBlend && westTerrainEdit != nullptr && !westTerrainEdit->southSideZPlus.needBlend)
+							if (southwestData.heights32Buffer != nullptr && southwestTerrainEdit != nullptr /*&& !southwestTerrainEdit->northSideZMinus.needBlend && westTerrainEdit != nullptr && !westTerrainEdit->southSideZPlus.needBlend*/)
 							{
 								if (lastPhase)
 								{
@@ -3451,7 +3656,7 @@ namespace TheWorld_Utils
 
 		size_t maxIndex = numVerticesPerSize - 1;
 
-		if (eastData.heights32Buffer != nullptr && eastTerrainEdit != nullptr && (terrainEdit->eastSideXPlus.needBlend || eastTerrainEdit->westSideXMinus.needBlend))
+		if (eastData.heights32Buffer != nullptr && eastTerrainEdit != nullptr /*&& (terrainEdit->eastSideXPlus.needBlend || eastTerrainEdit->westSideXMinus.needBlend)*/)
 		{
 			// moving on south side: every x with z = 0 
 			for (size_t z = 0; z < numVerticesPerSize; z++)
@@ -3497,7 +3702,7 @@ namespace TheWorld_Utils
 						// if last phase we need to reconcile vertices on the border of modified quadrants
 						if (z == 0)
 						{
-							if (northData.heights32Buffer != nullptr && northTerrainEdit != nullptr && !northTerrainEdit->southSideZPlus.needBlend && !terrainEdit->northSideZMinus.needBlend)
+							if (northData.heights32Buffer != nullptr && northTerrainEdit != nullptr /*&& !northTerrainEdit->southSideZPlus.needBlend && !terrainEdit->northSideZMinus.needBlend*/)
 							{
 								if (lastPhase)
 								{
@@ -3512,7 +3717,7 @@ namespace TheWorld_Utils
 									northTerrainEdit->southSideZPlus.needBlend = true;
 								}
 							}
-							if (northeastData.heights32Buffer != nullptr && northeastTerrainEdit != nullptr && !northeastTerrainEdit->southSideZPlus.needBlend && eastTerrainEdit != nullptr && !eastTerrainEdit->northSideZMinus.needBlend)
+							if (northeastData.heights32Buffer != nullptr && northeastTerrainEdit != nullptr /*&& !northeastTerrainEdit->southSideZPlus.needBlend && eastTerrainEdit != nullptr && !eastTerrainEdit->northSideZMinus.needBlend*/)
 							{
 								if (lastPhase)
 								{
@@ -3532,7 +3737,7 @@ namespace TheWorld_Utils
 						// if last phase we need to reconcile vertices on the border of modified quadrants
 						if (z == maxIndex)
 						{
-							if (southData.heights32Buffer != nullptr && southTerrainEdit != nullptr && !southTerrainEdit->northSideZMinus.needBlend && !terrainEdit->southSideZPlus.needBlend)
+							if (southData.heights32Buffer != nullptr && southTerrainEdit != nullptr /*&& !southTerrainEdit->northSideZMinus.needBlend && !terrainEdit->southSideZPlus.needBlend*/)
 							{
 								if (lastPhase)
 								{
@@ -3547,7 +3752,7 @@ namespace TheWorld_Utils
 									southTerrainEdit->northSideZMinus.needBlend = true;
 								}
 							}
-							if (southeastData.heights32Buffer != nullptr && southeastTerrainEdit != nullptr && !southeastTerrainEdit->northSideZMinus.needBlend && eastTerrainEdit != nullptr && !eastTerrainEdit->southSideZPlus.needBlend)
+							if (southeastData.heights32Buffer != nullptr && southeastTerrainEdit != nullptr /*&& !southeastTerrainEdit->northSideZMinus.needBlend && eastTerrainEdit != nullptr && !eastTerrainEdit->southSideZPlus.needBlend*/)
 							{
 								if (lastPhase)
 								{
