@@ -923,14 +923,20 @@ namespace TheWorld_Utils
 
 	bool MeshCacheBuffer::refreshMapsFromDisk(size_t numVerticesPerSize, float gridStepInWU, std::string _meshId, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer)
 	{
-		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromCache 1 ") + __FUNCTION__, "ALL");
+		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromDisk 1 ") + __FUNCTION__, "ALL");
 
 		TheWorld_Utils::MemoryBuffer buffer;
 
 		bool empty = false;
 		
+		if (_meshId.length() == 0)
 		{
-			TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromCache 1.1  ") + __FUNCTION__, "readBufferFromCache");
+			size_t s = _meshId.length();	// Trap
+			s = _meshId.length();
+		}
+		
+		{
+			TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromDisk 1.1  ") + __FUNCTION__, "readBufferFromCache");
 			readBufferFromDisk(_meshId, buffer);
 		}
 
@@ -939,12 +945,12 @@ namespace TheWorld_Utils
 			TheWorld_Utils::MemoryBuffer tempBuffer;
 
 			{
-				TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromCache 1.2 ") + __FUNCTION__, "setEmptyBuffer");
+				TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromDisk 1.2 ") + __FUNCTION__, "setEmptyBuffer");
 				setEmptyBuffer(numVerticesPerSize, _meshId, tempBuffer);
 			}
 
 			{
-				TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromCache 1.3 ") + __FUNCTION__, "readMapsFromMeshCache");
+				TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromDisk 1.3 ") + __FUNCTION__, "readMapsFromMeshCache");
 
 				refreshMapsFromBuffer(tempBuffer, _meshId, terrainEditValues, minAltitude, maxAltitude, float16HeigthsBuffer, float32HeigthsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, false);
 			}
@@ -953,7 +959,7 @@ namespace TheWorld_Utils
 		}
 		else
 		{
-			TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromCache 1.4  ") + __FUNCTION__, "refreshMapsFromBuffer");
+			TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromDisk 1.4  ") + __FUNCTION__, "refreshMapsFromBuffer");
 			std::string meshIdFromBuffer;
 			refreshMapsFromBuffer(buffer, meshIdFromBuffer, terrainEditValues, minAltitude, maxAltitude, float16HeigthsBuffer, float32HeigthsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, false);
 			assert(meshIdFromBuffer == _meshId);
