@@ -11,6 +11,17 @@ namespace TheWorld_Utils
 
 		switch (terrainType)
 		{
+		case TerrainType::empty:
+			if (textureType == TerrainEdit::TextureType::lowElevation)
+				ret = "Marble021_1K";
+				//ret = "Ground037_1K";
+			else if (textureType == TerrainEdit::TextureType::highElevation)
+				ret = "Marble021_1K";
+			else if (textureType == TerrainEdit::TextureType::dirt)
+				ret = "Marble021_1K";
+			else if (textureType == TerrainEdit::TextureType::rocks)
+				ret = "Marble021_1K";
+			break;
 		case TerrainType::flat:
 			if (textureType == TerrainEdit::TextureType::lowElevation)
 				ret = "grass";
@@ -88,6 +99,7 @@ namespace TheWorld_Utils
 
 		switch (terrainType)
 		{
+		case TerrainEdit::TerrainType::empty:
 		case TerrainEdit::TerrainType::flat:
 		{
 			noise.noiseType = FastNoiseLite::NoiseType::NoiseType_Perlin;
@@ -314,7 +326,8 @@ namespace TheWorld_Utils
 			noise.warpNoiseFractalGain = 0.5f;
 
 			noise.amplitude = 2500;
-			noise.scaleFactor = 1.0f / 1.5f;
+			//noise.scaleFactor = 1.0f / 1.5f;
+			noise.scaleFactor = 1.0f;
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = true;
 		}
@@ -347,7 +360,8 @@ namespace TheWorld_Utils
 			noise.warpNoiseFractalGain = 0.5f;
 
 			noise.amplitude = 2500;
-			noise.scaleFactor = 1.0f / 1.5f;
+			//noise.scaleFactor = 1.0f / 1.5f;
+			noise.scaleFactor = 1.0f;
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = false;
 		}
@@ -381,6 +395,7 @@ namespace TheWorld_Utils
 
 			noise.amplitude = 4000;
 			noise.scaleFactor = 1.0f / 1.5f;
+			//noise.scaleFactor = 1.0f;
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = true;
 		}
@@ -413,7 +428,8 @@ namespace TheWorld_Utils
 			noise.warpNoiseFractalGain = 0.5f;
 
 			noise.amplitude = 4000;
-			noise.scaleFactor = 1.0f / 1.5f;
+			//noise.scaleFactor = 1.0f / 1.5f;
+			noise.scaleFactor = 1.0f;
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = false;
 		}
@@ -446,7 +462,8 @@ namespace TheWorld_Utils
 			noise.warpNoiseFractalGain = 0.5f;
 
 			noise.amplitude = 9000;
-			noise.scaleFactor = 1.0f / 3.0f;
+			//noise.scaleFactor = 1.0f / 3.0f;
+			noise.scaleFactor = 1.0f;
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = true;
 		}
@@ -479,7 +496,8 @@ namespace TheWorld_Utils
 			noise.warpNoiseFractalGain = 0.5f;
 
 			noise.amplitude = 9000;
-			noise.scaleFactor = 1.0f / 3.0f;
+			//noise.scaleFactor = 1.0f / 3.0f;
+			noise.scaleFactor = 1.0f;
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = false;
 		}

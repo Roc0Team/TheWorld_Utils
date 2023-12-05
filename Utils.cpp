@@ -292,6 +292,11 @@ namespace TheWorld_Utils
 			return "flat";
 		}
 		break;
+		case TerrainEdit::TerrainType::empty:
+		{
+			return "empty";
+		}
+		break;
 		case TerrainEdit::TerrainType::campaign_1:
 		{
 			return "campaign_1";
@@ -344,7 +349,7 @@ namespace TheWorld_Utils
 		break;
 		default:
 		{
-			return "Unknown";
+			return "notset";
 		}
 		break;
 		}
@@ -354,6 +359,8 @@ namespace TheWorld_Utils
 	{
 		if (terrainType == "noise_1")
 			return TerrainEdit::TerrainType::noise_1;
+		else if (terrainType == "empty")
+			return TerrainEdit::TerrainType::empty;
 		else if (terrainType == "flat")
 			return TerrainEdit::TerrainType::flat;
 		else if (terrainType == "campaign_1")
@@ -377,7 +384,7 @@ namespace TheWorld_Utils
 		else if (terrainType == "high_mountains_2_grow")
 			return TerrainEdit::TerrainType::high_mountains_2_grow;
 		else
-			return TerrainEdit::TerrainType::unknown;
+			return TerrainEdit::TerrainType::notset;
 	}
 
 	void TerrainEdit::serialize(TheWorld_Utils::MemoryBuffer& buffer)
@@ -1345,6 +1352,19 @@ namespace TheWorld_Utils
 					idx++;
 				}
 		}
+		if (terrainEdit->terrainType == TheWorld_Utils::TerrainEdit::TerrainType::empty)
+		{
+			terrainEdit->minHeight = 0;
+			terrainEdit->maxHeight = 0;
+			terrainEdit->eastSideXPlus.minHeight = 0;
+			terrainEdit->eastSideXPlus.maxHeight = 0;
+			terrainEdit->westSideXMinus.minHeight = 0;
+			terrainEdit->westSideXMinus.maxHeight = 0;
+			terrainEdit->southSideZPlus.minHeight = 0;
+			terrainEdit->southSideZPlus.maxHeight = 0;
+			terrainEdit->northSideZMinus.minHeight = 0;
+			terrainEdit->northSideZMinus.maxHeight = 0;
+		}
 		else
 		{
 			//{
@@ -1476,32 +1496,32 @@ namespace TheWorld_Utils
 			{
 				//TheWorld_Utils::GuardProfiler profiler(std::string("EditGenerate 1.3 ") + __FUNCTION__, "Adjust desidered min height");
 
-				if (terrainEdit->noise.desideredMinHeight != FLT_MIN)
-				{
-					float corrector = terrainEdit->noise.desideredMinHeight - terrainEdit->minHeight;
-					size_t idx = 0;
-					for (int z = 0; z < numVerticesPerSize; z++)
-						for (int x = 0; x < numVerticesPerSize; x++)
-						{
-							vectGridHeights[idx] += corrector;
-							idx++;
-						}
+				//if (terrainEdit->noise.desideredMinHeight != FLT_MIN)
+				//{
+				//	float corrector = terrainEdit->noise.desideredMinHeight - terrainEdit->minHeight;
+				//	size_t idx = 0;
+				//	for (int z = 0; z < numVerticesPerSize; z++)
+				//		for (int x = 0; x < numVerticesPerSize; x++)
+				//		{
+				//			vectGridHeights[idx] += corrector;
+				//			idx++;
+				//		}
 
-					terrainEdit->minHeight += corrector;
-					terrainEdit->maxHeight += corrector;
+				//	terrainEdit->minHeight += corrector;
+				//	terrainEdit->maxHeight += corrector;
 
-					terrainEdit->eastSideXPlus.minHeight += corrector;
-					terrainEdit->eastSideXPlus.maxHeight += corrector;
+				//	terrainEdit->eastSideXPlus.minHeight += corrector;
+				//	terrainEdit->eastSideXPlus.maxHeight += corrector;
 
-					terrainEdit->westSideXMinus.minHeight += corrector;
-					terrainEdit->westSideXMinus.maxHeight += corrector;
+				//	terrainEdit->westSideXMinus.minHeight += corrector;
+				//	terrainEdit->westSideXMinus.maxHeight += corrector;
 
-					terrainEdit->southSideZPlus.minHeight += corrector;
-					terrainEdit->southSideZPlus.maxHeight += corrector;
+				//	terrainEdit->southSideZPlus.minHeight += corrector;
+				//	terrainEdit->southSideZPlus.maxHeight += corrector;
 
-					terrainEdit->northSideZMinus.minHeight += corrector;
-					terrainEdit->northSideZMinus.maxHeight += corrector;
-				}
+				//	terrainEdit->northSideZMinus.minHeight += corrector;
+				//	terrainEdit->northSideZMinus.maxHeight += corrector;
+				//}
 			}
 		}
 	}
@@ -2166,6 +2186,10 @@ namespace TheWorld_Utils
 		TheWorld_Utils::MemoryBuffer* _flatFloat16HeightsBuffer = cacheQuadrantData.heights16Buffer;
 		static TheWorld_Utils::MemoryBuffer s_flatFloat32HeightsBuffer;
 		TheWorld_Utils::MemoryBuffer* _flatFloat32HeightsBuffer = cacheQuadrantData.heights32Buffer;
+		static TheWorld_Utils::MemoryBuffer s_flatNormalsBuffer;
+		TheWorld_Utils::MemoryBuffer* _flatNormalsBuffer = cacheQuadrantData.normalsBuffer;
+		static TheWorld_Utils::MemoryBuffer s_flatSplatmapBuffer;
+		TheWorld_Utils::MemoryBuffer* _flatSplatmapBuffer = cacheQuadrantData.splatmapBuffer;
 
 		if (numHeights16 == 0)
 		{
@@ -2175,7 +2199,7 @@ namespace TheWorld_Utils
 			_flatFloat32HeightsBuffer = &s_flatFloat32HeightsBuffer;
 
 			numHeights32 = numHeights16 = numVerticesPerSize * numVerticesPerSize;
-			
+
 			{
 				std::lock_guard<std::recursive_mutex> lock(s_mtxEmptyBuffer);
 				
@@ -2238,6 +2262,67 @@ namespace TheWorld_Utils
 					assert(float16HeightsBufferSize == _flatFloat16HeightsBuffer->size());
 					assert(float32HeightsBufferSize == _flatFloat32HeightsBuffer->size());
 				}
+
+				//// useless as texture are filled in ShaderTerrainData::resetMaterialParams if they are empty
+				//_flatNormalsBuffer = &s_flatNormalsBuffer;
+				//numNormals = numVerticesPerSize * numVerticesPerSize;
+				//size_t floatNormalsBufferSize = numVerticesPerSize * numVerticesPerSize * sizeof(struct TheWorld_Utils::_RGB);
+				//if (s_flatNormalsBuffer.size() == 0)
+				//{
+				//	s_flatNormalsBuffer.reserve(floatNormalsBufferSize);
+				//	struct TheWorld_Utils::_RGB* _normalBufferPtr = (struct TheWorld_Utils::_RGB*)s_flatNormalsBuffer.ptr();
+
+				//	Eigen::Vector3d normal(0.0f, 1.0f, 0.0f);
+				//	//float nx = float(normal.x());		// DEBUG ONLY
+				//	//float ny = float(normal.y());		// DEBUG ONLY
+				//	//float nz = float(normal.z());		// DEBUG ONLY
+				//	Eigen::Vector3d packedNormal = packNormal(normal);
+				//	//float pnx = float(packedNormal.x());		// DEBUG ONLY
+				//	//float pny = float(packedNormal.y());		// DEBUG ONLY
+				//	//float pnz = float(packedNormal.z());		// DEBUG ONLY
+				//	struct TheWorld_Utils::_RGB flatBufferNormal;
+				//	flatBufferNormal.r = (BYTE)(packedNormal.x() * 255);
+				//	flatBufferNormal.g = (BYTE)(packedNormal.y() * 255);
+				//	flatBufferNormal.b = (BYTE)(packedNormal.z() * 255);
+				//	for (size_t z = 0; z < numVerticesPerSize; z++)
+				//		for (size_t x = 0; x < numVerticesPerSize; x++)
+				//		{
+				//			*_normalBufferPtr = flatBufferNormal;
+				//			_normalBufferPtr++;
+				//		}
+
+				//	assert((BYTE*)_normalBufferPtr - s_flatNormalsBuffer.ptr() == floatNormalsBufferSize);
+				//	s_flatNormalsBuffer.adjustSize(floatNormalsBufferSize);
+				//}
+				//else
+				//{
+				//	assert(floatNormalsBufferSize == s_flatNormalsBuffer.size());
+				//}
+
+				//// useless as texture are filled in ShaderTerrainData::resetMaterialParams if they are empty
+				//_flatSplatmapBuffer = &s_flatSplatmapBuffer;
+				//numSplatmapVertices = numVerticesPerSize * numVerticesPerSize;
+				//size_t floatSplatmapBufferSize = numVerticesPerSize * numVerticesPerSize * sizeof(struct TheWorld_Utils::_RGBA);
+				//if (s_flatSplatmapBuffer.size() == 0)
+				//{
+				//	s_flatSplatmapBuffer.reserve(floatSplatmapBufferSize);
+				//	struct TheWorld_Utils::_RGBA* _splatmapBufferPtr = (struct TheWorld_Utils::_RGBA*)s_flatSplatmapBuffer.ptr();
+
+				//	struct TheWorld_Utils::_RGBA flatBufferSplatmap;	flatBufferSplatmap.r = 255;	flatBufferSplatmap.g = 0;	flatBufferSplatmap.b = 0;	flatBufferSplatmap.a = 0;
+				//	for (size_t z = 0; z < numVerticesPerSize; z++)
+				//		for (size_t x = 0; x < numVerticesPerSize; x++)
+				//		{
+				//			*_splatmapBufferPtr = flatBufferSplatmap;
+				//			_splatmapBufferPtr++;
+				//		}
+
+				//	assert((BYTE*)_splatmapBufferPtr - s_flatSplatmapBuffer.ptr() == floatSplatmapBufferSize);
+				//	s_flatSplatmapBuffer.adjustSize(floatSplatmapBufferSize);
+				//}
+				//else
+				//{
+				//	assert(floatSplatmapBufferSize == s_flatSplatmapBuffer.size());
+				//}
 			}
 		}
 
@@ -2316,7 +2401,7 @@ namespace TheWorld_Utils
 		{
 			TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer setBufferFromCacheQuadrantData 1.4 ") + __FUNCTION__, "copy normals");
 
-			memcpy(_streamBuffer, cacheQuadrantData.normalsBuffer->ptr(), normalmapSize);
+			memcpy(_streamBuffer, _flatNormalsBuffer->ptr(), normalmapSize);
 			_streamBuffer += normalmapSize;
 		}
 		else
@@ -2331,7 +2416,7 @@ namespace TheWorld_Utils
 		{
 			TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer setBufferFromCacheQuadrantData 1.4 ") + __FUNCTION__, "copy splatmap");
 
-			memcpy(_streamBuffer, cacheQuadrantData.splatmapBuffer->ptr(), splatmapSize);
+			memcpy(_streamBuffer, _flatSplatmapBuffer->ptr(), splatmapSize);
 			_streamBuffer += splatmapSize;
 		}
 		else
