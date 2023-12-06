@@ -225,8 +225,8 @@ namespace TheWorld_Utils
 		float warpNoiseFractalLacunarity;
 		float warpNoiseFractalGain;
 
-		unsigned int amplitude;		// range of heights in WU (noise is from -1 to 1)
-		float scaleFactor;
+		unsigned int heightsAmplitude;		// range of heights in WU (noise is from -1 to 1)
+		float scaleFactor_JagIntensity;
 		float desideredMinHeight;
 		bool desideredMinHeigthMandatory;
 
@@ -276,9 +276,9 @@ namespace TheWorld_Utils
 				return false;
 			if (warpNoiseFractalGain != o.warpNoiseFractalGain)
 				return false;
-			if (amplitude != o.amplitude)
+			if (heightsAmplitude != o.heightsAmplitude)
 				return false;
-			if (scaleFactor != o.scaleFactor)
+			if (scaleFactor_JagIntensity != o.scaleFactor_JagIntensity)
 				return false;
 			if (desideredMinHeight != o.desideredMinHeight)
 				return false;

@@ -1394,8 +1394,8 @@ namespace TheWorld_Utils
 			//				float xf = (lowerXGridVertex + (x * gridStepInWU));
 			//				float zf = (lowerZGridVertex + (z * gridStepInWU));
 			//				altitude = noiseLite.GetNoise(xf, zf);
-			//				// noises are value in range -1 to 1 we need to interpolate with amplitude
-			//				altitude *= (terrainEdit.noise.amplitude / 2);
+			//				// noises are value in range -1 to 1 we need to interpolate with heightsAmplitude
+			//				altitude *= (terrainEdit.noise.heightsAmplitude / 2);
 			//			}
 
 			//			vectGridHeights[idx] = altitude;
@@ -1443,11 +1443,11 @@ namespace TheWorld_Utils
 						{
 							//TheWorld_Utils::GuardProfiler profiler(std::string("EditGenerate 1.2.2 ") + __FUNCTION__, "GetNoise main");
 
-							float xf = (lowerXGridVertex + (x * gridStepInWU)) * terrainEdit->noise.scaleFactor;
-							float zf = (lowerZGridVertex + (z * gridStepInWU)) * terrainEdit->noise.scaleFactor;
+							float xf = (lowerXGridVertex + (x * gridStepInWU)) * terrainEdit->noise.scaleFactor_JagIntensity;
+							float zf = (lowerZGridVertex + (z * gridStepInWU)) * terrainEdit->noise.scaleFactor_JagIntensity;
 							altitude = noiseLite.GetNoise(xf, zf);
-							// noises are value in range -1 to 1 we need to interpolate with amplitude
-							altitude *= (terrainEdit->noise.amplitude / 2);
+							// noises are value in range -1 to 1 we need to interpolate with heightsAmplitude
+							altitude *= (terrainEdit->noise.heightsAmplitude / 2);
 
 							if (altitude < terrainEdit->minHeight)
 								terrainEdit->minHeight = altitude;
@@ -1496,32 +1496,32 @@ namespace TheWorld_Utils
 			{
 				//TheWorld_Utils::GuardProfiler profiler(std::string("EditGenerate 1.3 ") + __FUNCTION__, "Adjust desidered min height");
 
-				//if (terrainEdit->noise.desideredMinHeight != FLT_MIN)
-				//{
-				//	float corrector = terrainEdit->noise.desideredMinHeight - terrainEdit->minHeight;
-				//	size_t idx = 0;
-				//	for (int z = 0; z < numVerticesPerSize; z++)
-				//		for (int x = 0; x < numVerticesPerSize; x++)
-				//		{
-				//			vectGridHeights[idx] += corrector;
-				//			idx++;
-				//		}
+				if (terrainEdit->noise.desideredMinHeight != FLT_MIN)
+				{
+					float corrector = terrainEdit->noise.desideredMinHeight - terrainEdit->minHeight;
+					size_t idx = 0;
+					for (int z = 0; z < numVerticesPerSize; z++)
+						for (int x = 0; x < numVerticesPerSize; x++)
+						{
+							vectGridHeights[idx] += corrector;
+							idx++;
+						}
 
-				//	terrainEdit->minHeight += corrector;
-				//	terrainEdit->maxHeight += corrector;
+					terrainEdit->minHeight += corrector;
+					terrainEdit->maxHeight += corrector;
 
-				//	terrainEdit->eastSideXPlus.minHeight += corrector;
-				//	terrainEdit->eastSideXPlus.maxHeight += corrector;
+					terrainEdit->eastSideXPlus.minHeight += corrector;
+					terrainEdit->eastSideXPlus.maxHeight += corrector;
 
-				//	terrainEdit->westSideXMinus.minHeight += corrector;
-				//	terrainEdit->westSideXMinus.maxHeight += corrector;
+					terrainEdit->westSideXMinus.minHeight += corrector;
+					terrainEdit->westSideXMinus.maxHeight += corrector;
 
-				//	terrainEdit->southSideZPlus.minHeight += corrector;
-				//	terrainEdit->southSideZPlus.maxHeight += corrector;
+					terrainEdit->southSideZPlus.minHeight += corrector;
+					terrainEdit->southSideZPlus.maxHeight += corrector;
 
-				//	terrainEdit->northSideZMinus.minHeight += corrector;
-				//	terrainEdit->northSideZMinus.maxHeight += corrector;
-				//}
+					terrainEdit->northSideZMinus.minHeight += corrector;
+					terrainEdit->northSideZMinus.maxHeight += corrector;
+				}
 			}
 		}
 	}

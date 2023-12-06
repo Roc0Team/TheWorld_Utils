@@ -127,8 +127,8 @@ namespace TheWorld_Utils
 			noise.warpNoiseFractalLacunarity = 2.0f;
 			noise.warpNoiseFractalGain = 0.5f;
 
-			noise.amplitude = 100;
-			noise.scaleFactor = 1.0f;
+			noise.heightsAmplitude = 100;
+			noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = true;
 		}
@@ -160,8 +160,8 @@ namespace TheWorld_Utils
 			noise.warpNoiseFractalLacunarity = 2.0f;
 			noise.warpNoiseFractalGain = 0.5f;
 
-			noise.amplitude = 100;
-			noise.scaleFactor = 1.0f;
+			noise.heightsAmplitude = 100;
+			noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = false;
 		}
@@ -193,8 +193,8 @@ namespace TheWorld_Utils
 			noise.warpNoiseFractalLacunarity = 2.0f;
 			noise.warpNoiseFractalGain = 0.5f;
 
-			noise.amplitude = 100;
-			noise.scaleFactor = 1.0f;
+			noise.heightsAmplitude = 100;
+			noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = true;
 		}
@@ -226,8 +226,8 @@ namespace TheWorld_Utils
 			noise.warpNoiseFractalLacunarity = 2.0f;
 			noise.warpNoiseFractalGain = 0.5f;
 
-			noise.amplitude = 100;
-			noise.scaleFactor = 1.0f;
+			noise.heightsAmplitude = 100;
+			noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = false;
 		}
@@ -259,8 +259,8 @@ namespace TheWorld_Utils
 			noise.warpNoiseFractalLacunarity = 2.0f;
 			noise.warpNoiseFractalGain = 0.5f;
 
-			noise.amplitude = 1000;
-			noise.scaleFactor = 1.0f;
+			noise.heightsAmplitude = 1000;
+			noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = true;
 		}
@@ -292,8 +292,8 @@ namespace TheWorld_Utils
 			noise.warpNoiseFractalLacunarity = 2.0f;
 			noise.warpNoiseFractalGain = 0.5f;
 
-			noise.amplitude = 2000;
-			noise.scaleFactor = 1.0f;
+			noise.heightsAmplitude = 2000;
+			noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = true;
 		}
@@ -325,9 +325,9 @@ namespace TheWorld_Utils
 			noise.warpNoiseFractalLacunarity = 2.0f;
 			noise.warpNoiseFractalGain = 0.5f;
 
-			noise.amplitude = 2500;
-			//noise.scaleFactor = 1.0f / 1.5f;
-			noise.scaleFactor = 1.0f;
+			noise.heightsAmplitude = 2500;
+			noise.scaleFactor_JagIntensity = 1.0f / 1.5f;
+			//noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = true;
 		}
@@ -359,9 +359,9 @@ namespace TheWorld_Utils
 			noise.warpNoiseFractalLacunarity = 2.0f;
 			noise.warpNoiseFractalGain = 0.5f;
 
-			noise.amplitude = 2500;
-			//noise.scaleFactor = 1.0f / 1.5f;
-			noise.scaleFactor = 1.0f;
+			noise.heightsAmplitude = 2500;
+			noise.scaleFactor_JagIntensity = 1.0f / 1.5f;
+			//noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = false;
 		}
@@ -393,9 +393,9 @@ namespace TheWorld_Utils
 			noise.warpNoiseFractalLacunarity = 2.0f;
 			noise.warpNoiseFractalGain = 0.5f;
 
-			noise.amplitude = 4000;
-			noise.scaleFactor = 1.0f / 1.5f;
-			//noise.scaleFactor = 1.0f;
+			noise.heightsAmplitude = 4000;
+			noise.scaleFactor_JagIntensity = 1.0f / 1.5f;
+			//noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = true;
 		}
@@ -427,9 +427,9 @@ namespace TheWorld_Utils
 			noise.warpNoiseFractalLacunarity = 2.0f;
 			noise.warpNoiseFractalGain = 0.5f;
 
-			noise.amplitude = 4000;
-			//noise.scaleFactor = 1.0f / 1.5f;
-			noise.scaleFactor = 1.0f;
+			noise.heightsAmplitude = 4000;
+			noise.scaleFactor_JagIntensity = 1.0f / 1.5f;
+			//noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = false;
 		}
@@ -461,9 +461,9 @@ namespace TheWorld_Utils
 			noise.warpNoiseFractalLacunarity = 2.0f;
 			noise.warpNoiseFractalGain = 0.5f;
 
-			noise.amplitude = 9000;
-			//noise.scaleFactor = 1.0f / 3.0f;
-			noise.scaleFactor = 1.0f;
+			noise.heightsAmplitude = 9000;
+			noise.scaleFactor_JagIntensity = 1.0f / 3.0f;
+			//noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = true;
 		}
@@ -495,9 +495,9 @@ namespace TheWorld_Utils
 			noise.warpNoiseFractalLacunarity = 2.0f;
 			noise.warpNoiseFractalGain = 0.5f;
 
-			noise.amplitude = 9000;
-			//noise.scaleFactor = 1.0f / 3.0f;
-			noise.scaleFactor = 1.0f;
+			noise.heightsAmplitude = 9000;
+			noise.scaleFactor_JagIntensity = 1.0f / 3.0f;
+			//noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = false;
 		}
@@ -530,8 +530,8 @@ namespace TheWorld_Utils
 			noise.warpNoiseFractalLacunarity = 0.0f;
 			noise.warpNoiseFractalGain = 0.0f;
 
-			noise.amplitude = 0;
-			noise.scaleFactor = 1.0f;
+			noise.heightsAmplitude = 0;
+			noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = false;
 		}
