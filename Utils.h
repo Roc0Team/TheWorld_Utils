@@ -32,6 +32,8 @@
 #include <Eigen/Dense>
 #pragma warning(pop)
 
+#define THEWORLD_DEFAULT_AMPLITUDE_BLEND_FACTOR									1.0f
+
 #define Vector3Zero godot::Vector3(0, 0, 0)
 #define Vector3UP godot::Vector3(0, 1, 0)
 
@@ -373,6 +375,7 @@ namespace TheWorld_Utils
 			float highElevationFactor = 4.0f;
 			float lowElevationFactor = 2.0f;
 			size_t splatMapMode = 1;
+			float amplitudeBlendFactor = THEWORLD_DEFAULT_AMPLITUDE_BLEND_FACTOR;
 		} extraValues;
 
 		// WARNING: this struct can safely grow appending new data at the end

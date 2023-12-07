@@ -15,6 +15,9 @@
 #include "Utils.h"
 #include "Profiler.h"
 #include "half.h"
+//#include <stdlib.h>     /* srand, rand */
+//#include <time.h>       /* time */
+#include <tgmath.h>
 #include <filesystem>
 #include <string>
 #include <algorithm>
@@ -2702,6 +2705,8 @@ namespace TheWorld_Utils
 		return true;
 	}
 
+//#define AMPLITUDE_BLEND_FACTOR	2.0f
+
 	bool MeshCacheBuffer::blendQuadrant(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
 		CacheQuadrantData& data,
 		CacheQuadrantData& northData,
@@ -3197,6 +3202,8 @@ namespace TheWorld_Utils
 			}
 	}
 
+#define SINK_BLEND_FACTOR	1.0f
+
 	bool MeshCacheBuffer::blendQuadrantOnNorthSide(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
 		CacheQuadrantData& data,
 		CacheQuadrantData& northData,
@@ -3246,10 +3253,13 @@ namespace TheWorld_Utils
 			// moving on north side: every x with z = 0 
 			for (size_t x = 0; x < numVerticesPerSize; x++)
 			{
-				float gapForEachQuandrantOnBorder = abs(data.heights32Buffer->at<float>(x, 0, numVerticesPerSize) - northData.heights32Buffer->at<float>(x, maxIndex, numVerticesPerSize)) / 2;
-				size_t numVerticesToAdjustInEachQuadrant = (size_t)ceilf(gapForEachQuandrantOnBorder / (gridStepInWU / 2));
-				if (numVerticesToAdjustInEachQuadrant > numVerticesPerSize / 2)
-					numVerticesToAdjustInEachQuadrant = numVerticesPerSize / 2;
+				float heightGapForEachQuandrantOnBorder = abs(data.heights32Buffer->at<float>(x, 0, numVerticesPerSize) - northData.heights32Buffer->at<float>(x, maxIndex, numVerticesPerSize)) / 2;
+				//size_t numVerticesToAdjustInEachQuadrant = (size_t)ceilf(heightGapForEachQuandrantOnBorder / (gridStepInWU / 2));
+				//if (numVerticesToAdjustInEachQuadrant > numVerticesPerSize / 2)
+				//	numVerticesToAdjustInEachQuadrant = numVerticesPerSize / 2;
+				size_t numVerticesToAdjustInEachQuadrant = (size_t)ceilf(heightGapForEachQuandrantOnBorder * terrainEdit->extraValues.amplitudeBlendFactor);
+				if (numVerticesToAdjustInEachQuadrant > numVerticesPerSize)
+					numVerticesToAdjustInEachQuadrant = numVerticesPerSize;
 
 				if (numVerticesToAdjustInEachQuadrant > 0)
 				{
@@ -3261,30 +3271,58 @@ namespace TheWorld_Utils
 					northData.heightsUpdated = true;
 					updated = true;
 
+					float saveHeight = 0;
 					for (int z = (int)numVerticesToAdjustInEachQuadrant - 1; z >= 0; z--)
 					{
 						float currentGapInEachQuadrant = abs(data.heights32Buffer->at<float>(x, z, numVerticesPerSize) - northData.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize)) / 2;
 						float desideredGapInEachQuadrant = abs(averageStep) * z;
 						if (currentGapInEachQuadrant > desideredGapInEachQuadrant)
 						{
+							//float radiantValuePerVertex = ((float)z * TheWorld_Utils::kPi) / numVerticesToAdjustInEachQuadrant;	// kPi (farthest from border vertex to be adjusted) ==> 0 (vertex on border)
+							//float coeffPerVertex = sin(radiantValuePerVertex) + (0.5f * SINK_BLEND_FACTOR);						// [0.5 * SINK_BLEND_FACTOR] (farthest from border vertex to be adjusted) ==> 1 + [0.5 * SINK_BLEND_FACTOR] (in the middle between farthest and border ==> [0.5 * SINK_BLEND_FACTOR] (on the border)
 							increment = currentGapInEachQuadrant - desideredGapInEachQuadrant;
+							//if (increment > 1.0f)
+							//	increment = averageStep * coeffPerVertex;
 							if (data.heights32Buffer->at<float>(x, z, numVerticesPerSize) > northData.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize))
 								increment = -increment;
 						}
 						else
 							increment = 0.0f;
 
-						//float h = data.heights32Buffer->at<float>(x, z, numVerticesPerSize);
-						data.heights32Buffer->at<float>(x, z, numVerticesPerSize) += increment;
+						if (z == 0)
+						{
+							data.heights32Buffer->at<float>(x, z, numVerticesPerSize) += increment;
+							float f = data.heights32Buffer->at<float>(x, z, numVerticesPerSize);
+							data.heights32Buffer->at<float>(x, z, numVerticesPerSize) = saveHeight;
+							float f1 = data.heights32Buffer->at<float>(x, z, numVerticesPerSize);
+							f = f1;
+						}
+						else
+							data.heights32Buffer->at<float>(x, z, numVerticesPerSize) += increment;
 						TheWorld_Utils::FLOAT_32 f(data.heights32Buffer->at<float>(x, z, numVerticesPerSize));
 						uint16_t half = half_from_float(f.u32);
 						data.heights16Buffer->at<uint16_t>(x, z, numVerticesPerSize) = half;
 
-						//float hNorth = northData.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize);
-						northData.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize) -= increment;
+						if (z == 0)
+						{
+							northData.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize) -= increment;
+							float f = northData.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize);
+							northData.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize) = saveHeight;
+							float f1 = northData.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize);
+							f = f1;
+						}
+						else
+							northData.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize) -= increment;
 						TheWorld_Utils::FLOAT_32 f1(northData.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize));
 						uint16_t half1 = half_from_float(f1.u32);
 						northData.heights16Buffer->at<uint16_t>(x, maxIndex - z, numVerticesPerSize) = half1;
+
+						if (z == 1)
+						{
+							float h1 = data.heights32Buffer->at<float>(x, z, numVerticesPerSize);
+							float h2 = northData.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize);
+							saveHeight = (h1 + h2) / 2;
+						}
 
 						//if (x == 0)
 						//	PLOG_DEBUG << "x=" << std::to_string(x) << " z=" << std::to_string(z) << "/" << std::to_string(maxIndex - z) << " increment= " << std::to_string(increment) << " " << std::to_string(h) << " ==> " << std::to_string(data.heights32Buffer->at<float>(x, z, numVerticesPerSize)) << " " << std::to_string(hNorth) << " ==> " << std::to_string(northData.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize));
@@ -3418,10 +3456,14 @@ namespace TheWorld_Utils
 			// moving on south side: every x with z = 0 
 			for (size_t x = 0; x < numVerticesPerSize; x++)
 			{
-				float gapForEachQuandrantOnBorder = abs(data.heights32Buffer->at<float>(x, maxIndex, numVerticesPerSize) - southData.heights32Buffer->at<float>(x, 0, numVerticesPerSize)) / 2;
-				size_t numVerticesToAdjustInEachQuadrant = (size_t)ceilf(gapForEachQuandrantOnBorder / (gridStepInWU / 2));
-				if (numVerticesToAdjustInEachQuadrant > numVerticesPerSize / 2)
-					numVerticesToAdjustInEachQuadrant = numVerticesPerSize / 2;
+				float heightGapForEachQuandrantOnBorder = abs(data.heights32Buffer->at<float>(x, maxIndex, numVerticesPerSize) - southData.heights32Buffer->at<float>(x, 0, numVerticesPerSize)) / 2;
+
+				//size_t numVerticesToAdjustInEachQuadrant = (size_t)ceilf(heightGapForEachQuandrantOnBorder / (gridStepInWU / 2));
+				//if (numVerticesToAdjustInEachQuadrant > numVerticesPerSize / 2)
+				//	numVerticesToAdjustInEachQuadrant = numVerticesPerSize / 2;
+				size_t numVerticesToAdjustInEachQuadrant = (size_t)ceilf(heightGapForEachQuandrantOnBorder * terrainEdit->extraValues.amplitudeBlendFactor);
+				if (numVerticesToAdjustInEachQuadrant > numVerticesPerSize)
+					numVerticesToAdjustInEachQuadrant = numVerticesPerSize;
 
 				if (numVerticesToAdjustInEachQuadrant > 0)
 				{
@@ -3433,28 +3475,58 @@ namespace TheWorld_Utils
 					southData.heightsUpdated = true;
 					updated = true;
 
+					float saveHeight = 0;
 					for (int z = (int)numVerticesToAdjustInEachQuadrant - 1; z >= 0; z--)
 					{
 						float currentGapInEachQuadrant = abs(data.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize) - southData.heights32Buffer->at<float>(x, z, numVerticesPerSize)) / 2;
 						float desideredGapInEachQuadrant = abs(averageStep) * z;
 						if (currentGapInEachQuadrant > desideredGapInEachQuadrant)
 						{
+							//float radiantValuePerVertex = ((float)z * TheWorld_Utils::kPi) / numVerticesToAdjustInEachQuadrant;	// kPi (farthest from border vertex to be adjusted) ==> 0 (vertex on border)
+							//float coeffPerVertex = sin(radiantValuePerVertex) + (0.5f * SINK_BLEND_FACTOR);						// [0.5 * SINK_BLEND_FACTOR] (farthest from border vertex to be adjusted) ==> 1 + [0.5 * SINK_BLEND_FACTOR] (in the middle between farthest and border ==> [0.5 * SINK_BLEND_FACTOR] (on the border)
 							increment = currentGapInEachQuadrant - desideredGapInEachQuadrant;
+							//if (increment > 1.0f)
+							//	increment = averageStep * coeffPerVertex;
 							if (data.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize) > southData.heights32Buffer->at<float>(x, z, numVerticesPerSize))
 								increment = -increment;
 						}
 						else
 							increment = 0.0f;
 
-						data.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize) += increment;
+						if (z == 0)
+						{
+							data.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize) += increment;
+							float f = data.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize);
+							data.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize) = saveHeight;
+							float f1 = data.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize);
+							f = f1;
+						}
+						else
+							data.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize) += increment;
 						TheWorld_Utils::FLOAT_32 f(data.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize));
 						uint16_t half = half_from_float(f.u32);
 						data.heights16Buffer->at<uint16_t>(x, maxIndex - z, numVerticesPerSize) = half;
 
-						southData.heights32Buffer->at<float>(x, z, numVerticesPerSize) -= increment;
+						if (z == 0)
+						{
+							southData.heights32Buffer->at<float>(x, z, numVerticesPerSize) -= increment;
+							float f = southData.heights32Buffer->at<float>(x, z, numVerticesPerSize);
+							southData.heights32Buffer->at<float>(x, z, numVerticesPerSize) = saveHeight;
+							float f1 = southData.heights32Buffer->at<float>(x, z, numVerticesPerSize);
+							f = f1;
+						}
+						else
+							southData.heights32Buffer->at<float>(x, z, numVerticesPerSize) -= increment;
 						TheWorld_Utils::FLOAT_32 f1(southData.heights32Buffer->at<float>(x, z, numVerticesPerSize));
 						uint16_t half1 = half_from_float(f1.u32);
 						southData.heights16Buffer->at<uint16_t>(x, z, numVerticesPerSize) = half1;
+
+						if (z == 1)
+						{
+							float h1 = data.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize);
+							float h2 = southData.heights32Buffer->at<float>(x, z, numVerticesPerSize);
+							saveHeight = (h1 + h2) / 2;
+						}
 
 						// if last phase we need to reconcile vertices on the border of modified quadrants
 						if (x == 0)
@@ -3585,10 +3657,13 @@ namespace TheWorld_Utils
 			// moving on west side: every z with x = 0 
 			for (size_t z = 0; z < numVerticesPerSize; z++)
 			{
-				float gapForEachQuandrantOnBorder = abs(data.heights32Buffer->at<float>(0, z, numVerticesPerSize) - westData.heights32Buffer->at<float>(maxIndex, z, numVerticesPerSize)) / 2;
-				size_t numVerticesToAdjustInEachQuadrant = (size_t)ceilf(gapForEachQuandrantOnBorder / (gridStepInWU / 2));
-				if (numVerticesToAdjustInEachQuadrant > numVerticesPerSize / 2)
-					numVerticesToAdjustInEachQuadrant = numVerticesPerSize / 2;
+				float heightGapForEachQuandrantOnBorder = abs(data.heights32Buffer->at<float>(0, z, numVerticesPerSize) - westData.heights32Buffer->at<float>(maxIndex, z, numVerticesPerSize)) / 2;
+				//size_t numVerticesToAdjustInEachQuadrant = (size_t)ceilf(heightGapForEachQuandrantOnBorder / (gridStepInWU / 2));
+				//if (numVerticesToAdjustInEachQuadrant > numVerticesPerSize / 2)
+				//	numVerticesToAdjustInEachQuadrant = numVerticesPerSize / 2;
+				size_t numVerticesToAdjustInEachQuadrant = (size_t)ceilf(heightGapForEachQuandrantOnBorder * terrainEdit->extraValues.amplitudeBlendFactor);
+				if (numVerticesToAdjustInEachQuadrant > numVerticesPerSize)
+					numVerticesToAdjustInEachQuadrant = numVerticesPerSize;
 
 				if (numVerticesToAdjustInEachQuadrant > 0)
 				{
@@ -3600,28 +3675,58 @@ namespace TheWorld_Utils
 					westData.heightsUpdated = true;
 					updated = true;
 
+					float saveHeight = 0;
 					for (int x = (int)numVerticesToAdjustInEachQuadrant - 1; x >= 0; x--)
 					{
 						float currentGapInEachQuadrant = abs(data.heights32Buffer->at<float>(x, z, numVerticesPerSize) - westData.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize)) / 2;
 						float desideredGapInEachQuadrant = abs(averageStep) * x;
 						if (currentGapInEachQuadrant > desideredGapInEachQuadrant)
 						{
+							//float radiantValuePerVertex = ((float)x * TheWorld_Utils::kPi) / numVerticesToAdjustInEachQuadrant;	// kPi (farthest from border vertex to be adjusted) ==> 0 (vertex on border)
+							//float coeffPerVertex = sin(radiantValuePerVertex) + (0.5f * SINK_BLEND_FACTOR);						// [0.5 * SINK_BLEND_FACTOR] (farthest from border vertex to be adjusted) ==> 1 + [0.5 * SINK_BLEND_FACTOR] (in the middle between farthest and border ==> [0.5 * SINK_BLEND_FACTOR] (on the border)
 							increment = currentGapInEachQuadrant - desideredGapInEachQuadrant;
+							//if (increment > 1.0f)
+							//	increment = averageStep * coeffPerVertex;
 							if (data.heights32Buffer->at<float>(x, z, numVerticesPerSize) > westData.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize))
 								increment = -increment;
 						}
 						else
 							increment = 0.0f;
 
-						data.heights32Buffer->at<float>(x, z, numVerticesPerSize) += increment;
+						if (x == 0)
+						{
+							data.heights32Buffer->at<float>(x, z, numVerticesPerSize) += increment;
+							float f = data.heights32Buffer->at<float>(x, z, numVerticesPerSize);
+							data.heights32Buffer->at<float>(x, z, numVerticesPerSize) = saveHeight;
+							float f1 = data.heights32Buffer->at<float>(x, z, numVerticesPerSize);
+							f = f1;
+						}
+						else
+							data.heights32Buffer->at<float>(x, z, numVerticesPerSize) += increment;
 						TheWorld_Utils::FLOAT_32 f(data.heights32Buffer->at<float>(x, z, numVerticesPerSize));
 						uint16_t half = half_from_float(f.u32);
 						data.heights16Buffer->at<uint16_t>(x, z, numVerticesPerSize) = half;
 
-						westData.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize) -= increment;
+						if (x == 0)
+						{
+							westData.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize) -= increment;
+							float f = westData.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize);
+							westData.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize) = saveHeight;
+							float f1 = westData.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize);
+							f = f1;
+						}
+						else
+							westData.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize) -= increment;
 						TheWorld_Utils::FLOAT_32 f1(westData.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize));
 						uint16_t half1 = half_from_float(f1.u32);
 						westData.heights16Buffer->at<uint16_t>(maxIndex - x, z, numVerticesPerSize) = half1;
+
+						if (x == 1)
+						{
+							float h1 = data.heights32Buffer->at<float>(x, z, numVerticesPerSize);
+							float h2 = westData.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize);
+							saveHeight = (h1 + h2) / 2;
+						}
 
 						// if last phase we need to reconcile vertices on the border of modified quadrants
 						if (z == 0)
@@ -3752,10 +3857,13 @@ namespace TheWorld_Utils
 			// moving on south side: every x with z = 0 
 			for (size_t z = 0; z < numVerticesPerSize; z++)
 			{
-				float gapForEachQuandrantOnBorder = abs(data.heights32Buffer->at<float>(maxIndex, z, numVerticesPerSize) - eastData.heights32Buffer->at<float>(0, z, numVerticesPerSize)) / 2;
-				size_t numVerticesToAdjustInEachQuadrant = (size_t)ceilf(gapForEachQuandrantOnBorder / (gridStepInWU / 2));
-				if (numVerticesToAdjustInEachQuadrant > numVerticesPerSize / 2)
-					numVerticesToAdjustInEachQuadrant = numVerticesPerSize / 2;
+				float heightGapForEachQuandrantOnBorder = abs(data.heights32Buffer->at<float>(maxIndex, z, numVerticesPerSize) - eastData.heights32Buffer->at<float>(0, z, numVerticesPerSize)) / 2;
+				//size_t numVerticesToAdjustInEachQuadrant = (size_t)ceilf(heightGapForEachQuandrantOnBorder / (gridStepInWU / 2));
+				//if (numVerticesToAdjustInEachQuadrant > numVerticesPerSize / 2)
+				//	numVerticesToAdjustInEachQuadrant = numVerticesPerSize / 2;
+				size_t numVerticesToAdjustInEachQuadrant = (size_t)ceilf(heightGapForEachQuandrantOnBorder * terrainEdit->extraValues.amplitudeBlendFactor);
+				if (numVerticesToAdjustInEachQuadrant > numVerticesPerSize)
+					numVerticesToAdjustInEachQuadrant = numVerticesPerSize;
 
 				if (numVerticesToAdjustInEachQuadrant > 0)
 				{
@@ -3767,28 +3875,58 @@ namespace TheWorld_Utils
 					eastData.heightsUpdated = true;
 					updated = true;
 
+					float saveHeight = 0;
 					for (int x = (int)numVerticesToAdjustInEachQuadrant - 1; x >= 0; x--)
 					{
 						float currentGapInEachQuadrant = abs(data.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize) - eastData.heights32Buffer->at<float>(x, z, numVerticesPerSize)) / 2;
 						float desideredGapInEachQuadrant = abs(averageStep) * x;
 						if (currentGapInEachQuadrant > desideredGapInEachQuadrant)
 						{
+							//float radiantValuePerVertex = ((float)x * TheWorld_Utils::kPi) / numVerticesToAdjustInEachQuadrant;	// kPi (farthest from border vertex to be adjusted) ==> 0 (vertex on border)
+							//float coeffPerVertex = sin(radiantValuePerVertex) + (0.5f * SINK_BLEND_FACTOR);						// [0.5 * SINK_BLEND_FACTOR] (farthest from border vertex to be adjusted) ==> 1 + [0.5 * SINK_BLEND_FACTOR] (in the middle between farthest and border ==> [0.5 * SINK_BLEND_FACTOR] (on the border)
 							increment = currentGapInEachQuadrant - desideredGapInEachQuadrant;
+							//if (increment > 1.0f)
+							//	increment = averageStep * coeffPerVertex;
 							if (data.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize) > eastData.heights32Buffer->at<float>(x, z, numVerticesPerSize))
 								increment = -increment;
 						}
 						else
 							increment = 0.0f;
 
-						data.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize) += increment;
+						if (x == 0)
+						{
+							data.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize) += increment;
+							float f = data.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize);
+							data.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize) = saveHeight;
+							float f1 = data.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize);
+							f = f1;
+						}
+						else
+							data.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize) += increment;
 						TheWorld_Utils::FLOAT_32 f(data.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize));
 						uint16_t half = half_from_float(f.u32);
 						data.heights16Buffer->at<uint16_t>(maxIndex - x, z, numVerticesPerSize) = half;
 
-						eastData.heights32Buffer->at<float>(x, z, numVerticesPerSize) -= increment;
+						if (x == 0)
+						{
+							eastData.heights32Buffer->at<float>(x, z, numVerticesPerSize) -= increment;
+							float f = eastData.heights32Buffer->at<float>(x, z, numVerticesPerSize);
+							eastData.heights32Buffer->at<float>(x, z, numVerticesPerSize) = saveHeight;
+							float f1 = eastData.heights32Buffer->at<float>(x, z, numVerticesPerSize);
+							f = f1;
+						}
+						else
+							eastData.heights32Buffer->at<float>(x, z, numVerticesPerSize) -= increment;
 						TheWorld_Utils::FLOAT_32 f1(eastData.heights32Buffer->at<float>(x, z, numVerticesPerSize));
 						uint16_t half1 = half_from_float(f1.u32);
 						eastData.heights16Buffer->at<uint16_t>(x, z, numVerticesPerSize) = half1;
+
+						if (x == 1)
+						{
+							float h1 = data.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize);
+							float h2 = eastData.heights32Buffer->at<float>(x, z, numVerticesPerSize);
+							saveHeight = (h1 + h2) / 2;
+						}
 
 						// if last phase we need to reconcile vertices on the border of modified quadrants
 						if (z == 0)
