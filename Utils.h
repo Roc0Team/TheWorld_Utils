@@ -289,7 +289,7 @@ namespace TheWorld_Utils
 			return true;
 		}
 	};
-	
+
 	class TerrainSideInfo
 	{
 	public:
@@ -378,7 +378,18 @@ namespace TheWorld_Utils
 			float amplitudeBlendFactor = THEWORLD_DEFAULT_AMPLITUDE_BLEND_FACTOR;
 		} extraValues;
 
-		// WARNING: this struct can safely grow appending new data at the end
+#pragma pack (1)
+		struct
+		{
+			float postGenerateElevation = 0;
+			bool ignoreDesideredMinHeight = false;
+			size_t numBlendingCycles = 2;
+			float blendingBendingFactor = 0.0f;
+			float minRandomBendingExtension = 0.2f;
+			float maxRandomBendingExtension = 0.5f;
+		} extraValues1;
+#pragma pack ()
+		// WARNING: this struct can safely grow appending new data at the end (may be need an alignment filler to modify sizeof(extraValues))
 
 		__declspec(dllexport) TerrainEdit(enum class TerrainEdit::TerrainType terrainType = TerrainEdit::TerrainType::empty);
 		__declspec(dllexport) void setTextureNameForTerrainType(enum class TerrainEdit::TextureType textureType);
