@@ -3587,20 +3587,20 @@ namespace TheWorld_Utils
 						uint16_t half1 = half_from_float(f1.u32);
 						northData.heights16Buffer->at<uint16_t>(x, maxIndex - z, numVerticesPerSize) = half1;
 
-						//if (z == 1)
-						//{
-						//	float h1 = data.heights32Buffer->at<float>(x, z, numVerticesPerSize);
-						//	float h2 = northData.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize);
-						//	saveHeight = (h1 + h2) / 2;
-						//	heightSaved = true;
-						//}
+						if (z == 1)
+						{
+							float h1 = data.heights32Buffer->at<float>(x, z, numVerticesPerSize);
+							float h2 = northData.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize);
+							saveHeight = (h1 + h2) / 2;
+							heightSaved = true;
+						}
 
 						//if (x == 0)
 						//	PLOG_DEBUG << "x=" << std::to_string(x) << " z=" << std::to_string(z) << "/" << std::to_string(maxIndex - z) << " increment= " << std::to_string(increment) << " " << std::to_string(h) << " ==> " << std::to_string(data.heights32Buffer->at<float>(x, z, numVerticesPerSize)) << " " << std::to_string(hNorth) << " ==> " << std::to_string(northData.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize));
 					}
 
 					// DISABLED ATM BECAUSE terrainEdit->extraValues1.blendingBendingFactor IS ALWAYS ZERO
-					if (terrainEdit->extraValues1.blendingBendingFactor != 0)
+					if (terrainEdit->extraValues1.blendingBendingFactor != 0 && lastPhase)
 					{
 						std::hash<std::string> hasher;
 						size_t seed = hasher(data.meshId + northData.meshId);
@@ -3744,17 +3744,17 @@ namespace TheWorld_Utils
 						uint16_t half1 = half_from_float(f1.u32);
 						southData.heights16Buffer->at<uint16_t>(x, z, numVerticesPerSize) = half1;
 
-						//if (z == 1)
-						//{
-						//	float h1 = data.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize);
-						//	float h2 = southData.heights32Buffer->at<float>(x, z, numVerticesPerSize);
-						//	saveHeight = (h1 + h2) / 2;
-						//	heightSaved = true;
-						//}
+						if (z == 1)
+						{
+							float h1 = data.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize);
+							float h2 = southData.heights32Buffer->at<float>(x, z, numVerticesPerSize);
+							saveHeight = (h1 + h2) / 2;
+							heightSaved = true;
+						}
 					}
 
 					// DISABLED ATM BECAUSE terrainEdit->extraValues1.blendingBendingFactor IS ALWAYS ZERO
-					if (terrainEdit->extraValues1.blendingBendingFactor != 0)
+					if (terrainEdit->extraValues1.blendingBendingFactor != 0 && lastPhase)
 					{
 						std::hash<std::string> hasher;
 						size_t seed = hasher(data.meshId + southData.meshId);
@@ -3897,17 +3897,17 @@ namespace TheWorld_Utils
 						uint16_t half1 = half_from_float(f1.u32);
 						westData.heights16Buffer->at<uint16_t>(maxIndex - x, z, numVerticesPerSize) = half1;
 
-						//if (x == 1)
-						//{
-						//	float h1 = data.heights32Buffer->at<float>(x, z, numVerticesPerSize);
-						//	float h2 = westData.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize);
-						//	saveHeight = (h1 + h2) / 2;
-						//	heightSaved = true;
-						//}
+						if (x == 1)
+						{
+							float h1 = data.heights32Buffer->at<float>(x, z, numVerticesPerSize);
+							float h2 = westData.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize);
+							saveHeight = (h1 + h2) / 2;
+							heightSaved = true;
+						}
 					}
 					
 					// DISABLED ATM BECAUSE terrainEdit->extraValues1.blendingBendingFactor IS ALWAYS ZERO
-					if (terrainEdit->extraValues1.blendingBendingFactor != 0)
+					if (terrainEdit->extraValues1.blendingBendingFactor != 0 && lastPhase)
 					{
 						std::hash<std::string> hasher;
 						size_t seed = hasher(data.meshId + westData.meshId);
@@ -4050,17 +4050,17 @@ namespace TheWorld_Utils
 						uint16_t half1 = half_from_float(f1.u32);
 						eastData.heights16Buffer->at<uint16_t>(x, z, numVerticesPerSize) = half1;
 
-						//if (x == 1)
-						//{
-						//	float h1 = data.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize);
-						//	float h2 = eastData.heights32Buffer->at<float>(x, z, numVerticesPerSize);
-						//	saveHeight = (h1 + h2) / 2;
-						//	heightSaved = true;
-						//}
+						if (x == 1)
+						{
+							float h1 = data.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize);
+							float h2 = eastData.heights32Buffer->at<float>(x, z, numVerticesPerSize);
+							saveHeight = (h1 + h2) / 2;
+							heightSaved = true;
+						}
 					}
 
 					// DISABLED ATM BECAUSE terrainEdit->extraValues1.blendingBendingFactor IS ALWAYS ZERO
-					if (terrainEdit->extraValues1.blendingBendingFactor != 0)
+					if (terrainEdit->extraValues1.blendingBendingFactor != 0 && lastPhase)
 					{
 						std::hash<std::string> hasher;
 						size_t seed = hasher(data.meshId + eastData.meshId);

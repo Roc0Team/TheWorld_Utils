@@ -384,7 +384,7 @@ namespace TheWorld_Utils
 			float postGenerateElevation = 0;
 			bool ignoreDesideredMinHeight = false;
 			size_t numBlendingCycles = 2;
-			float blendingBendingFactor = 0.0f;
+			float blendingBendingFactor = 1.0f;
 			float minRandomBendingExtension = 0.2f;
 			float maxRandomBendingExtension = 0.5f;
 		} extraValues1;
