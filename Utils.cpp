@@ -1359,11 +1359,11 @@ namespace TheWorld_Utils
 			for (int z = 0; z < numVerticesPerSize; z++)
 				for (int x = 0; x < numVerticesPerSize; x++)
 				{
-					vectGridHeights[idx] += altitude;
+					vectGridHeights[idx] = altitude;
 					idx++;
 				}
 		}
-		if (terrainEdit->terrainType == TheWorld_Utils::TerrainEdit::TerrainType::empty)
+		else if (terrainEdit->terrainType == TheWorld_Utils::TerrainEdit::TerrainType::empty)
 		{
 			terrainEdit->minHeight = 0;
 			terrainEdit->maxHeight = 0;
