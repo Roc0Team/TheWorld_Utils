@@ -954,7 +954,7 @@ namespace TheWorld_Utils
 		}
 		
 		{
-			TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromDisk 1.1  ") + __FUNCTION__, "readBufferFromCache");
+			TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromDisk 1.1  ") + __FUNCTION__, "readBufferFromDisk");
 			readBufferFromDisk(_meshId, buffer);
 		}
 
