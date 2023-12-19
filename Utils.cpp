@@ -1164,7 +1164,7 @@ namespace TheWorld_Utils
 
 	void MeshCacheBuffer::readBufferFromDisk(std::string _meshId, TheWorld_Utils::MemoryBuffer& buffer)
 	{
-		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer readBufferFromCache 1 ") + __FUNCTION__, "ALL");
+		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer readBufferFromDisk 1 ") + __FUNCTION__, "ALL");
 
 		BYTE shortBuffer[256 + 1];
 		size_t size;
