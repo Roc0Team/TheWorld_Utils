@@ -84,8 +84,12 @@ namespace TheWorld_Utils
 		static size_t maxElapsedMcs(std::string function, std::string name);
 		static size_t minElapsedMs(std::string function, std::string name);
 		static size_t maxElapsedMs(std::string function, std::string name);
+		static bool isActive(void);
+		static bool activate(void);
+		static bool deactivate(void);
 
 	private:
+		static bool s_active;
 	};
 
 	class GuardProfiler
@@ -93,15 +97,21 @@ namespace TheWorld_Utils
 	public:
 		GuardProfiler(std::string function, std::string name)
 		{
-			m_function = function;
-			m_name = name;
-			m_clock.tick();
+			if (TheWorld_Utils::Profiler::isActive())
+			{
+				m_function = function;
+				m_name = name;
+				m_clock.tick();
+			}
 		}
 		~GuardProfiler(void)
 		{
-			m_clock.tock();
-			if (!m_name.empty())
-				TheWorld_Utils::Profiler::addElapsedMcs(m_function, m_name, m_clock.duration().count());
+			if (m_function.length() > 0)
+			{
+				m_clock.tock();
+				if (!m_name.empty())
+					TheWorld_Utils::Profiler::addElapsedMcs(m_function, m_name, m_clock.duration().count());
+			}
 		}
 
 	private:

@@ -6,6 +6,8 @@
 namespace TheWorld_Utils
 {
 	ProfilerInternal s_profiler;
+	bool Profiler::s_active = false;
+
 
 	ProfilingData::ProfilingData()
 	{
@@ -174,6 +176,25 @@ namespace TheWorld_Utils
 	{
 	}
 
+	bool Profiler::isActive(void)
+	{
+		return s_active;
+	}
+
+	bool Profiler::activate(void)
+	{
+		bool previousState = s_active;
+		s_active = true;
+		return previousState;
+	}
+
+	bool Profiler::deactivate(void)
+	{
+		bool previousState = s_active;
+		s_active = false;
+		return previousState;
+	}
+
 	//ProfilingData* Profiler::getData(std::string name)
 	//{
 	//	return ProfilerInternal::get()->getData(name);
@@ -191,12 +212,14 @@ namespace TheWorld_Utils
 
 	void Profiler::addElapsedMcs(std::string function, std::string name, size_t elapsed)
 	{
-		ProfilerInternal::get().addElapsedMcs(function, name, elapsed);
+		if (TheWorld_Utils::Profiler::isActive())
+			ProfilerInternal::get().addElapsedMcs(function, name, elapsed);
 	}
 
 	void Profiler::addElapsedMs(std::string function, std::string name, size_t elapsed)
 	{
-		ProfilerInternal::get().addElapsedMcs(function, name, elapsed * 1000);
+		if (TheWorld_Utils::Profiler::isActive())
+			ProfilerInternal::get().addElapsedMcs(function, name, elapsed * 1000);
 	}
 
 	void Profiler::reset(std::string function, std::string name)
