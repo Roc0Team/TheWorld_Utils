@@ -93,7 +93,7 @@ namespace TheWorld_Utils
 
 		size_t bufferSize = width * heigth * sizeof(struct TheWorld_Utils::_RGBA);
 
-		albedoBumpImage.clear();
+		albedoBumpImage.clear(__FUNCTION__);
 		albedoBumpImage.reserve(bufferSize);
 		albedoBumpImage.adjustSize(bufferSize);
 		struct TheWorld_Utils::_RGBA* rgba = (struct TheWorld_Utils::_RGBA*)albedoBumpImage.ptr();
@@ -118,7 +118,7 @@ namespace TheWorld_Utils
 				rgb++;
 			}
 
-		normalRoughnessImage.clear();
+		normalRoughnessImage.clear(__FUNCTION__);
 		if (normalImage.size() > 0 || roughImage.size() > 0)
 		{
 			normalRoughnessImage.reserve(bufferSize);
@@ -465,7 +465,7 @@ namespace TheWorld_Utils
 
 	MemoryBuffer::~MemoryBuffer(void)
 	{
-		clear();
+		clear("destructor");
 	}
 
 	void MemoryBuffer::toString(std::string& buffer)
@@ -526,7 +526,7 @@ namespace TheWorld_Utils
 		m_size = 0;
 	}
 
-	void MemoryBuffer::clear(void)
+	void MemoryBuffer::clear(std::string lastActor)
 	{
 		if (m_ptr != nullptr)
 		{
@@ -534,6 +534,7 @@ namespace TheWorld_Utils
 			m_ptr = nullptr;
 			m_size = 0;
 			m_bufferSize = 0;
+			m_lastActor = lastActor;
 		}
 	}
 	
@@ -554,9 +555,9 @@ namespace TheWorld_Utils
 		m_size = size;
 	}
 
-	void MemoryBuffer::copyFrom(MemoryBuffer& inBuffer)
+	void MemoryBuffer::copyFrom(MemoryBuffer& inBuffer, std::string lastActor)
 	{
-		clear();
+		clear(lastActor);
 		reserve(inBuffer.reserved());
 		memcpy(m_ptr, inBuffer.ptr(), inBuffer.size());
 		m_size = inBuffer.size();
@@ -1052,7 +1053,7 @@ namespace TheWorld_Utils
 			struct TheWorld_Utils::_RGB* rgb = (struct TheWorld_Utils::_RGB*)movingStreamBuffer;
 			if (rgb->r == 0 && rgb->g == 0 && rgb->b == 0)
 			{
-				normalsBuffer.clear();
+				normalsBuffer.clear(__FUNCTION__);
 				movingStreamBuffer += sizeof(struct TheWorld_Utils::_RGB);
 			}
 			else
@@ -1067,7 +1068,7 @@ namespace TheWorld_Utils
 				struct TheWorld_Utils::_RGBA* rgba = (struct TheWorld_Utils::_RGBA*)movingStreamBuffer;
 				if (rgba->r == 0 && rgba->g == 0 && rgba->b == 0 && rgba->a == 0)
 				{
-					splatmapBuffer.clear();
+					splatmapBuffer.clear(__FUNCTION__);
 					movingStreamBuffer += sizeof(struct TheWorld_Utils::_RGBA);
 				}
 				else
@@ -1079,7 +1080,7 @@ namespace TheWorld_Utils
 			}
 			else
 			{
-				splatmapBuffer.clear();
+				splatmapBuffer.clear(__FUNCTION__);
 			}
 			
 			if (movingStreamBuffer + sizeof(struct TheWorld_Utils::_RGBA) <= endOfBuffer)
@@ -1087,7 +1088,7 @@ namespace TheWorld_Utils
 				struct TheWorld_Utils::_RGBA* rgba = (struct TheWorld_Utils::_RGBA*)movingStreamBuffer;
 				if ((rgba->r == 0 && rgba->g == 0 && rgba->b == 0 && rgba->a == 0) /* || (rgba->r == 255 && rgba->g == 255 && rgba->b == 255 && rgba->a == 255)*/)
 				{
-					colormapBuffer.clear();
+					colormapBuffer.clear(__FUNCTION__);
 					movingStreamBuffer += sizeof(struct TheWorld_Utils::_RGBA);
 				}
 				else
@@ -1099,7 +1100,7 @@ namespace TheWorld_Utils
 			}
 			else
 			{
-				colormapBuffer.clear();
+				colormapBuffer.clear(__FUNCTION__);
 			}
 
 			if (movingStreamBuffer + sizeof(struct TheWorld_Utils::_RGB) <= endOfBuffer)
@@ -1107,7 +1108,7 @@ namespace TheWorld_Utils
 				struct TheWorld_Utils::_RGB* rgb = (struct TheWorld_Utils::_RGB*)movingStreamBuffer;
 				if ((rgb->r == 0 && rgb->g == 0 && rgb->b == 0) /* || (rgb->r == 255 && rgb->g == 255 && rgb->b == 255)*/)
 				{
-					globalmapBuffer.clear();
+					globalmapBuffer.clear(__FUNCTION__);
 					movingStreamBuffer += sizeof(struct TheWorld_Utils::_RGB);
 				}
 				else
@@ -1119,7 +1120,7 @@ namespace TheWorld_Utils
 			}
 			else
 			{
-				globalmapBuffer.clear();
+				globalmapBuffer.clear(__FUNCTION__);
 			}
 
 			if (updateCache)
@@ -1128,12 +1129,12 @@ namespace TheWorld_Utils
 		else
 		{
 			minAltitude = maxAltitude = 0;
-			float16HeigthsBuffer.clear();
-			float32HeigthsBuffer.clear();
-			normalsBuffer.clear();
-			splatmapBuffer.clear();
-			colormapBuffer.clear();
-			globalmapBuffer.clear();
+			float16HeigthsBuffer.clear(__FUNCTION__);
+			float32HeigthsBuffer.clear(__FUNCTION__);
+			normalsBuffer.clear(__FUNCTION__);
+			splatmapBuffer.clear(__FUNCTION__);
+			colormapBuffer.clear(__FUNCTION__);
+			globalmapBuffer.clear(__FUNCTION__);
 		}
 	}
 
@@ -1172,7 +1173,7 @@ namespace TheWorld_Utils
 		// read vertices from local cache
 		if (!fs::exists(m_meshFilePath))
 		{
-			buffer.clear();
+			buffer.clear(__FUNCTION__);
 			return;
 			//throw(GDN_TheWorld_Exception(__FUNCTION__, std::string("not found current quadrant in cache").c_str()));
 		}
@@ -1780,7 +1781,7 @@ namespace TheWorld_Utils
 		my_assert(numVertices == 0 || numVertices == numVerticesPerSize * numVerticesPerSize);
 
 		size_t requiredBufferSize = numVertices == 0 ? sizeof(struct TheWorld_Utils::_RGB) : numVertices * sizeof(struct TheWorld_Utils::_RGB);
-		normalsBuffer.clear();
+		normalsBuffer.clear(__FUNCTION__);
 		normalsBuffer.reserve(requiredBufferSize);
 		normalsBuffer.adjustSize(requiredBufferSize);
 
@@ -1930,7 +1931,7 @@ namespace TheWorld_Utils
 		assert(float32HeigthsBuffer.size() == numVerticesPerSize * numVerticesPerSize * sizeof(float));
 		assert(normalsBuffer.size() == numVerticesPerSize * numVerticesPerSize * sizeof(struct TheWorld_Utils::_RGB));
 		
-		splatmapBuffer.clear();
+		splatmapBuffer.clear(__FUNCTION__);
 		size_t splatmapSize = numVerticesPerSize * numVerticesPerSize * sizeof(struct TheWorld_Utils::_RGBA);
 		splatmapBuffer.reserve(splatmapSize);
 		splatmapBuffer.adjustSize(splatmapSize);

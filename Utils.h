@@ -159,9 +159,9 @@ namespace TheWorld_Utils
 		__declspec(dllexport) BYTE* ptr();
 		__declspec(dllexport) size_t size(void);
 		__declspec(dllexport) bool empty(void);
-		__declspec(dllexport) void clear(void);
+		__declspec(dllexport) void clear(std::string lastActor = "");
 		__declspec(dllexport) void adjustSize(size_t size);
-		__declspec(dllexport) void copyFrom(MemoryBuffer& inBuffer);
+		__declspec(dllexport) void copyFrom(MemoryBuffer& inBuffer, std::string lastActor);
 		__declspec(dllexport) void populateFloatVector(std::vector<float>& v);
 		__declspec(dllexport) void populateUint16Vector(std::vector<uint16_t>& v);
 		__declspec(dllexport) void toString(std::string& buffer);
@@ -197,6 +197,7 @@ namespace TheWorld_Utils
 		BYTE* m_ptr;
 		size_t m_size;
 		size_t m_bufferSize;
+		std::string m_lastActor;
 	};
 
 	class NoiseValues
