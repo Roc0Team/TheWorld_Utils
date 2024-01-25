@@ -164,6 +164,8 @@
     <ClInclude Include="Profiler.h" />
     <ClInclude Include="TerrainEditValues.h" />
     <ClInclude Include="Utils.h" />
+    <ClInclude Include="warning_pop.h" />
+    <ClInclude Include="warning_push.h" />
     <ClInclude Include="WorldModifier.h" />
   </ItemGroup>
   <ItemGroup>

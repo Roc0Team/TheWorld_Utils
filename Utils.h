@@ -28,7 +28,8 @@
 #include <plog/Log.h>
 #include "gsl\assert"
 
-#pragma warning(push, 0)
+#pragma warning(push, 1)
+#pragma warning (disable : 26495)
 #include <Eigen/Dense>
 #pragma warning(pop)
 
@@ -126,17 +127,17 @@ namespace TheWorld_Utils
 
 	struct _RGB
 	{
-		BYTE r;
-		BYTE g;
-		BYTE b;
+		BYTE r = 0;
+		BYTE g = 0;
+		BYTE b = 0;
 	};
 
 	struct _RGBA
 	{
-		BYTE r;
-		BYTE g;
-		BYTE b;
-		BYTE a;
+		BYTE r = 0;
+		BYTE g = 0;
+		BYTE b = 0;
+		BYTE a = 0;
 	};
 
 	static constexpr float kPi = 3.14159265358979323846f;
@@ -154,16 +155,16 @@ namespace TheWorld_Utils
 		__declspec(dllexport) void set(BYTE* in, size_t size);
 		__declspec(dllexport) void append(BYTE* in, size_t size);
 		__declspec(dllexport) void reserve(size_t size);
-		__declspec(dllexport) size_t reserved(void);
+		__declspec(dllexport) size_t reserved(void) const;
 		__declspec(dllexport) void reset(void);
 		__declspec(dllexport) BYTE* ptr();
-		__declspec(dllexport) size_t size(void);
-		__declspec(dllexport) bool empty(void);
+		__declspec(dllexport) size_t size(void) const;
+		__declspec(dllexport) bool empty(void) const;
 		__declspec(dllexport) void clear(std::string lastActor = "");
 		__declspec(dllexport) void adjustSize(size_t size);
 		__declspec(dllexport) void copyFrom(MemoryBuffer& inBuffer, std::string lastActor);
-		__declspec(dllexport) void populateFloatVector(std::vector<float>& v);
-		__declspec(dllexport) void populateUint16Vector(std::vector<uint16_t>& v);
+		__declspec(dllexport) void populateFloatVector(std::vector<float>& v) const;
+		__declspec(dllexport) void populateUint16Vector(std::vector<uint16_t>& v) const;
 		__declspec(dllexport) void toString(std::string& buffer);
 		template <typename T> __declspec(dllexport) T& at(size_t idx)
 		{
@@ -363,13 +364,13 @@ namespace TheWorld_Utils
 
 		struct
 		{
-			char lowElevationTexName_r[51];
-			char highElevationTexName_g[51];
-			char dirtTexName_b[51];
-			char rocksTexName_a[51];
-			bool splatmapNeedRegen;
-			bool colormapNeedRegen;
-			bool globalmapNeedRegen;
+			char lowElevationTexName_r[51] = "";
+			char highElevationTexName_g[51] = "";
+			char dirtTexName_b[51] = "";
+			char rocksTexName_a[51] = "";
+			bool splatmapNeedRegen = false;
+			bool colormapNeedRegen = false;
+			bool globalmapNeedRegen = false;
 			float slopeVerticalFactor = 4.0f;
 			float slopeFlatFactor = 1.0f;
 			float dirtOnRocksFactor = 2.0f;
@@ -677,27 +678,27 @@ namespace TheWorld_Utils
 		{
 			return m_mapName;
 		}
-		__declspec(dllexport) float getGridStepInWU(void)
+		__declspec(dllexport) float getGridStepInWU(void) const
 		{
 			return m_gridStepInWU;
 		}
-		__declspec(dllexport) size_t getNumVerticesPerSize(void)
+		__declspec(dllexport) size_t getNumVerticesPerSize(void) const
 		{
 			return m_numVerticesPerSize;
 		}
-		__declspec(dllexport) int getLevel(void)
+		__declspec(dllexport) int getLevel(void) const
 		{
 			return m_level;
 		}
-		__declspec(dllexport) float getLowerXGridVertex(void)
+		__declspec(dllexport) float getLowerXGridVertex(void) const
 		{
 			return m_lowerXGridVertex;
 		}
-		__declspec(dllexport) float getLowerZGridVertex(void)
+		__declspec(dllexport) float getLowerZGridVertex(void) const
 		{
 			return m_lowerZGridVertex;
 		}
-		__declspec(dllexport) std::string getCacheFilePath(void)
+		__declspec(dllexport) std::string getCacheFilePath(void) const
 		{
 			return m_meshFilePath;
 		}
@@ -862,7 +863,7 @@ namespace TheWorld_Utils
 
 		static bool isFinite(float f) 
 		{
-			FloatUint32 fu;
+			FloatUint32 fu(0);
 			fu.f = f;
 			return fu.u != 0x7F800000u && fu.u != 0x7F800001u;
 		}

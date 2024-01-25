@@ -39,6 +39,12 @@
     <ClInclude Include="WorldModifier.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="warning_push.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="warning_pop.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">

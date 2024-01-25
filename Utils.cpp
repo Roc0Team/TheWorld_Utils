@@ -22,7 +22,7 @@
 #include <string>
 #include <algorithm>
 #include <plog/Initializers/RollingFileInitializer.h>
-#include <Eigen/Dense>
+//#include <Eigen/Dense>
 #include <Rpc.h>
 #include <cmath>
 #include "FastNoiseLite.h"
@@ -516,7 +516,7 @@ namespace TheWorld_Utils
 		}
 	}
 
-	size_t MemoryBuffer::reserved(void)
+	size_t MemoryBuffer::reserved(void) const
 	{
 		return m_bufferSize;
 	}
@@ -542,11 +542,11 @@ namespace TheWorld_Utils
 	{
 		return m_ptr;
 	}
-	size_t MemoryBuffer::size(void)
+	size_t MemoryBuffer::size(void) const
 	{
 		return m_size;
 	}
-	bool MemoryBuffer::empty(void)
+	bool MemoryBuffer::empty(void) const
 	{
 		return m_size == 0;
 	}
@@ -563,14 +563,14 @@ namespace TheWorld_Utils
 		m_size = inBuffer.size();
 	}
 
-	void MemoryBuffer::populateFloatVector(std::vector<float>& v)
+	void MemoryBuffer::populateFloatVector(std::vector<float>& v) const
 	{
 		size_t numElements = size() / sizeof(float);
 		my_assert(size() == numElements * sizeof(float));
 		v.assign((float*)m_ptr, (float*)m_ptr + numElements);
 	}
 
-	void MemoryBuffer::populateUint16Vector(std::vector<uint16_t>& v)
+	void MemoryBuffer::populateUint16Vector(std::vector<uint16_t>& v) const
 	{
 		size_t numElements = size() / sizeof(uint16_t);
 		my_assert(size() == numElements * sizeof(uint16_t));
@@ -1459,7 +1459,7 @@ namespace TheWorld_Utils
 							float zf = (lowerZGridVertex + (z * gridStepInWU)) * terrainEdit->noise.scaleFactor_JagIntensity;
 							altitude = noiseLite.GetNoise(xf, zf);
 							// noises are value in range -1 to 1 we need to interpolate with heightsAmplitude
-							altitude *= (terrainEdit->noise.heightsAmplitude / 2);
+							altitude *= (float)(terrainEdit->noise.heightsAmplitude / 2);
 
 							if (altitude < terrainEdit->minHeight)
 								terrainEdit->minHeight = altitude;
@@ -1820,8 +1820,8 @@ namespace TheWorld_Utils
 						
 						if (x < maxIndex && z < maxIndex)
 						{
-							float hr = float32HeigthsBuffer.at<float>(x + 1, z, numVerticesPerSize);
-							float hf = float32HeigthsBuffer.at<float>(x, z + 1, numVerticesPerSize);
+							float hr = float32HeigthsBuffer.at<float>((size_t)(x + 1), (size_t)z, numVerticesPerSize);
+							float hf = float32HeigthsBuffer.at<float>((size_t)x, (size_t)(z + 1), numVerticesPerSize);
 							normal = Eigen::Vector3d(h - hr, gridStepInWU, h - hf).normalized();
 																																							//normal = Eigen::Vector3d(h - hr, gridStepInWU, hf - h).normalized();
 							//{	// Verify
@@ -1848,8 +1848,8 @@ namespace TheWorld_Utils
 							}
 							else
 							{
-								float hl = float32HeigthsBuffer.at<float>(x - 1, z, numVerticesPerSize);
-								float hb = float32HeigthsBuffer.at<float>(x, z - 1, numVerticesPerSize);
+								float hl = float32HeigthsBuffer.at<float>((size_t)(x - 1), (size_t)z, numVerticesPerSize);
+								float hb = float32HeigthsBuffer.at<float>((size_t)x, (size_t)(z - 1), numVerticesPerSize);
 								normal = Eigen::Vector3d(hl - h, gridStepInWU, hb - h).normalized();
 							}
 						}
@@ -1858,13 +1858,13 @@ namespace TheWorld_Utils
 							if (east_float32HeigthsBuffer.size() > 0)
 							{
 								float hr = east_float32HeigthsBuffer.at<float>(1, z, numVerticesPerSize);
-								float hf = float32HeigthsBuffer.at<float>(x, z + 1, numVerticesPerSize);
+								float hf = float32HeigthsBuffer.at<float>((size_t)x, (size_t)z + 1, numVerticesPerSize);
 								normal = Eigen::Vector3d(h - hr, gridStepInWU, h - hf).normalized();
 							}
 							else
 							{
-								float hl = float32HeigthsBuffer.at<float>(x - 1, z, numVerticesPerSize);
-								float hf = float32HeigthsBuffer.at<float>(x, z + 1, numVerticesPerSize);
+								float hl = float32HeigthsBuffer.at<float>((size_t)x - 1, (size_t)z, numVerticesPerSize);
+								float hf = float32HeigthsBuffer.at<float>((size_t)x, (size_t)z + 1, numVerticesPerSize);
 								normal = Eigen::Vector3d(hl - h, gridStepInWU, h - hf).normalized();
 							}
 						}
@@ -1872,14 +1872,14 @@ namespace TheWorld_Utils
 						{
 							if (south_float32HeigthsBuffer.size() > 0)
 							{
-								float hr = float32HeigthsBuffer.at<float>(x + 1, z, numVerticesPerSize);
-								float hf = south_float32HeigthsBuffer.at<float>(x, 1, numVerticesPerSize);
+								float hr = float32HeigthsBuffer.at<float>((size_t)x + 1, (size_t)z, numVerticesPerSize);
+								float hf = south_float32HeigthsBuffer.at<float>((size_t)x, 1, numVerticesPerSize);
 								normal = Eigen::Vector3d(h - hr, gridStepInWU, h - hf).normalized();
 							}
 							else
 							{
-								float hr = float32HeigthsBuffer.at<float>(x + 1, z, numVerticesPerSize);
-								float hb = float32HeigthsBuffer.at<float>(x, z - 1, numVerticesPerSize);
+								float hr = float32HeigthsBuffer.at<float>((size_t)x + 1, (size_t)z, numVerticesPerSize);
+								float hb = float32HeigthsBuffer.at<float>((size_t)x, (size_t)z - 1, numVerticesPerSize);
 								normal = Eigen::Vector3d(h - hr, gridStepInWU, hb - h).normalized();
 							}
 						}
@@ -1899,7 +1899,7 @@ namespace TheWorld_Utils
 						//		float nx1 = float(unpackedNormal.x());	// DEBUG ONLY
 						//		float ny1 = float(unpackedNormal.y());	// DEBUG ONLY
 						//		float nz1 = float(unpackedNormal.z());	// DEBUG ONLY
-						struct _RGB rgb;
+						struct _RGB rgb(0, 0, 0);
 						rgb.r = (BYTE)(packedNormal.x() * 255);	// normals coords range from 0 to 1 but if expressed as color in a normalmap range from 0 to 255
 						rgb.g = (BYTE)(packedNormal.y() * 255);
 						rgb.b = (BYTE)(packedNormal.z() * 255);
@@ -1911,7 +1911,7 @@ namespace TheWorld_Utils
 		}
 		else
 		{
-			struct _RGB rgb;
+			struct _RGB rgb(0, 0, 0);
 			rgb.r = rgb.g = rgb.b = 0;
 			*_tempNormalmapBuffer = rgb;
 			_tempNormalmapBuffer++;
@@ -2059,8 +2059,8 @@ namespace TheWorld_Utils
 						//Eigen::Vector3d P((float)x, h, (float)z);	// Verify
 						if (x < maxIndex && z < maxIndex)
 						{
-							float hr = vectGridHeights[z * numVerticesPerSize + x + 1];
-							float hf = vectGridHeights[(z + 1) * numVerticesPerSize + x];
+							float hr = vectGridHeights[(size_t)z * numVerticesPerSize + (size_t)x + 1];
+							float hf = vectGridHeights[((size_t)z + 1) * numVerticesPerSize + (size_t)x];
 							v = Eigen::Vector3d(h - hr, gridStepInWU, h - hf).normalized();
 							//{		// Verify
 							//	Eigen::Vector3d PR((float)(x + gridStepInWU), hr, (float)z);
@@ -2074,8 +2074,8 @@ namespace TheWorld_Utils
 						{
 							if (x == maxIndex && z == 0)
 							{
-								float hf = vectGridHeights[(z + 1) * numVerticesPerSize + x];
-								float hl = vectGridHeights[z * numVerticesPerSize + x - 1];
+								float hf = vectGridHeights[((size_t)z + 1) * numVerticesPerSize + x];
+								float hl = vectGridHeights[(size_t)z * numVerticesPerSize + x - 1];
 								v = Eigen::Vector3d(hl - h, gridStepInWU, h - hf).normalized();
 								//{		// Verify
 								//	Eigen::Vector3d PL((float)(x - gridStepInWU), hl, (float)z);
@@ -2087,8 +2087,8 @@ namespace TheWorld_Utils
 							}
 							else if (x == 0 && z == maxIndex)
 							{
-								float hr = vectGridHeights[z * numVerticesPerSize + x + 1];
-								float hb = vectGridHeights[(z - 1) * numVerticesPerSize + x];
+								float hr = vectGridHeights[(size_t)z * numVerticesPerSize + x + 1];
+								float hb = vectGridHeights[(size_t)(z - 1) * numVerticesPerSize + x];
 								v = Eigen::Vector3d(h - hr, gridStepInWU, hb - h).normalized();
 								//{		// Verify
 								//	Eigen::Vector3d PR((float)(x + gridStepInWU), hr, (float)z);
@@ -2100,8 +2100,8 @@ namespace TheWorld_Utils
 							}
 							else
 							{
-								float hl = vectGridHeights[z * numVerticesPerSize + x - 1];
-								float hb = vectGridHeights[(z - 1) * numVerticesPerSize + x];
+								float hl = vectGridHeights[(size_t)z * numVerticesPerSize + x - 1];
+								float hb = vectGridHeights[(size_t)(z - 1) * numVerticesPerSize + x];
 								v = Eigen::Vector3d(hl - h, gridStepInWU, hb - h).normalized();
 								//{		// Verify
 								//	Eigen::Vector3d PB((float)x, hb, (float)(z - gridStepInWU));
@@ -2141,7 +2141,7 @@ namespace TheWorld_Utils
 		}
 		else
 		{
-			struct _RGB rgb;
+			struct _RGB rgb(0, 0, 0);
 			rgb.r = rgb.g = rgb.b = 0;
 			*_tempNormalmapBuffer = rgb;
 			_tempNormalmapBuffer++;
@@ -2426,7 +2426,7 @@ namespace TheWorld_Utils
 		}
 		else
 		{
-			struct TheWorld_Utils::_RGB rgb;
+			struct TheWorld_Utils::_RGB rgb(0, 0, 0);
 			rgb.r = rgb.g = rgb.b = 0;
 			memcpy(_streamBuffer, (BYTE*)&rgb, sizeof(struct TheWorld_Utils::_RGB));
 			_streamBuffer += sizeof(struct TheWorld_Utils::_RGB);
@@ -2441,7 +2441,7 @@ namespace TheWorld_Utils
 		}
 		else
 		{
-			struct TheWorld_Utils::_RGBA rgba;
+			struct TheWorld_Utils::_RGBA rgba(0, 0, 0, 0);
 			rgba.r = rgba.g = rgba.b = rgba.a = 0;
 			memcpy(_streamBuffer, (BYTE*)&rgba, sizeof(struct TheWorld_Utils::_RGBA));
 			_streamBuffer += sizeof(struct TheWorld_Utils::_RGBA);
@@ -2617,7 +2617,7 @@ namespace TheWorld_Utils
 					{
 						for (int x = 0; x < numVerticesPerSize; x++)		// m_heightMapImage->get_width()
 						{
-							TheWorld_Utils::FLOAT_32 f;
+							TheWorld_Utils::FLOAT_32 f(0);
 							{
 
 								// supposing heights are ordered line by line
