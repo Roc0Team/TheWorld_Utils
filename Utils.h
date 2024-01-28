@@ -33,7 +33,7 @@
 #include <Eigen/Dense>
 #pragma warning(pop)
 
-#define THEWORLD_DEFAULT_AMPLITUDE_BLEND_FACTOR									1.0f
+#define THEWORLD_DEFAULT_AMPLITUDE_BLEND_FACTOR									2.0f
 
 #define Vector3Zero godot::Vector3(0, 0, 0)
 #define Vector3UP godot::Vector3(0, 1, 0)
