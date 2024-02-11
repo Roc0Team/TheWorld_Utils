@@ -1339,6 +1339,8 @@ namespace TheWorld_Utils
 		vectGridHeights.clear();
 		vectGridHeights.resize(numVerticesPerSize * numVerticesPerSize);
 
+		bool adjustHeights = true;
+		
 		if (terrainEdit->terrainType == TheWorld_Utils::TerrainEdit::TerrainType::flat)
 		{
 			//TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer generateHeights 1.2 ") + __FUNCTION__, "Generate flat Heights");
@@ -1376,6 +1378,7 @@ namespace TheWorld_Utils
 			terrainEdit->southSideZPlus.maxHeight = 0;
 			terrainEdit->northSideZMinus.minHeight = 0;
 			terrainEdit->northSideZMinus.maxHeight = 0;
+			adjustHeights = false;
 		}
 		else
 		{
@@ -1504,44 +1507,45 @@ namespace TheWorld_Utils
 						idx++;
 					}
 			}
+		}
 
+		if (adjustHeights)
+		{
+			//TheWorld_Utils::GuardProfiler profiler(std::string("EditGenerate 1.3 ") + __FUNCTION__, "Adjust desidered min height");
+
+			if ((terrainEdit->noise.desideredMinHeight != FLT_MIN && !terrainEdit->extraValues1.ignoreDesideredMinHeight)
+				|| terrainEdit->extraValues1.postGenerateElevation != 0)
 			{
-				//TheWorld_Utils::GuardProfiler profiler(std::string("EditGenerate 1.3 ") + __FUNCTION__, "Adjust desidered min height");
+				float corrector = 0;
 
-				if ( (terrainEdit->noise.desideredMinHeight != FLT_MIN && !terrainEdit->extraValues1.ignoreDesideredMinHeight)
-					|| terrainEdit->extraValues1.postGenerateElevation != 0)
-				{
-					float corrector = 0;
-					
-					if (terrainEdit->noise.desideredMinHeight != FLT_MIN && !terrainEdit->extraValues1.ignoreDesideredMinHeight)
-						corrector += terrainEdit->noise.desideredMinHeight - terrainEdit->minHeight;
+				if (terrainEdit->noise.desideredMinHeight != FLT_MIN && !terrainEdit->extraValues1.ignoreDesideredMinHeight)
+					corrector += terrainEdit->noise.desideredMinHeight - terrainEdit->minHeight;
 
-					if (terrainEdit->extraValues1.postGenerateElevation != 0)
-						corrector += terrainEdit->extraValues1.postGenerateElevation;
+				if (terrainEdit->extraValues1.postGenerateElevation != 0)
+					corrector += terrainEdit->extraValues1.postGenerateElevation;
 
-					size_t idx = 0;
-					for (int z = 0; z < numVerticesPerSize; z++)
-						for (int x = 0; x < numVerticesPerSize; x++)
-						{
-							vectGridHeights[idx] += corrector;
-							idx++;
-						}
+				size_t idx = 0;
+				for (int z = 0; z < numVerticesPerSize; z++)
+					for (int x = 0; x < numVerticesPerSize; x++)
+					{
+						vectGridHeights[idx] += corrector;
+						idx++;
+					}
 
-					terrainEdit->minHeight += corrector;
-					terrainEdit->maxHeight += corrector;
+				terrainEdit->minHeight += corrector;
+				terrainEdit->maxHeight += corrector;
 
-					terrainEdit->eastSideXPlus.minHeight += corrector;
-					terrainEdit->eastSideXPlus.maxHeight += corrector;
+				terrainEdit->eastSideXPlus.minHeight += corrector;
+				terrainEdit->eastSideXPlus.maxHeight += corrector;
 
-					terrainEdit->westSideXMinus.minHeight += corrector;
-					terrainEdit->westSideXMinus.maxHeight += corrector;
+				terrainEdit->westSideXMinus.minHeight += corrector;
+				terrainEdit->westSideXMinus.maxHeight += corrector;
 
-					terrainEdit->southSideZPlus.minHeight += corrector;
-					terrainEdit->southSideZPlus.maxHeight += corrector;
+				terrainEdit->southSideZPlus.minHeight += corrector;
+				terrainEdit->southSideZPlus.maxHeight += corrector;
 
-					terrainEdit->northSideZMinus.minHeight += corrector;
-					terrainEdit->northSideZMinus.maxHeight += corrector;
-				}
+				terrainEdit->northSideZMinus.minHeight += corrector;
+				terrainEdit->northSideZMinus.maxHeight += corrector;
 			}
 		}
 	}
