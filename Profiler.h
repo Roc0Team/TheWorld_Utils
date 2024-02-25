@@ -35,7 +35,7 @@ namespace TheWorld_Utils
 		size_t m_elapsed;
 		size_t m_minElapsed;
 		size_t m_maxElapsed;
-		TheWorld_Utils::TimerMcs m_clock;
+		TimerMcs m_clock;
 
 		std::recursive_mutex m_Mtx;
 	};
@@ -117,6 +117,6 @@ namespace TheWorld_Utils
 	private:
 		std::string m_function;
 		std::string m_name;
-		TheWorld_Utils::TimerMcs m_clock;
+		TimerMcs m_clock;
 	};
 }

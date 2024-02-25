@@ -512,8 +512,8 @@ namespace TheWorld_Utils
 
 	};
 
-#define TimerMs Timer<std::chrono::milliseconds, std::chrono::steady_clock>
-#define TimerMcs Timer<std::chrono::microseconds, std::chrono::steady_clock>
+#define TimerMs TheWorld_Utils::Timer<std::chrono::milliseconds, std::chrono::steady_clock>
+#define TimerMcs TheWorld_Utils::Timer<std::chrono::microseconds, std::chrono::steady_clock>
 
 	class GridVertex;
 
