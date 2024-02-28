@@ -21,12 +21,14 @@
 #include <filesystem>
 #include <string>
 #include <algorithm>
+#include <functional>
+#include <chrono>
+
 #include <plog/Initializers/RollingFileInitializer.h>
 //#include <Eigen/Dense>
 #include <Rpc.h>
 #include <cmath>
 #include "FastNoiseLite.h"
-#include <functional>
 		
 //#define	MIN_PERCENT					0.2f
 //#define	MAX_PERCENT					0.5f
@@ -284,6 +286,32 @@ namespace TheWorld_Utils
 			return false;
 		if (extraValues.globalmapNeedRegen != o.extraValues.globalmapNeedRegen)
 			return false;
+		if (extraValues.slopeVerticalFactor != o.extraValues.slopeVerticalFactor)
+			return false;
+		if (extraValues.slopeFlatFactor != o.extraValues.slopeFlatFactor)
+			return false;
+		if (extraValues.dirtOnRocksFactor != o.extraValues.dirtOnRocksFactor)
+			return false;
+		if (extraValues.lowElevationFactor != o.extraValues.lowElevationFactor)
+			return false;
+		if (extraValues.splatMapMode != o.extraValues.splatMapMode)
+			return false;
+		if (extraValues.amplitudeBlendFactor != o.extraValues.amplitudeBlendFactor)
+			return false;
+		if (extraValues1.postGenerateElevation != o.extraValues1.postGenerateElevation)
+			return false;
+		if (extraValues1.ignoreDesideredMinHeight != o.extraValues1.ignoreDesideredMinHeight)
+			return false;
+		if (extraValues1.numBlendingCycles != o.extraValues1.numBlendingCycles)
+			return false;
+		if (extraValues1.blendingBendingFactor != o.extraValues1.blendingBendingFactor)
+			return false;
+		if (extraValues1.minRandomBendingExtension != o.extraValues1.minRandomBendingExtension)
+			return false;
+		if (extraValues1.maxRandomBendingExtension != o.extraValues1.maxRandomBendingExtension)
+			return false;
+		if (extraValues1.heightsNeedRegen != o.extraValues1.heightsNeedRegen)
+			return false;
 		return true;
 	}
 
@@ -364,7 +392,7 @@ namespace TheWorld_Utils
 		}
 	}
 
-	enum class TerrainEdit::TerrainType terrainTypeEnum(std::string& terrainType)
+	enum class TerrainEdit::TerrainType TerrainEdit::terrainTypeEnum(std::string& terrainType)
 	{
 		if (terrainType == "noise_1")
 			return TerrainEdit::TerrainType::noise_1;
@@ -410,6 +438,8 @@ namespace TheWorld_Utils
 		TerrainEdit* p = (TerrainEdit*)buffer.ptr();
 		init(p->terrainType);
 		memcpy(this, buffer.ptr(), minLen);
+		if (buffer.size() == 456 && buffer.size() < saveSize)
+			extraValues1.heightsNeedRegen = false;
 		size = saveSize;
 	}
 
@@ -753,7 +783,30 @@ namespace TheWorld_Utils
 		return meshId;
 	}
 
-	bool MeshCacheBuffer::firstMeshIdMoreRecent(std::string firstMeshId, std::string secondMeshId)
+	std::chrono::system_clock::time_point MeshCacheBuffer::getTimeFromMeshId(std::string& meshId, std::string& meshIdWithoutBinaryTime)
+	{
+		size_t size = 0;
+		std::chrono::system_clock::time_point time;
+		meshIdWithoutBinaryTime = "";
+
+		std::vector<std::string> v = TheWorld_Utils::Utils::split(meshId, ':');
+		my_assert(v.size() >= 1);
+		if (v.size() > 1)	// else time is equal to std::chrono::system_clock::time_point()
+		{
+			if (v.size() >= 4)
+				assert(v.size() >= 4);	// DEBUGBREAKPOINT
+			my_assert(v.size() > 2);
+			size_t headerToDiscardSize = v[0].size() + v[1].size() + 2;
+			meshIdWithoutBinaryTime = meshId.substr(0, headerToDiscardSize);
+			std::string s = meshId.substr(headerToDiscardSize);
+			size_t sz = s.size();
+			time = TheWorld_Utils::deserializeFromByteStream<std::chrono::system_clock::time_point>((BYTE*)s.c_str(), size);
+		}
+				
+		return time;
+	}
+
+	bool MeshCacheBuffer::firstMeshIdMoreRecent(std::string& firstMeshId, std::string& secondMeshId)
 	{
 		size_t size = 0;
 		//BYTE shortBuffer[256 + 1];
@@ -829,7 +882,7 @@ namespace TheWorld_Utils
 		//	return false;
 	}
 
-	void MeshCacheBuffer::getAllDiskCache(std::string _cacheDir, std::string mapName, float gridStepInWU, size_t numVerticesPerSize, int level, std::vector<MeshCacheBuffer>& vectDiskCache)
+	void MeshCacheBuffer::getAllDiskCache(std::string _cacheDir, std::string mapName, float gridStepInWU, size_t numVerticesPerSize, int level, std::vector<MeshCacheBuffer>& vectDiskCache, std::time_t& fromFileTimeType)
 	{
 		vectDiskCache.clear();
 
@@ -837,40 +890,49 @@ namespace TheWorld_Utils
 		if (!fs::exists(dirPath))
 			return;
 
+		std::time_t _fromFileTimeType = fromFileTimeType;
+		fromFileTimeType = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+		
 		for (const auto& entry : fs::directory_iterator(dirPath))
 			if (entry.is_regular_file())
 			{
-				std::string filename = entry.path().filename().generic_string();
-				size_t pos = filename.find_last_of('.');
-				if (pos != std::string::npos)
+				auto fileTimeType = entry.last_write_time();
+				const auto systemTime = std::chrono::clock_cast<std::chrono::system_clock>(fileTimeType);
+				const auto fileTime = std::chrono::system_clock::to_time_t(systemTime);
+				if (fileTime > _fromFileTimeType)
 				{
-					std::string filenameNoExt = filename.substr(0, pos);
-					std::vector<std::string> v1 = TheWorld_Utils::Utils::split(filenameNoExt, '_');
-					if (v1.size() == 2)
+					std::string filename = entry.path().filename().generic_string();
+					size_t pos = filename.find_last_of('.');
+					if (pos != std::string::npos)
 					{
-						float lowerXGridVertex = FLT_MAX, lowerZGridVertex = FLT_MAX;
-
-						pos = v1[0].find_first_of('-');
-						if (pos != std::string::npos)
+						std::string filenameNoExt = filename.substr(0, pos);
+						std::vector<std::string> v1 = TheWorld_Utils::Utils::split(filenameNoExt, '_');
+						if (v1.size() == 2)
 						{
-							std::string coord = v1[0].substr(0, pos);
-							std::string value = v1[0].substr(pos + 1);
-							if (coord == "X")
-								lowerXGridVertex = std::stof(value);
-						}
+							float lowerXGridVertex = FLT_MAX, lowerZGridVertex = FLT_MAX;
 
-						pos = v1[1].find_first_of('-');
-						if (pos != std::string::npos)
-						{
-							std::string coord = v1[1].substr(0, pos);
-							std::string value = v1[1].substr(pos + 1);
-							if (coord == "Z")
-								lowerZGridVertex = std::stof(value);
-						}
+							pos = v1[0].find_first_of('-');
+							if (pos != std::string::npos)
+							{
+								std::string coord = v1[0].substr(0, pos);
+								std::string value = v1[0].substr(pos + 1);
+								if (coord == "X")
+									lowerXGridVertex = std::stof(value);
+							}
 
-						if (lowerXGridVertex != FLT_MAX && lowerZGridVertex != FLT_MAX)
-						{
-							vectDiskCache.push_back(MeshCacheBuffer(_cacheDir, mapName, gridStepInWU, numVerticesPerSize, level, lowerXGridVertex, lowerZGridVertex));
+							pos = v1[1].find_first_of('-');
+							if (pos != std::string::npos)
+							{
+								std::string coord = v1[1].substr(0, pos);
+								std::string value = v1[1].substr(pos + 1);
+								if (coord == "Z")
+									lowerZGridVertex = std::stof(value);
+							}
+
+							if (lowerXGridVertex != FLT_MAX && lowerZGridVertex != FLT_MAX)
+							{
+								vectDiskCache.push_back(MeshCacheBuffer(_cacheDir, mapName, gridStepInWU, numVerticesPerSize, level, lowerXGridVertex, lowerZGridVertex));
+							}
 						}
 					}
 				}
@@ -1187,6 +1249,7 @@ namespace TheWorld_Utils
 		if (err != 0)
 			throw(GDN_TheWorld_Exception(__FUNCTION__, std::string("Open " + m_meshFilePath + " in errore - Err=" + std::to_string(err)).c_str()));
 
+		// read the buffer size
 		if (fread(shortBuffer, size_t_size, 1, inFile) != 1)
 		{
 			fclose(inFile);
@@ -1245,6 +1308,7 @@ namespace TheWorld_Utils
 			throw(GDN_TheWorld_Exception(__FUNCTION__, std::string("Read error 2!").c_str()));
 		}
 
+		// read the whoole buffer
 		size_t s = fread(streamBuffer, streamBufferSize, 1, inFile);
 
 		fclose(inFile);
@@ -2494,6 +2558,11 @@ namespace TheWorld_Utils
 		//BYTE shortBuffer[256 + 1];	size_t size = 0;
 		//TheWorld_Utils::serializeToByteStream<size_t>(sizeof(size_t), shortBuffer, size);
 		TheWorld_Utils::TerrainEdit terrainEdit;
+		terrainEdit.extraValues1.heightsNeedRegen = true;
+		terrainEdit.normalsNeedRegen = true;
+		terrainEdit.extraValues.splatmapNeedRegen = true;
+		terrainEdit.extraValues.globalmapNeedRegen = true;
+		terrainEdit.extraValues.colormapNeedRegen = true;
 		TheWorld_Utils::MemoryBuffer terrainEditValuesBuffer((BYTE*)&terrainEdit, terrainEdit.size);
 		cacheQuadrantData.minHeight = 0.0f;
 		cacheQuadrantData.maxHeight = 0.0f;
@@ -2712,19 +2781,19 @@ namespace TheWorld_Utils
 		m_meshId = meshId;
 	}
 
-	bool MeshCacheBuffer::checkBlendingQuadrantNeeded(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
-		CacheQuadrantData& data,
-		CacheQuadrantData& northData,
-		CacheQuadrantData& southData,
-		CacheQuadrantData& westData,
-		CacheQuadrantData& eastData,
-		CacheQuadrantData& northwestData,
-		CacheQuadrantData& northeastData,
-		CacheQuadrantData& southwestData,
-		CacheQuadrantData& southeastData)
-	{
-		return true;
-	}
+	//bool MeshCacheBuffer::checkBlendingQuadrantNeeded(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
+	//	CacheQuadrantData& data,
+	//	CacheQuadrantData& northData,
+	//	CacheQuadrantData& southData,
+	//	CacheQuadrantData& westData,
+	//	CacheQuadrantData& eastData,
+	//	CacheQuadrantData& northwestData,
+	//	CacheQuadrantData& northeastData,
+	//	CacheQuadrantData& southwestData,
+	//	CacheQuadrantData& southeastData)
+	//{
+	//	return true;
+	//}
 
 //#define AMPLITUDE_BLEND_FACTOR	2.0f
 

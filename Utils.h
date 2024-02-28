@@ -146,6 +146,267 @@ namespace TheWorld_Utils
 	static constexpr float kAreaEpsilon = FLT_EPSILON;
 	static constexpr float kNormalEpsilon = 0.001f;
 
+	class QuadrantPos
+	{
+	public:
+		enum class DirectionSlot
+		{
+			Center = -1
+
+			//
+			// - o
+			//
+			, XMinus = 0
+			, WestXMinus = 0
+
+			//
+			//   o -
+			//
+			, XPlus = 1
+			, EastXPlus = 1
+
+			//   -
+			//   o
+			//
+			, ZMinus = 2
+			, NorthZMinus = 2
+
+			//
+			//   o
+			//   -
+			, ZPlus = 3
+			, SouthZPlus = 3
+
+			// - 
+			//   o
+			//   
+			, ZMinusXMinus = 4
+			, NorthwestZMinusXMinus = 4
+
+			//     - 
+			//   o
+			//   
+			, ZMinusXPlus = 5
+			, NortheastZMinusXPlus = 5
+
+			//     
+			//   o
+			// -    
+			, ZPlusXMinus = 6
+			, SouthwestZPlusXMinus = 6
+
+			//      
+			//   o
+			//     -
+			, ZPlusXPlus = 7
+			, SoutheastZPlusXPlus = 7
+		};
+
+		QuadrantPos()
+		{
+			reset();
+			//m_lowerXGridVertex = m_lowerZGridVertex = m_gridStepInWU = 0;
+			//m_numVerticesPerSize = m_level = 0;
+			//m_sizeInWU = 0;
+			//m_initialized = false;
+		}
+
+		void reset(void)
+		{
+			m_lowerXGridVertex = m_lowerZGridVertex = m_gridStepInWU = 0;
+			m_numVerticesPerSize = m_level = 0;
+			m_sizeInWU = 0;
+			m_tag.clear();
+			m_name.clear();
+			m_initialized = false;
+		}
+
+		bool empty(void) const
+		{
+			return m_initialized == false;
+		}
+
+		QuadrantPos(const QuadrantPos& quadrantPos)
+		{
+			*this = quadrantPos;
+			//m_lowerXGridVertex = quadrantPos.m_lowerXGridVertex;
+			//m_lowerZGridVertex = quadrantPos.m_lowerZGridVertex;
+			//m_numVerticesPerSize = quadrantPos.m_numVerticesPerSize;
+			//m_level = quadrantPos.m_level;
+			//m_gridStepInWU = quadrantPos.m_gridStepInWU;
+			//m_sizeInWU = quadrantPos.m_sizeInWU;
+			//m_tag = quadrantPos.m_tag;
+			//m_name = quadrantPos.m_name;
+			//m_initialized = true;
+		}
+
+		// x, z pos a point contained in the quadrant in global coord: calculating starting point of the quadrant in global coord
+		QuadrantPos(float x, float z, int level, int numVerticesPerSize, float gridStepInWU)
+		{
+			float gridSizeInWU = (numVerticesPerSize - 1) * gridStepInWU;
+			//float f = x / gridSizeInWU;
+			//f = floor(f);
+			//f = f * gridSizeInWU;
+			m_lowerXGridVertex = floor(x / gridSizeInWU) * gridSizeInWU;
+			m_lowerZGridVertex = floor(z / gridSizeInWU) * gridSizeInWU;
+			m_numVerticesPerSize = numVerticesPerSize;
+			m_level = level;
+			m_gridStepInWU = gridStepInWU;
+			m_sizeInWU = (m_numVerticesPerSize - 1) * m_gridStepInWU;
+			m_initialized = true;
+			resetName();
+		}
+
+		QuadrantPos(int x, int z, int level, int numVerticesPerSize, float gridStepInWU)
+		{
+			float gridSizeInWU = (numVerticesPerSize - 1) * gridStepInWU;
+			m_lowerXGridVertex = x * gridSizeInWU;
+			m_lowerZGridVertex = z * gridSizeInWU;
+			m_numVerticesPerSize = numVerticesPerSize;
+			m_level = level;
+			m_gridStepInWU = gridStepInWU;
+			m_sizeInWU = (m_numVerticesPerSize - 1) * m_gridStepInWU;
+			m_initialized = true;
+			resetName();
+		}
+
+		bool operator<(const QuadrantPos& quadrantPos) const
+		{
+			assert(m_initialized == true);
+			assert(quadrantPos.m_initialized == true);
+			assert(m_level == quadrantPos.m_level);
+			if (m_level < quadrantPos.m_level)
+				return true;
+			if (m_level > quadrantPos.m_level)
+				return false;
+			// m_level == quadrantPos.m_level
+
+			assert(m_sizeInWU == quadrantPos.m_sizeInWU);
+			if (m_sizeInWU < quadrantPos.m_sizeInWU)
+				return true;
+			if (m_sizeInWU > quadrantPos.m_sizeInWU)
+				return false;
+			// m_sizeInWU == quadrantPos.m_sizeInWU
+
+			if (m_lowerZGridVertex < quadrantPos.m_lowerZGridVertex)
+				return true;
+			if (m_lowerZGridVertex > quadrantPos.m_lowerZGridVertex)
+				return false;
+			// m_lowerZGridVertex == quadrantPos.m_lowerZGridVertex
+
+			return m_lowerXGridVertex < quadrantPos.m_lowerXGridVertex;
+		}
+
+		bool operator==(const QuadrantPos& quadrantPos) const
+		{
+			if (m_lowerXGridVertex == quadrantPos.m_lowerXGridVertex
+				&& m_lowerZGridVertex == quadrantPos.m_lowerZGridVertex
+				&& m_numVerticesPerSize == quadrantPos.m_numVerticesPerSize
+				&& m_level == quadrantPos.m_level
+				&& m_gridStepInWU == quadrantPos.m_gridStepInWU)
+				return true;
+			else
+				return false;
+		}
+
+		void operator=(const QuadrantPos& quadrantPos)
+		{
+			m_lowerXGridVertex = quadrantPos.m_lowerXGridVertex;
+			m_lowerZGridVertex = quadrantPos.m_lowerZGridVertex;
+			m_numVerticesPerSize = quadrantPos.m_numVerticesPerSize;
+			m_level = quadrantPos.m_level;
+			m_gridStepInWU = quadrantPos.m_gridStepInWU;
+			m_sizeInWU = quadrantPos.m_sizeInWU;
+			m_tag = quadrantPos.m_tag;
+			m_name = quadrantPos.m_name;
+			//m_initialized = true;
+			m_initialized = quadrantPos.m_initialized;
+			//return *this;
+		}
+
+		std::string getIdStr(void)
+		{
+			return "ST" + std::to_string(m_gridStepInWU) + "_SZ" + std::to_string(m_numVerticesPerSize) + "_L" + std::to_string(m_level) + "_X" + std::to_string(m_lowerXGridVertex) + "_Z" + std::to_string(m_lowerZGridVertex);
+		}
+
+		float getLowerXGridVertex() const
+		{
+			return m_lowerXGridVertex;
+		};
+		float getLowerZGridVertex() const
+		{
+			return m_lowerZGridVertex;
+		};
+		int getNumVerticesPerSize() const
+		{
+			return m_numVerticesPerSize;
+		};
+		int getLevel() const
+		{
+			return m_level;
+		};
+		float getGridStepInWU()  const
+		{
+			return m_gridStepInWU;
+		};
+		float getSizeInWU() const
+		{
+			return m_sizeInWU;
+		};
+		int getIndexPosX(void) const
+		{
+			float gridSizeInWU = (m_numVerticesPerSize - 1) * m_gridStepInWU;
+			return (int)(m_lowerXGridVertex / gridSizeInWU);
+		}
+		int getIndexPosZ(void) const
+		{
+			float gridSizeInWU = (m_numVerticesPerSize - 1) * m_gridStepInWU;
+			return (int)(m_lowerZGridVertex / gridSizeInWU);
+		}
+		_declspec(dllexport) QuadrantPos getQuadrantPos(enum class DirectionSlot dir, int numSlot = 1);
+		void setTag(std::string tag)
+		{
+			m_tag = tag;
+		}
+		std::string getTag(void)
+		{
+			return m_tag;
+		}
+		_declspec(dllexport) size_t distanceInPerimeter(QuadrantPos& q) const;
+		bool isInitialized(void) const
+		{
+			return m_initialized;
+		}
+
+		std::string getName(void)
+		{
+			return m_name;
+		}
+
+	private:
+		void resetName(void)
+		{
+			float gridSizeInWU = (m_numVerticesPerSize - 1) * m_gridStepInWU;
+			//m_name = "Quadrant-" + std::to_string((int)(m_lowerXGridVertex / gridSizeInWU)) + "-" + std::to_string((int)(m_lowerZGridVertex / gridSizeInWU));
+			m_name = "Quadrant " + std::to_string((int)(m_lowerXGridVertex / gridSizeInWU)) + "," + std::to_string((int)(m_lowerZGridVertex / gridSizeInWU));
+		}
+
+	private:
+		// ID
+		float m_lowerXGridVertex;	// starting point in the X axis of the quadrant in global coord
+		float m_lowerZGridVertex;	// starting point in the Z axis of the quadrant in global coord
+		int m_numVerticesPerSize;
+		int m_level;
+		float m_gridStepInWU;
+		// ID
+
+		bool m_initialized;
+
+		float m_sizeInWU;
+		std::string m_tag;
+		std::string m_name;
+	};
+
 	class MemoryBuffer
 	{
 	public:
@@ -389,9 +650,16 @@ namespace TheWorld_Utils
 			float blendingBendingFactor = 1.0f;
 			float minRandomBendingExtension = 0.2f;
 			float maxRandomBendingExtension = 0.5f;
+			float filler1 = 0.0f;
+			float filler2 = 0.0f;
+			float filler3 = 0.0f;
+			float filler4 = 0.0f;
+			float filler5 = 0.0f;
+			bool heightsNeedRegen = true;	// ???
 		} extraValues1;
 #pragma pack ()
 		// WARNING: this struct can safely grow appending new data at the end (may be need an alignment filler to modify sizeof(extraValues))
+		// remember to update operator== and DBJson
 
 		__declspec(dllexport) TerrainEdit(enum class TerrainEdit::TerrainType terrainType = TerrainEdit::TerrainType::empty);
 		__declspec(dllexport) void setTextureNameForTerrainType(enum class TerrainEdit::TextureType textureType);
@@ -566,9 +834,10 @@ namespace TheWorld_Utils
 		__declspec(dllexport) static std::string generateNewMeshId(void);
 		__declspec(dllexport) static std::string generateNewMeshIdForEmptyBuffer(void);
 		__declspec(dllexport) static bool isEmptyBuffer(std::string meshId);
-		__declspec(dllexport) static bool firstMeshIdMoreRecent(std::string firstMeshId, std::string secondMeshId);
+		__declspec(dllexport) static bool firstMeshIdMoreRecent(std::string& firstMeshId, std::string& secondMeshId);
+		__declspec(dllexport) static std::chrono::system_clock::time_point getTimeFromMeshId(std::string& meshId, std::string& meshIdWithoutBinaryTime);
 		__declspec(dllexport) std::string getMeshIdFromDisk(void);
-		__declspec(dllexport) static void getAllDiskCache(std::string cacheDir, std::string mapName, float gridStepInWU, size_t numVerticesPerSize, int level, std::vector<MeshCacheBuffer>& vectDiskCache);
+		__declspec(dllexport) static void getAllDiskCache(std::string cacheDir, std::string mapName, float gridStepInWU, size_t numVerticesPerSize, int level, std::vector<MeshCacheBuffer>& vectDiskCache, std::time_t& fromFileTimeType);
 		__declspec(dllexport) std::string getCacheIdStr(void);
 		__declspec(dllexport) bool refreshMapsFromDisk(size_t numVerticesPerSize, float gridStepInWU, std::string meshId, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitde, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer);
 		__declspec(dllexport) void refreshMapsFromBuffer(const BYTE* buffer, const size_t bufferSize, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitde, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, bool updateCache);
@@ -594,67 +863,17 @@ namespace TheWorld_Utils
 		__declspec(dllexport) void deprecated_generateNormals(size_t numVerticesPerSize, float gridStepInWU, std::vector<float>& vectGridHeights, TheWorld_Utils::MemoryBuffer& normalsBuffer);
 		__declspec(dllexport) void deprecated_generateNormals(size_t numVerticesPerSize, float gridStepInWU, std::vector<float>& vectGridHeights, BYTE* normalsBuffer, const size_t normalsBufferSize, size_t& usedBufferSize);
 		__declspec(dllexport) void calcMinMaxHeight(size_t numVerticesPerSize, TheWorld_Utils::TerrainEdit* terrainEdit, TheWorld_Utils::MemoryBuffer& heights32Buffer);
-		__declspec(dllexport) bool checkBlendingQuadrantNeeded(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
-			CacheQuadrantData& data,
-			CacheQuadrantData& northData,
-			CacheQuadrantData& southData,
-			CacheQuadrantData& westData,
-			CacheQuadrantData& eastData,
-			CacheQuadrantData& northwestData,
-			CacheQuadrantData& northeastData,
-			CacheQuadrantData& southwestData,
-			CacheQuadrantData& southeastData);
-		__declspec(dllexport) bool blendBorders(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
-			CacheQuadrantData& data,
-			CacheQuadrantData& northData,
-			CacheQuadrantData& southData,
-			CacheQuadrantData& westData,
-			CacheQuadrantData& eastData,
-			CacheQuadrantData& northwestData,
-			CacheQuadrantData& northeastData,
-			CacheQuadrantData& southwestData,
-			CacheQuadrantData& southeastData);
+		//__declspec(dllexport) bool checkBlendingQuadrantNeeded(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
+		//	CacheQuadrantData& data,
+		//	CacheQuadrantData& northData,
+		//	CacheQuadrantData& southData,
+		//	CacheQuadrantData& westData,
+		//	CacheQuadrantData& eastData,
+		//	CacheQuadrantData& northwestData,
+		//	CacheQuadrantData& northeastData,
+		//	CacheQuadrantData& southwestData,
+		//	CacheQuadrantData& southeastData);
 		__declspec(dllexport) bool blendQuadrant(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
-			CacheQuadrantData& data,
-			CacheQuadrantData& northData,
-			CacheQuadrantData& southData,
-			CacheQuadrantData& westData,
-			CacheQuadrantData& eastData,
-			CacheQuadrantData& northwestData,
-			CacheQuadrantData& northeastData,
-			CacheQuadrantData& southwesthData,
-			CacheQuadrantData& southeastData);
-		__declspec(dllexport) bool blendQuadrantOnNorthSide(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
-			CacheQuadrantData& data,
-			CacheQuadrantData& northData,
-			CacheQuadrantData& southData,
-			CacheQuadrantData& westData,
-			CacheQuadrantData& eastData,
-			CacheQuadrantData& northwestData,
-			CacheQuadrantData& northeastData,
-			CacheQuadrantData& southwesthData,
-			CacheQuadrantData& southeastData);
-		__declspec(dllexport) bool blendQuadrantOnSouthSide(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
-			CacheQuadrantData& data,
-			CacheQuadrantData& northData,
-			CacheQuadrantData& southData,
-			CacheQuadrantData& westData,
-			CacheQuadrantData& eastData,
-			CacheQuadrantData& northwestData,
-			CacheQuadrantData& northeastData,
-			CacheQuadrantData& southwesthData,
-			CacheQuadrantData& southeastData);
-		__declspec(dllexport) bool blendQuadrantOnWestSide(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
-			CacheQuadrantData& data,
-			CacheQuadrantData& northData,
-			CacheQuadrantData& southData,
-			CacheQuadrantData& westData,
-			CacheQuadrantData& eastData,
-			CacheQuadrantData& northwestData,
-			CacheQuadrantData& northeastData,
-			CacheQuadrantData& southwesthData,
-			CacheQuadrantData& southeastData);
-		__declspec(dllexport) bool blendQuadrantOnEastSide(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
 			CacheQuadrantData& data,
 			CacheQuadrantData& northData,
 			CacheQuadrantData& southData,
@@ -702,6 +921,58 @@ namespace TheWorld_Utils
 		{
 			return m_meshFilePath;
 		}
+
+	private:
+		__declspec(dllexport) bool blendBorders(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
+			CacheQuadrantData& data,
+			CacheQuadrantData& northData,
+			CacheQuadrantData& southData,
+			CacheQuadrantData& westData,
+			CacheQuadrantData& eastData,
+			CacheQuadrantData& northwestData,
+			CacheQuadrantData& northeastData,
+			CacheQuadrantData& southwestData,
+			CacheQuadrantData& southeastData);
+		__declspec(dllexport) bool blendQuadrantOnNorthSide(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
+			CacheQuadrantData& data,
+			CacheQuadrantData& northData,
+			CacheQuadrantData& southData,
+			CacheQuadrantData& westData,
+			CacheQuadrantData& eastData,
+			CacheQuadrantData& northwestData,
+			CacheQuadrantData& northeastData,
+			CacheQuadrantData& southwesthData,
+			CacheQuadrantData& southeastData);
+		__declspec(dllexport) bool blendQuadrantOnSouthSide(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
+			CacheQuadrantData& data,
+			CacheQuadrantData& northData,
+			CacheQuadrantData& southData,
+			CacheQuadrantData& westData,
+			CacheQuadrantData& eastData,
+			CacheQuadrantData& northwestData,
+			CacheQuadrantData& northeastData,
+			CacheQuadrantData& southwesthData,
+			CacheQuadrantData& southeastData);
+		__declspec(dllexport) bool blendQuadrantOnWestSide(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
+			CacheQuadrantData& data,
+			CacheQuadrantData& northData,
+			CacheQuadrantData& southData,
+			CacheQuadrantData& westData,
+			CacheQuadrantData& eastData,
+			CacheQuadrantData& northwestData,
+			CacheQuadrantData& northeastData,
+			CacheQuadrantData& southwesthData,
+			CacheQuadrantData& southeastData);
+		__declspec(dllexport) bool blendQuadrantOnEastSide(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
+			CacheQuadrantData& data,
+			CacheQuadrantData& northData,
+			CacheQuadrantData& southData,
+			CacheQuadrantData& westData,
+			CacheQuadrantData& eastData,
+			CacheQuadrantData& northwestData,
+			CacheQuadrantData& northeastData,
+			CacheQuadrantData& southwesthData,
+			CacheQuadrantData& southeastData);
 
 	private:
 		std::string m_meshFilePath;
