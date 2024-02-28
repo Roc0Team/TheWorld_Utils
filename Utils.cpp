@@ -50,6 +50,73 @@ namespace TheWorld_Utils
 		return ret;
 	}
 
+	QuadrantPos QuadrantPos::getQuadrantPos(enum class DirectionSlot dir, int numSlot)
+	{
+		QuadrantPos pos = *this;
+
+		switch (dir)
+		{
+		case DirectionSlot::XMinus:
+		{
+			pos.m_lowerXGridVertex -= (m_sizeInWU * numSlot);
+		}
+		break;
+		case DirectionSlot::XPlus:
+		{
+			pos.m_lowerXGridVertex += (m_sizeInWU * numSlot);
+		}
+		break;
+		case DirectionSlot::ZMinus:
+		{
+			pos.m_lowerZGridVertex -= (m_sizeInWU * numSlot);
+		}
+		break;
+		case DirectionSlot::ZPlus:
+		{
+			pos.m_lowerZGridVertex += (m_sizeInWU * numSlot);
+		}
+		break;
+		case DirectionSlot::ZMinusXMinus:
+		{
+			QuadrantPos pos1 = getQuadrantPos(DirectionSlot::ZMinus, numSlot);
+			pos = pos1.getQuadrantPos(DirectionSlot::XMinus, numSlot);
+		}
+		break;
+		case DirectionSlot::ZMinusXPlus:
+		{
+			QuadrantPos pos1 = getQuadrantPos(DirectionSlot::ZMinus, numSlot);
+			pos = pos1.getQuadrantPos(DirectionSlot::XPlus, numSlot);
+		}
+		break;
+		case DirectionSlot::ZPlusXMinus:
+		{
+			QuadrantPos pos1 = getQuadrantPos(DirectionSlot::ZPlus, numSlot);
+			pos = pos1.getQuadrantPos(DirectionSlot::XMinus, numSlot);
+		}
+		break;
+		case DirectionSlot::ZPlusXPlus:
+		{
+			QuadrantPos pos1 = getQuadrantPos(DirectionSlot::ZPlus, numSlot);
+			pos = pos1.getQuadrantPos(DirectionSlot::XPlus, numSlot);
+		}
+		break;
+		}
+
+		pos.resetName();
+
+		return pos;
+	}
+
+	size_t QuadrantPos::distanceInPerimeter(QuadrantPos& q) const
+	{
+		size_t distanceOnX = (size_t)ceil(abs(q.getLowerXGridVertex() - getLowerXGridVertex()) / q.m_sizeInWU);
+		size_t distanceOnZ = (size_t)ceil(abs(q.getLowerZGridVertex() - getLowerZGridVertex()) / q.m_sizeInWU);
+		if (distanceOnX > distanceOnZ)
+			return distanceOnX;
+		else
+			return distanceOnZ;
+	}
+
 	void TerrainEdit::generateGroundImage(MemoryBuffer& albedoBumpImage, MemoryBuffer& normalRoughnessImage, std::string groundTypeName, size_t imageSize, bool flipY, MemoryBuffer& colorImage, MemoryBuffer& bumpImage, MemoryBuffer& normalImage, MemoryBuffer& roughImage)
 	{
 		size_t width, heigth;
