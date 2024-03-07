@@ -113,6 +113,13 @@ namespace TheWorld_Utils
 					TheWorld_Utils::Profiler::addElapsedMcs(m_function, m_name, m_clock.duration().count());
 			}
 		}
+		size_t partialDuration()
+		{
+			if (m_clock.counterStarted())
+				return m_clock.partialDuration().count();
+			else
+				return 0;
+		}
 
 	private:
 		std::string m_function;

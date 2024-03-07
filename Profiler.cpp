@@ -6,7 +6,7 @@
 namespace TheWorld_Utils
 {
 	ProfilerInternal s_profiler;
-	bool Profiler::s_active = false;
+	bool Profiler::s_active = true;
 
 
 	ProfilingData::ProfilingData()

@@ -50,6 +50,62 @@ namespace TheWorld_Utils
 		return ret;
 	}
 
+	void QuadrantPos::serialize(TheWorld_Utils::MemoryBuffer& buffer) const
+	{
+		buffer.reserve(sizeof(QuadrantPos) + m_tag.length() + m_name.length());
+
+		size_t size;
+		size_t cursor = 0;
+
+		serializeToByteStream<float>(m_lowerXGridVertex, buffer.ptr() + cursor, size);
+		cursor += size;
+		serializeToByteStream<float>(m_lowerZGridVertex, buffer.ptr() + cursor, size);
+		cursor += size;
+		serializeToByteStream<int>(m_numVerticesPerSize, buffer.ptr() + cursor, size);
+		cursor += size;
+		serializeToByteStream<int>(m_level, buffer.ptr() + cursor, size);
+		cursor += size;
+		serializeToByteStream<float>(m_gridStepInWU, buffer.ptr() + cursor, size);
+		cursor += size;
+		serializeToByteStream<bool>(m_initialized, buffer.ptr() + cursor, size);
+		cursor += size;
+		serializeToByteStream<size_t>(m_tag.size(), buffer.ptr() + cursor, size);
+		cursor += size;
+		memcpy(buffer.ptr() + cursor, m_tag.c_str(), m_tag.size());
+		cursor += m_tag.size();
+
+		buffer.adjustSize(cursor);
+	}
+
+	void QuadrantPos::deserialize(TheWorld_Utils::MemoryBuffer& buffer)
+	{
+		reset();
+
+		size_t size;
+		size_t cursor = 0;
+
+		m_lowerXGridVertex = deserializeFromByteStream<float>(buffer.ptr() + cursor, size);
+		cursor += size;
+		m_lowerZGridVertex = deserializeFromByteStream<float>(buffer.ptr() + cursor, size);
+		cursor += size;
+		m_numVerticesPerSize = deserializeFromByteStream<int>(buffer.ptr() + cursor, size);
+		cursor += size;
+		m_level = deserializeFromByteStream<int>(buffer.ptr() + cursor, size);
+		cursor += size;
+		m_gridStepInWU = deserializeFromByteStream<float>(buffer.ptr() + cursor, size);
+		cursor += size;
+		m_initialized = deserializeFromByteStream<bool>(buffer.ptr() + cursor, size);
+		cursor += size;
+		size_t m_tagSize = deserializeFromByteStream<size_t>(buffer.ptr() + cursor, size);
+		cursor += size;
+		m_tag = std::string((char*)buffer.ptr() + cursor, m_tagSize);
+		cursor += m_tagSize;
+
+		m_sizeInWU = (m_numVerticesPerSize - 1) * m_gridStepInWU;
+		resetIndexPos();
+		resetName();
+	}
+
 	QuadrantPos QuadrantPos::getQuadrantPos(enum class DirectionSlot dir, int numSlot)
 	{
 		QuadrantPos pos = *this;
@@ -102,6 +158,7 @@ namespace TheWorld_Utils
 		break;
 		}
 
+		pos.resetIndexPos();
 		pos.resetName();
 
 		return pos;
@@ -729,9 +786,13 @@ namespace TheWorld_Utils
 		{
 			fs::create_directories(m_cacheDir);
 		}
+		if (!fs::exists(m_cacheDir + "\\Work"))
+		{
+			fs::create_directories(m_cacheDir + "\\Work");
+		}
 		std::string cacheFileName = "X-" + std::to_string(lowerXGridVertex) + "_Z-" + std::to_string(lowerZGridVertex) + ".mesh";
-		m_meshFilePath = m_cacheDir + "\\" + cacheFileName;
-
+		m_cacheFilePath = m_cacheDir + "\\" + cacheFileName;
+		m_cacheWorkFilePath = getWorkCacheDirPathStatic(m_cacheDir) + cacheFileName;
 	}
 	
 	MeshCacheBuffer::MeshCacheBuffer(const MeshCacheBuffer& c)
@@ -746,7 +807,8 @@ namespace TheWorld_Utils
 		
 	void MeshCacheBuffer::operator=(const MeshCacheBuffer& c)
 	{
-		m_meshFilePath = c.m_meshFilePath;
+		m_cacheFilePath = c.m_cacheFilePath;
+		m_cacheWorkFilePath = c.m_cacheWorkFilePath;
 		m_cacheDir = c.m_cacheDir;
 		m_meshId = c.m_meshId;
 		//m_buffer = c.m_buffer;
@@ -756,6 +818,47 @@ namespace TheWorld_Utils
 		m_level = c.m_level;
 		m_lowerXGridVertex = c.m_lowerXGridVertex;
 		m_lowerZGridVertex = c.m_lowerZGridVertex;
+	}
+
+	bool MeshCacheBuffer::operator<(const MeshCacheBuffer& c) const
+	{
+		float quadrantSize = m_gridStepInWU * m_numVerticesPerSize;
+		float _quadrantSize = c.m_gridStepInWU * c.m_numVerticesPerSize;
+
+		if (quadrantSize < _quadrantSize)
+			return true;
+		if (quadrantSize > _quadrantSize)
+			return false;
+
+		if (m_level < c.m_level)
+			return true;
+		if (m_level > c.m_level)
+			return false;
+
+		if (m_lowerZGridVertex < c.m_lowerZGridVertex)
+			return true;
+		if (m_lowerZGridVertex > c.m_lowerZGridVertex)
+			return false;
+
+		return m_lowerXGridVertex < c.m_lowerXGridVertex;
+	}
+
+	bool MeshCacheBuffer::operator==(const MeshCacheBuffer& c) const
+	{
+		if (m_cacheFilePath == c.m_cacheFilePath
+			&& m_cacheWorkFilePath == c.m_cacheWorkFilePath
+			&& m_cacheDir == c.m_cacheDir
+			&& m_meshId == c.m_meshId
+			//&& m_buffer == c.m_buffer
+			&& m_mapName == c.m_mapName
+			&& m_gridStepInWU == c.m_gridStepInWU
+			&& m_numVerticesPerSize == c.m_numVerticesPerSize
+			&& m_level == c.m_level
+			&& m_lowerXGridVertex == c.m_lowerXGridVertex
+			&& m_lowerZGridVertex == c.m_lowerZGridVertex)
+			return true;
+		else
+			return false;
 	}
 
 	std::string MeshCacheBuffer::generateNewMeshId(void)
@@ -949,11 +1052,20 @@ namespace TheWorld_Utils
 		//	return false;
 	}
 
-	void MeshCacheBuffer::getAllDiskCache(std::string _cacheDir, std::string mapName, float gridStepInWU, size_t numVerticesPerSize, int level, std::vector<MeshCacheBuffer>& vectDiskCache, std::time_t& fromFileTimeType)
+	void MeshCacheBuffer::clearWorkCacheDir(std::string cacheDir, std::string mapName, float gridStepInWU, size_t numVerticesPerSize, int level)
 	{
-		vectDiskCache.clear();
+		std::string dirPath = MeshCacheBuffer::cacheDir(cacheDir, mapName, gridStepInWU, numVerticesPerSize, level);
+		std::string workDirPath = getWorkCacheDirPathStatic(dirPath);
+		fs::remove_all(workDirPath);
+		fs::create_directory(workDirPath);
+	}
 
+	void MeshCacheBuffer::getAllDiskCache(std::string _cacheDir, std::string mapName, float gridStepInWU, size_t numVerticesPerSize, int level, std::map<TheWorld_Utils::QuadrantPos, TheWorld_Utils::MeshCacheBuffer>& cacheMap, std::time_t& fromFileTimeType, bool workDir)
+	{
 		std::string dirPath  = MeshCacheBuffer::cacheDir(_cacheDir, mapName, gridStepInWU, numVerticesPerSize, level);
+		if (workDir)
+			dirPath = getWorkCacheDirPathStatic(dirPath);
+
 		if (!fs::exists(dirPath))
 			return;
 
@@ -998,7 +1110,8 @@ namespace TheWorld_Utils
 
 							if (lowerXGridVertex != FLT_MAX && lowerZGridVertex != FLT_MAX)
 							{
-								vectDiskCache.push_back(MeshCacheBuffer(_cacheDir, mapName, gridStepInWU, numVerticesPerSize, level, lowerXGridVertex, lowerZGridVertex));
+								TheWorld_Utils::QuadrantPos pos(lowerXGridVertex, lowerZGridVertex, level, int(numVerticesPerSize), gridStepInWU);
+								cacheMap[pos] = MeshCacheBuffer(_cacheDir, mapName, gridStepInWU, numVerticesPerSize, level, lowerXGridVertex, lowerZGridVertex);
 							}
 						}
 					}
@@ -1006,14 +1119,18 @@ namespace TheWorld_Utils
 			}
 	}
 	
-	std::string MeshCacheBuffer::getMeshIdFromDisk(void)
+	std::string MeshCacheBuffer::getMeshIdFromDisk(bool workDir)
 	{
 		//TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer getMeshIdFromCache 1") + __FUNCTION__, "ALL");
 
 		if (m_meshId.size() > 0)
 			return m_meshId;
 		
-		if (!fs::exists(m_meshFilePath))
+		std::string cacheFilePath = getCacheFilePath();
+		if (workDir)
+			cacheFilePath = getWorkCacheFilePath();
+
+		if (!fs::exists(cacheFilePath))
 			return "";
 		
 		BYTE shortBuffer[256 + 1];
@@ -1023,9 +1140,9 @@ namespace TheWorld_Utils
 		size_t size_t_size = sizeof(size_t);
 
 		FILE* inFile = nullptr;
-		errno_t err = fopen_s(&inFile, m_meshFilePath.c_str(), "rb");
+		errno_t err = fopen_s(&inFile, cacheFilePath.c_str(), "rb");
 		if (err != 0)
-			throw(GDN_TheWorld_Exception(__FUNCTION__, std::string("Open " + m_meshFilePath + " in errore - Err=" + std::to_string(err)).c_str()));
+			throw(GDN_TheWorld_Exception(__FUNCTION__, std::string("Open " + cacheFilePath + " in errore - Err=" + std::to_string(err)).c_str()));
 
 		if (fread(shortBuffer, size_t_size, 1, inFile) != 1)
 		{
@@ -1151,6 +1268,9 @@ namespace TheWorld_Utils
 		if (terrainEditValuesSize > 0)
 		{
 			terrainEditValues.set((BYTE*)movingStreamBuffer, terrainEditValuesSize);
+			TerrainEdit terrainEdit;
+			terrainEdit.deserialize(terrainEditValues);
+			terrainEditValues.set((BYTE*)&terrainEdit, terrainEdit.size);
 			movingStreamBuffer += terrainEditValuesSize;
 		}
 		else
@@ -1292,15 +1412,44 @@ namespace TheWorld_Utils
 		refreshCacheQuadrantDataFromBuffer((BYTE*)buffer.c_str(), buffer.size(), cacheQuadrantData, updateCache);
 	}
 
-	void MeshCacheBuffer::readBufferFromDisk(std::string _meshId, TheWorld_Utils::MemoryBuffer& buffer)
+	void MeshCacheBuffer::refreshInternalCacheQuadrantDataFromDisk(bool workDir, bool force)
+	{
+		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshInternalCacheQuadrantDataFromDisk 1 ") + __FUNCTION__, "ALL");
+
+		if (force || !m_internalCacheQuadrantData.buffersAllocated())
+		{
+			std::string buffer;
+			readBufferFromDisk(m_meshId, buffer, workDir);
+			m_internalCacheQuadrantData.allocateBuffers();
+			if (m_meshId.length() == 0 || buffer.length() == 0)
+			{
+				std::string meshid;
+				setEmptyBuffer(getNumVerticesPerSize(), meshid, buffer);
+			}
+			refreshCacheQuadrantDataFromBuffer(buffer, m_internalCacheQuadrantData, false);
+			//m_internalCacheQuadrantData.terrainData()->deserialize(*m_internalCacheQuadrantData.terrainEditValues);
+		}
+	}
+
+	MeshCacheBuffer::CacheQuadrantData* MeshCacheBuffer::internalCacheQuadrantData(void)
+	{
+		return &m_internalCacheQuadrantData;
+	}
+
+	
+	void MeshCacheBuffer::readBufferFromDisk(std::string _meshId, TheWorld_Utils::MemoryBuffer& buffer, bool workDir)
 	{
 		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer readBufferFromDisk 1 ") + __FUNCTION__, "ALL");
 
 		BYTE shortBuffer[256 + 1];
 		size_t size;
 
+		std::string cacheFilePath = getCacheFilePath();
+		if (workDir)
+			cacheFilePath = getWorkCacheFilePath();
+
 		// read vertices from local cache
-		if (!fs::exists(m_meshFilePath))
+		if (!fs::exists(cacheFilePath))
 		{
 			buffer.clear(__FUNCTION__);
 			return;
@@ -1312,9 +1461,9 @@ namespace TheWorld_Utils
 		size_t float_size = sizeof(float);
 
 		FILE* inFile = nullptr;
-		errno_t err = fopen_s(&inFile, m_meshFilePath.c_str(), "rb");
+		errno_t err = fopen_s(&inFile, cacheFilePath.c_str(), "rb");
 		if (err != 0)
-			throw(GDN_TheWorld_Exception(__FUNCTION__, std::string("Open " + m_meshFilePath + " in errore - Err=" + std::to_string(err)).c_str()));
+			throw(GDN_TheWorld_Exception(__FUNCTION__, std::string("Open " + cacheFilePath + " in errore - Err=" + std::to_string(err)).c_str()));
 
 		// read the buffer size
 		if (fread(shortBuffer, size_t_size, 1, inFile) != 1)
@@ -1383,11 +1532,11 @@ namespace TheWorld_Utils
 		buffer.adjustSize(streamBufferSize);
 	}
 
-	void MeshCacheBuffer::readBufferFromDisk(std::string _meshId, std::string& _buffer)
+	void MeshCacheBuffer::readBufferFromDisk(std::string _meshId, std::string& _buffer, bool workDir)
 	{
 		TheWorld_Utils::MemoryBuffer buffer;
 
-		readBufferFromDisk(_meshId, buffer);
+		readBufferFromDisk(_meshId, buffer, workDir);
 		
 		size_t size = buffer.size();
 
@@ -1396,22 +1545,26 @@ namespace TheWorld_Utils
 		_buffer.append((char*)buffer.ptr(), size);
 	}
 		
-	void MeshCacheBuffer::writeBufferToDiskCache(std::string& buffer, bool renewMeshId)
+	void MeshCacheBuffer::writeBufferToDiskCache(std::string& buffer, bool renewMeshId, bool workDir)
 	{
-		writeBufferToDiskCache((BYTE*)buffer.c_str(), buffer.size(), renewMeshId);
+		writeBufferToDiskCache((BYTE*)buffer.c_str(), buffer.size(), renewMeshId, workDir);
 	}
 
-	void MeshCacheBuffer::writeBufferToDiskCache(TheWorld_Utils::MemoryBuffer& buffer, bool renewMeshId)
+	void MeshCacheBuffer::writeBufferToDiskCache(TheWorld_Utils::MemoryBuffer& buffer, bool renewMeshId, bool workDir)
 	{
-		writeBufferToDiskCache(buffer.ptr(), buffer.size(), renewMeshId);
+		writeBufferToDiskCache(buffer.ptr(), buffer.size(), renewMeshId, workDir);
 	}
 
-	void MeshCacheBuffer::writeBufferToDiskCache(const BYTE* buffer, const size_t bufferSize, bool renewMeshId)
+	void MeshCacheBuffer::writeBufferToDiskCache(const BYTE* buffer, const size_t bufferSize, bool renewMeshId, bool workDir)
 	{
 		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer writeBufferToCache 1 ") + __FUNCTION__, "ALL");
 
-		std::string tempPath = m_meshFilePath + ".tmp";
-		
+		std::string meshFilePath = getCacheFilePath();
+		if (workDir)
+			meshFilePath = getWorkCacheFilePath();
+		std::string tempPath = meshFilePath + ".tmp";
+		std::string path = meshFilePath;
+
 		BYTE shortBuffer[256 + 1];
 		size_t bufferSize_size = 0;	// get size of a size_t
 
@@ -1438,7 +1591,7 @@ namespace TheWorld_Utils
 		errno_t err = fopen_s(&outFile, tempPath.c_str(), "wb");
 		if (err != 0)
 		{
-			throw(GDN_TheWorld_Exception(__FUNCTION__, std::string("Open " + m_meshFilePath + " in errore - Err=" + std::to_string(err)).c_str()));
+			throw(GDN_TheWorld_Exception(__FUNCTION__, std::string("Open " + tempPath + " in errore - Err=" + std::to_string(err)).c_str()));
 		}
 
 		if (fwrite(shortBuffer, bufferSize_size, 1, outFile) != 1)
@@ -1455,11 +1608,11 @@ namespace TheWorld_Utils
 
 		fclose(outFile);
 
-		if (fs::exists(m_meshFilePath.c_str()))
-			if (remove(m_meshFilePath.c_str()) != 0)
+		if (fs::exists(path.c_str()))
+			if (remove(path.c_str()) != 0)
 				throw(GDN_TheWorld_Exception(__FUNCTION__, std::string("Remove error!").c_str()));
 
-		if (rename(tempPath.c_str(), m_meshFilePath.c_str()) != 0)
+		if (rename(tempPath.c_str(), path.c_str()) != 0)
 			throw(GDN_TheWorld_Exception(__FUNCTION__, std::string("Rename error!").c_str()));
 	}
 
@@ -2526,7 +2679,12 @@ namespace TheWorld_Utils
 
 			if (terrainEditValueSize > 0)
 			{
-				memcpy(_streamBuffer, cacheQuadrantData.terrainEditValues->ptr(), terrainEditValueSize);
+				TerrainEdit terrainEdit;
+				terrainEdit.deserialize(*cacheQuadrantData.terrainEditValues);
+				if (numHeights16 > 0 && terrainEdit.terrainType == TerrainEdit::TerrainType::empty)
+					terrainEdit.extraValues1.heightsNeedRegen = false;
+				//memcpy(_streamBuffer, cacheQuadrantData.terrainEditValues->ptr(), terrainEditValueSize);
+				memcpy(_streamBuffer, &terrainEdit, terrainEditValueSize);
 				_streamBuffer += terrainEditValueSize;
 			}
 		}
@@ -2616,6 +2774,15 @@ namespace TheWorld_Utils
 		buffer.adjustSize(streamBufferSize);
 	}
 
+	void MeshCacheBuffer::setEmptyBuffer(size_t numVerticesPerSize, std::string& meshId, std::string& buffer)
+	{
+		TheWorld_Utils::MemoryBuffer _buffer;
+		setEmptyBuffer(numVerticesPerSize, meshId, _buffer);
+		buffer.clear();
+		buffer.reserve(_buffer.size());
+		buffer.assign((char*)_buffer.ptr(), _buffer.size());
+	}
+			
 	void MeshCacheBuffer::setEmptyBuffer(size_t numVerticesPerSize, std::string& meshId, TheWorld_Utils::MemoryBuffer& buffer)
 	{
 		meshId = generateNewMeshIdForEmptyBuffer();
@@ -2877,7 +3044,6 @@ namespace TheWorld_Utils
 	{
 		bool updated = false;
 
-		TerrainEdit* terrainEdit = (TerrainEdit*)data.terrainEditValues->ptr();
 		//if (!terrainEdit->northSideZMinus.needBlend && !terrainEdit->southSideZPlus.needBlend && !terrainEdit->eastSideXPlus.needBlend && !terrainEdit->westSideXMinus.needBlend)
 		//	return updated;
 		
@@ -2991,6 +3157,7 @@ namespace TheWorld_Utils
 
 		if (data.heightsUpdated)
 		{
+			TerrainEdit* terrainEdit = (TerrainEdit*)data.terrainEditValues->ptr();
 			calcMinMaxHeight(numVerticesPerSize, terrainEdit, *data.heights32Buffer);
 		}
 
@@ -3072,7 +3239,8 @@ namespace TheWorld_Utils
 			//	W	D	E
 			//			
 			//	SW	S	SE
-			if (northData.heights32Buffer != nullptr && northData.heights16Buffer != nullptr)
+			if (northData.heights32Buffer != nullptr && northData.heights32Buffer->size() > 0
+				&& northData.heights16Buffer != nullptr && northData.heights16Buffer->size() > 0)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = northData.heights32Buffer;
 				TheWorld_Utils::MemoryBuffer* data1heights16Buffer = northData.heights16Buffer;
@@ -3106,7 +3274,8 @@ namespace TheWorld_Utils
 			//	W	D	E
 			//		-	
 			//	SW	S	SE
-			if (southData.heights32Buffer != nullptr && southData.heights16Buffer != nullptr)
+			if (southData.heights32Buffer != nullptr && southData.heights32Buffer->size() > 0
+				&& southData.heights16Buffer != nullptr && southData.heights16Buffer->size() > 0)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = currentData.heights32Buffer;
 				TheWorld_Utils::MemoryBuffer* data1heights16Buffer = currentData.heights16Buffer;
@@ -3140,7 +3309,8 @@ namespace TheWorld_Utils
 			//	W	D |	E
 			//			
 			//	SW	S	SE
-			if (eastData.heights32Buffer != nullptr && eastData.heights16Buffer != nullptr)
+			if (eastData.heights32Buffer != nullptr && eastData.heights32Buffer->size() > 0
+				&& eastData.heights16Buffer != nullptr && eastData.heights16Buffer->size() > 0)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = currentData.heights32Buffer;
 				TheWorld_Utils::MemoryBuffer* data1heights16Buffer = currentData.heights16Buffer;
@@ -3174,7 +3344,8 @@ namespace TheWorld_Utils
 			//	W | D	E
 			//			
 			//	SW  S	SE
-			if (westData.heights32Buffer != nullptr && westData.heights16Buffer != nullptr)
+			if (westData.heights32Buffer != nullptr && westData.heights32Buffer->size() > 0
+				&& westData.heights16Buffer != nullptr && westData.heights16Buffer->size() > 0)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = westData.heights32Buffer;
 				TheWorld_Utils::MemoryBuffer* data1heights16Buffer = westData.heights16Buffer;
@@ -3208,7 +3379,10 @@ namespace TheWorld_Utils
 			//	W	D	E
 			//			
 			//	SW	S	SE
-			if (northwestData.heights32Buffer != nullptr && northData.heights32Buffer != nullptr && northwestData.heights16Buffer != nullptr && northData.heights16Buffer != nullptr)
+			if (northwestData.heights32Buffer != nullptr && northwestData.heights32Buffer->size() > 0
+				&& northData.heights32Buffer != nullptr && northData.heights32Buffer->size() > 0
+				&& northwestData.heights16Buffer != nullptr && northwestData.heights16Buffer->size() > 0 
+				&& northData.heights16Buffer != nullptr && northData.heights16Buffer->size() > 0)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = northwestData.heights32Buffer;
 				TheWorld_Utils::MemoryBuffer* data1heights16Buffer = northwestData.heights16Buffer;
@@ -3242,7 +3416,10 @@ namespace TheWorld_Utils
 			//	W	D	E
 			//			
 			//	SW	S	SE
-			if (northData.heights32Buffer != nullptr && northeastData.heights32Buffer != nullptr && northData.heights16Buffer != nullptr && northeastData.heights16Buffer != nullptr)
+			if (northData.heights32Buffer != nullptr && northData.heights32Buffer->size() > 0
+				&& northeastData.heights32Buffer != nullptr && northeastData.heights32Buffer->size() > 0
+				&& northData.heights16Buffer != nullptr && northData.heights16Buffer->size() > 0
+				&& northeastData.heights16Buffer != nullptr && northeastData.heights16Buffer->size() > 0)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = northData.heights32Buffer;
 				TheWorld_Utils::MemoryBuffer* data1heights16Buffer = northData.heights16Buffer;
@@ -3276,7 +3453,10 @@ namespace TheWorld_Utils
 			//	W	D	E
 			//			
 			//	SW	S	SE
-			if (northwestData.heights32Buffer != nullptr && westData.heights32Buffer != nullptr && northwestData.heights16Buffer != nullptr && westData.heights16Buffer != nullptr)
+			if (northwestData.heights32Buffer != nullptr && northwestData.heights32Buffer->size() > 0
+				&& westData.heights32Buffer != nullptr && westData.heights32Buffer->size() > 0
+				&& northwestData.heights16Buffer != nullptr && northwestData.heights16Buffer->size() > 0
+				&& westData.heights16Buffer != nullptr && westData.heights16Buffer->size() > 0)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = northwestData.heights32Buffer;
 				TheWorld_Utils::MemoryBuffer* data1heights16Buffer = northwestData.heights16Buffer;
@@ -3310,7 +3490,10 @@ namespace TheWorld_Utils
 			//	W	D	E
 			//			
 			//	SW	S	SE
-			if (northeastData.heights32Buffer != nullptr && eastData.heights32Buffer != nullptr && northeastData.heights16Buffer != nullptr && eastData.heights16Buffer != nullptr)
+			if (northeastData.heights32Buffer != nullptr && northeastData.heights32Buffer->size() > 0
+				&& eastData.heights32Buffer != nullptr && eastData.heights32Buffer->size() > 0
+				&& northeastData.heights16Buffer != nullptr && northeastData.heights16Buffer->size() > 0
+				&& eastData.heights16Buffer != nullptr && eastData.heights16Buffer->size() > 0)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = northeastData.heights32Buffer;
 				TheWorld_Utils::MemoryBuffer* data1heights16Buffer = northeastData.heights16Buffer;
@@ -3344,7 +3527,10 @@ namespace TheWorld_Utils
 			//	W	D	E
 			//	-		
 			//	SW	S	SE
-			if (westData.heights32Buffer != nullptr && southwestData.heights32Buffer != nullptr && westData.heights16Buffer != nullptr && southwestData.heights16Buffer != nullptr)
+			if (westData.heights32Buffer != nullptr && westData.heights32Buffer->size() > 0
+				&& southwestData.heights32Buffer != nullptr && southwestData.heights32Buffer->size() > 0
+				&& westData.heights16Buffer != nullptr && westData.heights16Buffer->size() > 0
+				&& southwestData.heights16Buffer != nullptr && southwestData.heights16Buffer->size() > 0)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = westData.heights32Buffer;
 				TheWorld_Utils::MemoryBuffer* data1heights16Buffer = westData.heights16Buffer;
@@ -3378,7 +3564,10 @@ namespace TheWorld_Utils
 			//	W	D	E
 			//			-		
 			//	SW	S	SE
-			if (eastData.heights32Buffer != nullptr && southeastData.heights32Buffer != nullptr && eastData.heights16Buffer != nullptr && southeastData.heights16Buffer != nullptr)
+			if (eastData.heights32Buffer != nullptr && eastData.heights32Buffer->size() > 0
+				&& southeastData.heights32Buffer != nullptr && southeastData.heights32Buffer->size() > 0
+				&& eastData.heights16Buffer != nullptr && eastData.heights16Buffer->size() > 0
+				&& southeastData.heights16Buffer != nullptr && southeastData.heights16Buffer->size() > 0)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = eastData.heights32Buffer;
 				TheWorld_Utils::MemoryBuffer* data1heights16Buffer = eastData.heights16Buffer;
@@ -3412,7 +3601,10 @@ namespace TheWorld_Utils
 			//	W	D	E
 			//			
 			//	SW	|S	SE
-			if (southwestData.heights32Buffer != nullptr && southData.heights32Buffer != nullptr && southwestData.heights16Buffer != nullptr && southData.heights16Buffer != nullptr)
+			if (southwestData.heights32Buffer != nullptr && southwestData.heights32Buffer->size() > 0
+				&& southData.heights32Buffer != nullptr && southData.heights32Buffer->size() > 0
+				&& southwestData.heights16Buffer != nullptr && southwestData.heights16Buffer->size() > 0
+				&& southData.heights16Buffer != nullptr && southData.heights16Buffer->size() > 0)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = southwestData.heights32Buffer;
 				TheWorld_Utils::MemoryBuffer* data1heights16Buffer = southwestData.heights16Buffer;
@@ -3446,7 +3638,10 @@ namespace TheWorld_Utils
 			//	W	D	E
 			//			
 			//	SW	S|	SE
-			if (southData.heights32Buffer != nullptr && southeastData.heights32Buffer != nullptr && southData.heights16Buffer != nullptr && southeastData.heights16Buffer != nullptr)
+			if (southData.heights32Buffer != nullptr && southData.heights32Buffer->size() > 0
+				&& southeastData.heights32Buffer != nullptr && southeastData.heights32Buffer->size() > 0
+				&& southData.heights16Buffer != nullptr && southData.heights16Buffer->size() > 0
+				&& southeastData.heights16Buffer != nullptr && southeastData.heights16Buffer->size() > 0)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = southData.heights32Buffer;
 				TheWorld_Utils::MemoryBuffer* data1heights16Buffer = southData.heights16Buffer;
@@ -3477,21 +3672,24 @@ namespace TheWorld_Utils
 		}
 
 		float northWestCornerHeight = currentData.heights32Buffer->at<float>(0, 0, numVerticesPerSize);
-		if (northData.heights32Buffer != nullptr && northData.heights16Buffer != nullptr)
+		if (northData.heights32Buffer != nullptr && northData.heights32Buffer->size() > 0
+			&& northData.heights16Buffer != nullptr && northData.heights16Buffer->size() > 0)
 		{
 			TheWorld_Utils::FLOAT_32 f(northWestCornerHeight);
 			uint16_t half = half_from_float(f.u32);
 			northData.heights32Buffer->at<float>(0, maxIndex, numVerticesPerSize) = northWestCornerHeight;
 			northData.heights16Buffer->at<uint16_t>(0, maxIndex, numVerticesPerSize) = half;
 		}
-		if (northwestData.heights32Buffer != nullptr && northwestData.heights16Buffer != nullptr)
+		if (northwestData.heights32Buffer != nullptr && northwestData.heights32Buffer->size() > 0
+			&& northwestData.heights16Buffer != nullptr && northwestData.heights16Buffer->size() > 0)
 		{
 			TheWorld_Utils::FLOAT_32 f(northWestCornerHeight);
 			uint16_t half = half_from_float(f.u32);
 			northwestData.heights32Buffer->at<float>(maxIndex, maxIndex, numVerticesPerSize) = northWestCornerHeight;
 			northwestData.heights16Buffer->at<uint16_t>(maxIndex, maxIndex, numVerticesPerSize) = half;
 		}
-		if (westData.heights32Buffer != nullptr && westData.heights16Buffer != nullptr)
+		if (westData.heights32Buffer != nullptr && westData.heights32Buffer->size() > 0
+			&& westData.heights16Buffer != nullptr && westData.heights16Buffer->size() > 0)
 		{
 			TheWorld_Utils::FLOAT_32 f(northWestCornerHeight);
 			uint16_t half = half_from_float(f.u32);
@@ -3500,21 +3698,24 @@ namespace TheWorld_Utils
 		}
 
 		float northEastCornerHeight = currentData.heights32Buffer->at<float>(maxIndex, 0, numVerticesPerSize);
-		if (northData.heights32Buffer != nullptr && northData.heights16Buffer != nullptr)
+		if (northData.heights32Buffer != nullptr && northData.heights32Buffer->size() > 0
+			&& northData.heights16Buffer != nullptr && northData.heights16Buffer->size() > 0)
 		{
 			TheWorld_Utils::FLOAT_32 f(northEastCornerHeight);
 			uint16_t half = half_from_float(f.u32);
 			northData.heights32Buffer->at<float>(maxIndex, maxIndex, numVerticesPerSize) = northEastCornerHeight;
 			northData.heights16Buffer->at<uint16_t>(maxIndex, maxIndex, numVerticesPerSize) = half;
 		}
-		if (northeastData.heights32Buffer != nullptr && northeastData.heights16Buffer != nullptr)
+		if (northeastData.heights32Buffer != nullptr && northeastData.heights32Buffer->size() > 0
+			&& northeastData.heights16Buffer != nullptr && northeastData.heights16Buffer->size() > 0)
 		{
 			TheWorld_Utils::FLOAT_32 f(northEastCornerHeight);
 			uint16_t half = half_from_float(f.u32);
 			northeastData.heights32Buffer->at<float>(0, maxIndex, numVerticesPerSize) = northEastCornerHeight;
 			northeastData.heights16Buffer->at<uint16_t>(0, maxIndex, numVerticesPerSize) = half;
 		}
-		if (eastData.heights32Buffer != nullptr && eastData.heights16Buffer != nullptr)
+		if (eastData.heights32Buffer != nullptr && eastData.heights32Buffer->size() > 0
+			&& eastData.heights16Buffer != nullptr && eastData.heights16Buffer->size() > 0)
 		{
 			TheWorld_Utils::FLOAT_32 f(northEastCornerHeight);
 			uint16_t half = half_from_float(f.u32);
@@ -3523,21 +3724,24 @@ namespace TheWorld_Utils
 		}
 
 		float southWestCornerHeight = currentData.heights32Buffer->at<float>(0, maxIndex, numVerticesPerSize);
-		if (southData.heights32Buffer != nullptr && southData.heights16Buffer != nullptr)
+		if (southData.heights32Buffer != nullptr && southData.heights32Buffer->size() > 0
+			&& southData.heights16Buffer != nullptr && southData.heights16Buffer->size() > 0)
 		{
 			TheWorld_Utils::FLOAT_32 f(southWestCornerHeight);
 			uint16_t half = half_from_float(f.u32);
 			southData.heights32Buffer->at<float>(0, 0, numVerticesPerSize) = southWestCornerHeight;
 			southData.heights16Buffer->at<uint16_t>(0, 0, numVerticesPerSize) = half;
 		}
-		if (southwestData.heights32Buffer != nullptr && southwestData.heights16Buffer != nullptr)
+		if (southwestData.heights32Buffer != nullptr && southwestData.heights32Buffer->size() > 0
+			&& southwestData.heights16Buffer != nullptr && southwestData.heights16Buffer->size() > 0)
 		{
 			TheWorld_Utils::FLOAT_32 f(southWestCornerHeight);
 			uint16_t half = half_from_float(f.u32);
 			southwestData.heights32Buffer->at<float>(maxIndex, 0, numVerticesPerSize) = southWestCornerHeight;
 			southwestData.heights16Buffer->at<uint16_t>(maxIndex, 0, numVerticesPerSize) = half;
 		}
-		if (westData.heights32Buffer != nullptr && westData.heights16Buffer != nullptr)
+		if (westData.heights32Buffer != nullptr && westData.heights32Buffer->size() > 0
+			&& westData.heights16Buffer != nullptr && westData.heights16Buffer->size() > 0)
 		{
 			TheWorld_Utils::FLOAT_32 f(southWestCornerHeight);
 			uint16_t half = half_from_float(f.u32);
@@ -3546,21 +3750,24 @@ namespace TheWorld_Utils
 		}
 
 		float southEastCornerHeight = currentData.heights32Buffer->at<float>(maxIndex, maxIndex, numVerticesPerSize);
-		if (southData.heights32Buffer != nullptr && southData.heights16Buffer != nullptr)
+		if (southData.heights32Buffer != nullptr && southData.heights32Buffer->size() > 0
+			&& southData.heights16Buffer != nullptr && southData.heights16Buffer->size() > 0)
 		{
 			TheWorld_Utils::FLOAT_32 f(southEastCornerHeight);
 			uint16_t half = half_from_float(f.u32);
 			southData.heights32Buffer->at<float>(maxIndex, 0, numVerticesPerSize) = southEastCornerHeight;
 			southData.heights16Buffer->at<uint16_t>(maxIndex, 0, numVerticesPerSize) = half;
 		}
-		if (southeastData.heights32Buffer != nullptr && southeastData.heights16Buffer != nullptr)
+		if (southeastData.heights32Buffer != nullptr && southeastData.heights32Buffer->size() > 0
+			&& southeastData.heights16Buffer != nullptr && southeastData.heights16Buffer->size() > 0)
 		{
 			TheWorld_Utils::FLOAT_32 f(southEastCornerHeight);
 			uint16_t half = half_from_float(f.u32);
 			southeastData.heights32Buffer->at<float>(0, 0, numVerticesPerSize) = southEastCornerHeight;
 			southeastData.heights16Buffer->at<uint16_t>(0, 0, numVerticesPerSize) = half;
 		}
-		if (eastData.heights32Buffer != nullptr && eastData.heights16Buffer != nullptr)
+		if (eastData.heights32Buffer != nullptr && eastData.heights32Buffer->size() > 0
+			&& eastData.heights16Buffer != nullptr && eastData.heights16Buffer->size() > 0)
 		{
 			TheWorld_Utils::FLOAT_32 f(southEastCornerHeight);
 			uint16_t half = half_from_float(f.u32);
