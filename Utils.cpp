@@ -508,6 +508,46 @@ namespace TheWorld_Utils
 			return "high_mountains_2_grow";
 		}
 		break;
+		case TerrainEdit::TerrainType::high_mountains_3:
+		{
+			return "high_mountains_3";
+		}
+		break;
+		case TerrainEdit::TerrainType::high_mountains_3_grow:
+		{
+			return "high_mountains_3_grow";
+		}
+		break;
+		case TerrainEdit::TerrainType::high_mountains_4:
+		{
+			return "high_mountains_4";
+		}
+		break;
+		case TerrainEdit::TerrainType::high_mountains_4_grow:
+		{
+			return "high_mountains_4_grow";
+		}
+		break;
+		case TerrainEdit::TerrainType::coastal:
+		{
+			return "coastal";
+		}
+		break;
+		case TerrainEdit::TerrainType::sea_abyss_1:
+		{
+			return "sea_abyss_1";
+		}
+		break;
+		case TerrainEdit::TerrainType::sea_abyss_2:
+		{
+			return "sea_abyss_2";
+		}
+		break;
+		case TerrainEdit::TerrainType::sea_abyss_3:
+		{
+			return "sea_abyss_3";
+		}
+		break;
 		default:
 		{
 			return "notset";
@@ -544,6 +584,22 @@ namespace TheWorld_Utils
 			return TerrainEdit::TerrainType::high_mountains_2;
 		else if (terrainType == "high_mountains_2_grow")
 			return TerrainEdit::TerrainType::high_mountains_2_grow;
+		else if (terrainType == "high_mountains_3")
+			return TerrainEdit::TerrainType::high_mountains_3;
+		else if (terrainType == "high_mountains_3_grow")
+			return TerrainEdit::TerrainType::high_mountains_3_grow;
+		else if (terrainType == "high_mountains_4")
+			return TerrainEdit::TerrainType::high_mountains_4;
+		else if (terrainType == "high_mountains_4_grow")
+			return TerrainEdit::TerrainType::high_mountains_4_grow;
+		else if (terrainType == "coastal")
+			return TerrainEdit::TerrainType::coastal;
+		else if (terrainType == "sea_abyss_1")
+			return TerrainEdit::TerrainType::sea_abyss_1;
+		else if (terrainType == "sea_abyss_2")
+			return TerrainEdit::TerrainType::sea_abyss_2;
+		else if (terrainType == "sea_abyss_3")
+			return TerrainEdit::TerrainType::sea_abyss_3;
 		else
 			return TerrainEdit::TerrainType::notset;
 	}
@@ -976,12 +1032,28 @@ namespace TheWorld_Utils
 		return time;
 	}
 
+	std::string MeshCacheBuffer::meshIdToPrint1(std::string meshId)
+	{
+		return meshIdToPrint(meshId);
+	}
+
+	std::string MeshCacheBuffer::meshIdToPrint(std::string& meshId)
+	{
+		std::string ret;
+		if (meshId.length() == 0)
+			return ret;
+		std::chrono::system_clock::time_point tp = getTimeFromMeshId(meshId, ret);
+		ret += std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(tp.time_since_epoch()).count());
+		return ret;
+	}
+
 	bool MeshCacheBuffer::firstMeshIdMoreRecent(std::string& firstMeshId, std::string& secondMeshId)
 	{
 		size_t size = 0;
 		//BYTE shortBuffer[256 + 1];
 
 		std::chrono::system_clock::time_point firstTime;
+		std::string sFirstTime;
 		std::vector<std::string> v = TheWorld_Utils::Utils::split(firstMeshId, ':');
 		my_assert(v.size() >= 1);
 		if (v.size() > 1)
@@ -993,6 +1065,12 @@ namespace TheWorld_Utils
 			std::string s = firstMeshId.substr(headerToDiscardSize);
 			size_t sz = s.size();
 			firstTime = TheWorld_Utils::deserializeFromByteStream<std::chrono::system_clock::time_point>((BYTE*)s.c_str(), size);
+			{
+				time_t t = std::chrono::system_clock::to_time_t(firstTime);
+				std::tm t1;	localtime_s(&t1, &t);
+				char buff[70];	strftime(buff, sizeof buff, "%Y %m %e %T", &t1);
+				sFirstTime = buff;
+			}
 		}
 
 		////time_t firstTime = 0;
@@ -1005,6 +1083,7 @@ namespace TheWorld_Utils
 		//}
 
 		std::chrono::system_clock::time_point secondTime;
+		std::string sSecondTime;
 		v = TheWorld_Utils::Utils::split(secondMeshId, ':');
 		my_assert(v.size() >= 1);
 		if (v.size() > 1)
@@ -1016,6 +1095,12 @@ namespace TheWorld_Utils
 			std::string s = secondMeshId.substr(headerToDiscardSize);
 			size_t sz = s.size();
 			secondTime = TheWorld_Utils::deserializeFromByteStream<std::chrono::system_clock::time_point>((BYTE*)s.c_str(), size);
+			{
+				time_t t = std::chrono::system_clock::to_time_t(secondTime);
+				std::tm t1;	localtime_s(&t1, &t);
+				char buff[70];	strftime(buff, sizeof buff, "%Y %m %e %T", &t1);
+				sSecondTime = buff;
+			}
 		}
 
 		////time_t secondTime = 0;
@@ -1181,9 +1266,14 @@ namespace TheWorld_Utils
 		return m_meshId;
 	}
 
+	std::string MeshCacheBuffer::getMeshIdStr(void)
+	{
+		return meshIdToPrint(m_meshId);
+	}
+		
 	std::string MeshCacheBuffer::getCacheIdStr(void)
 	{
-		return "MAP-" + m_mapName + "_ST-" + std::to_string(m_gridStepInWU) + "_SZ-" + std::to_string(m_numVerticesPerSize) + "_L-" + std::to_string(m_level) + "_X-" + std::to_string(m_lowerXGridVertex) + "_Z-" + std::to_string(m_lowerZGridVertex);
+		return "MAP-" + m_mapName + "_ST-" + std::to_string(m_gridStepInWU) + "_SZ-" + std::to_string(m_numVerticesPerSize) + "_L-" + std::to_string(m_level) + "_X-" + std::to_string(m_lowerXGridVertex) + "_Z-" + std::to_string(m_lowerZGridVertex) + " Hash=" + meshIdToPrint(m_meshId);
 	}
 
 	bool MeshCacheBuffer::refreshMapsFromDisk(size_t numVerticesPerSize, float gridStepInWU, std::string _meshId, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer)
@@ -1412,7 +1502,7 @@ namespace TheWorld_Utils
 		refreshCacheQuadrantDataFromBuffer((BYTE*)buffer.c_str(), buffer.size(), cacheQuadrantData, updateCache);
 	}
 
-	void MeshCacheBuffer::refreshInternalCacheQuadrantDataFromDisk(bool workDir, bool force)
+	void MeshCacheBuffer::refreshInternalCacheQuadrantDataFromDisk(bool workDir, bool force, bool renewMeshId)
 	{
 		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshInternalCacheQuadrantDataFromDisk 1 ") + __FUNCTION__, "ALL");
 
@@ -1421,12 +1511,19 @@ namespace TheWorld_Utils
 			std::string buffer;
 			readBufferFromDisk(m_meshId, buffer, workDir);
 			m_internalCacheQuadrantData.allocateBuffers();
+			bool renewed = false;
 			if (m_meshId.length() == 0 || buffer.length() == 0)
 			{
 				std::string meshid;
 				setEmptyBuffer(getNumVerticesPerSize(), meshid, buffer);
+				renewed = true;
 			}
 			refreshCacheQuadrantDataFromBuffer(buffer, m_internalCacheQuadrantData, false);
+			if (renewMeshId && !renewed)
+			{
+				m_internalCacheQuadrantData.meshId = generateNewMeshId();
+				m_meshId = m_internalCacheQuadrantData.meshId;
+			}
 			//m_internalCacheQuadrantData.terrainData()->deserialize(*m_internalCacheQuadrantData.terrainEditValues);
 		}
 	}
@@ -1555,7 +1652,7 @@ namespace TheWorld_Utils
 		writeBufferToDiskCache(buffer.ptr(), buffer.size(), renewMeshId, workDir);
 	}
 
-	void MeshCacheBuffer::writeBufferToDiskCache(const BYTE* buffer, const size_t bufferSize, bool renewMeshId, bool workDir)
+	void MeshCacheBuffer::writeBufferToDiskCache(const BYTE* buffer, const size_t bufferSize, bool renewMeshId, bool workDir) const
 	{
 		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer writeBufferToCache 1 ") + __FUNCTION__, "ALL");
 
@@ -3225,7 +3322,8 @@ namespace TheWorld_Utils
 	{
 		bool updated = false;
 
-		if (currentData.heights32Buffer == nullptr || currentData.heights16Buffer == nullptr)
+		if (currentData.heights32Buffer == nullptr || currentData.heights32Buffer->size() == 0
+			|| currentData.heights16Buffer == nullptr || currentData.heights16Buffer->size() == 0)
 			return updated;
 
 		size_t maxIndex = numVerticesPerSize - 1;
@@ -3849,7 +3947,9 @@ namespace TheWorld_Utils
 	{
 		bool updated = false;
 
-		if (data.terrainEditValues == nullptr)
+		if (data.terrainEditValues == nullptr || data.terrainEditValues->size() == 0
+			|| data.heights32Buffer == nullptr || data.heights32Buffer->size() == 0
+			|| data.heights16Buffer == nullptr || data.heights16Buffer->size() == 0)
 			return updated;
 
 		TerrainEdit* terrainEdit = (TerrainEdit*)data.terrainEditValues->ptr();
@@ -4005,7 +4105,9 @@ namespace TheWorld_Utils
 	{
 		bool updated = false;
 
-		if (data.terrainEditValues == nullptr)
+		if (data.terrainEditValues == nullptr || data.terrainEditValues->size() == 0
+			|| data.heights32Buffer == nullptr || data.heights32Buffer->size() == 0
+			|| data.heights16Buffer == nullptr || data.heights16Buffer->size() == 0)
 			return updated;
 
 		TerrainEdit* terrainEdit = (TerrainEdit*)data.terrainEditValues->ptr();
@@ -4159,7 +4261,9 @@ namespace TheWorld_Utils
 	{
 		bool updated = false;
 
-		if (data.terrainEditValues == nullptr)
+		if (data.terrainEditValues == nullptr || data.terrainEditValues->size() == 0
+			|| data.heights32Buffer == nullptr || data.heights32Buffer->size() == 0
+			|| data.heights16Buffer == nullptr || data.heights16Buffer->size() == 0)
 			return updated;
 
 		TerrainEdit* terrainEdit = (TerrainEdit*)data.terrainEditValues->ptr();
@@ -4312,7 +4416,9 @@ namespace TheWorld_Utils
 	{
 		bool updated = false;
 
-		if (data.terrainEditValues == nullptr)
+		if (data.terrainEditValues == nullptr || data.terrainEditValues->size() == 0
+			|| data.heights32Buffer == nullptr || data.heights32Buffer->size() == 0
+			|| data.heights16Buffer == nullptr || data.heights16Buffer->size() == 0)
 			return updated;
 
 		TerrainEdit* terrainEdit = (TerrainEdit*)data.terrainEditValues->ptr();
