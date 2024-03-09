@@ -63,6 +63,15 @@ namespace TheWorld_Utils
 				ret = "rocks07";
 			break;
 		case TerrainType::coastal:
+			if (textureType == TerrainEdit::TextureType::lowElevation)
+				ret = "sand";
+			else if (textureType == TerrainEdit::TextureType::highElevation)
+				ret = "grass";
+			else if (textureType == TerrainEdit::TextureType::dirt)
+				ret = "leaves";
+			else if (textureType == TerrainEdit::TextureType::rocks)
+				ret = "rocks07";
+			break;
 		case TerrainType::sea_abyss_1:
 		case TerrainType::sea_abyss_2:
 		case TerrainType::sea_abyss_3:
