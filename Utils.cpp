@@ -1642,12 +1642,12 @@ namespace TheWorld_Utils
 		_buffer.append((char*)buffer.ptr(), size);
 	}
 		
-	void MeshCacheBuffer::writeBufferToDiskCache(std::string& buffer, bool renewMeshId, bool workDir)
+	void MeshCacheBuffer::writeBufferToDiskCache(std::string& buffer, bool renewMeshId, bool workDir) const
 	{
 		writeBufferToDiskCache((BYTE*)buffer.c_str(), buffer.size(), renewMeshId, workDir);
 	}
 
-	void MeshCacheBuffer::writeBufferToDiskCache(TheWorld_Utils::MemoryBuffer& buffer, bool renewMeshId, bool workDir)
+	void MeshCacheBuffer::writeBufferToDiskCache(TheWorld_Utils::MemoryBuffer& buffer, bool renewMeshId, bool workDir) const
 	{
 		writeBufferToDiskCache(buffer.ptr(), buffer.size(), renewMeshId, workDir);
 	}
