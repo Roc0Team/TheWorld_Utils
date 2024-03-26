@@ -436,6 +436,10 @@ namespace TheWorld_Utils
 			return false;
 		if (extraValues1.heightsNeedRegen != o.extraValues1.heightsNeedRegen)
 			return false;
+		if (extraValues1.seaInfoSet != o.extraValues1.seaInfoSet)
+			return false;
+		if (extraValues1.containsSea != o.extraValues1.containsSea)
+			return false;
 		return true;
 	}
 
@@ -621,6 +625,29 @@ namespace TheWorld_Utils
 		if (buffer.size() == 456 && buffer.size() < saveSize)
 			extraValues1.heightsNeedRegen = false;
 		size = saveSize;
+	}
+
+	bool TerrainEdit::detectSeaInQuadrant(void)
+	{
+		bool done = false;
+
+		if (!extraValues1.heightsNeedRegen && extraValues1.seaInfoSet == 0)
+		{
+			extraValues1.containsSea = 0;
+
+			if (terrainType == TerrainType::coastal || terrainType == TerrainType::sea_abyss_1 || terrainType == TerrainType::sea_abyss_2 || terrainType == TerrainType::sea_abyss_3)
+			{
+				if (minHeight <= THEWORLD_SEA_LEVEL)
+				{
+					extraValues1.containsSea = 1;
+				}
+			}
+
+			extraValues1.seaInfoSet = 1;
+			done = true;
+		}
+
+		return done;
 	}
 
 	void TerrainEdit::adjustValues(TerrainEdit* northSideZMinus, TerrainEdit* southSideZPlus, TerrainEdit* westSideXMinus, TerrainEdit* eastSideXPlus)

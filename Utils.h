@@ -33,6 +33,8 @@
 #include <Eigen/Dense>
 #pragma warning(pop)
 
+#define THEWORLD_SEA_LEVEL														0
+
 #define THEWORLD_DEFAULT_AMPLITUDE_BLEND_FACTOR									2.0f
 
 #define Vector3Zero godot::Vector3(0, 0, 0)
@@ -678,12 +680,15 @@ namespace TheWorld_Utils
 			float blendingBendingFactor = 1.0f;
 			float minRandomBendingExtension = 0.2f;
 			float maxRandomBendingExtension = 0.5f;
-			float filler1 = 0.0f;
-			float filler2 = 0.0f;
-			float filler3 = 0.0f;
-			float filler4 = 0.0f;
-			float filler5 = 0.0f;
-			bool heightsNeedRegen = true;	// ???
+			float filler1 = 0.1f;
+			float filler2 = 0.2f;
+			float filler3 = 0.3f;
+			float filler4 = 0.4f;
+			float filler5 = 0.5f;
+			bool heightsNeedRegen = true;
+			float filler6 = 0.6f;
+			int32_t seaInfoSet = 0;		// used as bool
+			int32_t containsSea = 0;	// used as bool
 		} extraValues1;
 #pragma pack ()
 		// WARNING: this struct can safely grow appending new data at the end (may be need an alignment filler to modify sizeof(extraValues))
@@ -698,6 +703,7 @@ namespace TheWorld_Utils
 		__declspec(dllexport) static enum class TerrainEdit::TerrainType terrainTypeEnum(std::string& terrainType);
 		__declspec(dllexport) void adjustValues(TerrainEdit* northSideZMinus, TerrainEdit* southSideZPlus, TerrainEdit* westSideXMinus, TerrainEdit* eastSideXPlus);
 		__declspec(dllexport) bool operator==(const TerrainEdit& terrainEdit) const;
+		__declspec(dllexport) bool detectSeaInQuadrant(void);
 	};
 
 	template<> MYAPI void MemoryBuffer::populateVector<float>(std::vector<float>& v);
