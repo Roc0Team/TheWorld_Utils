@@ -520,6 +520,7 @@ namespace TheWorld_Utils
 			return m_tag;
 		}
 		_declspec(dllexport) size_t distanceInPerimeter(QuadrantPos& q) const;
+		_declspec(dllexport) int distanceInPerimeter(QuadrantPos& fromQuadrant, QuadrantPos::DirectionSlot dir) const;
 		bool isInitialized(void) const
 		{
 			return m_initialized;

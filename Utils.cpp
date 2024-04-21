@@ -174,6 +174,35 @@ namespace TheWorld_Utils
 			return distanceOnZ;
 	}
 
+	int QuadrantPos::distanceInPerimeter(QuadrantPos& fromQuadrant, QuadrantPos::DirectionSlot dir) const
+	{
+		int ret = -1;
+		switch (dir)
+		{
+			case DirectionSlot::WestXMinus:
+				{
+					ret = (int)ceil((fromQuadrant.getLowerXGridVertex() - getLowerXGridVertex()) / fromQuadrant.m_sizeInWU);
+				}
+				break;
+			case DirectionSlot::EastXPlus:
+				{
+					ret = (int)ceil((getLowerXGridVertex() - fromQuadrant.getLowerXGridVertex()) / fromQuadrant.m_sizeInWU);
+				}
+				break;
+			case DirectionSlot::NorthZMinus:
+				{
+					ret = (int)ceil((fromQuadrant.getLowerZGridVertex() - getLowerZGridVertex()) / fromQuadrant.m_sizeInWU);
+				}
+				break;
+			case DirectionSlot::SouthZPlus:
+				{
+					ret = (int)ceil((getLowerZGridVertex() - fromQuadrant.getLowerZGridVertex()) / fromQuadrant.m_sizeInWU);
+				}
+				break;
+		}
+		return ret;
+	}
+
 	void TerrainEdit::generateGroundImage(MemoryBuffer& albedoBumpImage, MemoryBuffer& normalRoughnessImage, std::string groundTypeName, size_t imageSize, bool flipY, MemoryBuffer& colorImage, MemoryBuffer& bumpImage, MemoryBuffer& normalImage, MemoryBuffer& roughImage)
 	{
 		size_t width, heigth;
