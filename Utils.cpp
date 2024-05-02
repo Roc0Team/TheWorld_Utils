@@ -646,6 +646,8 @@ namespace TheWorld_Utils
 	void TerrainEdit::deserialize(TheWorld_Utils::MemoryBuffer& buffer)
 	{
 		size_t minLen = (buffer.size() <= size ? buffer.size() : size);
+		//if (buffer.size() != size)	// DEBUG
+		//	bool b = true;			// DEBUG
 		//assert(buffer.len() == sizeof(TerrainEdit));
 		size_t saveSize = size;
 		TerrainEdit* p = (TerrainEdit*)buffer.ptr();

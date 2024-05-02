@@ -693,7 +693,7 @@ namespace TheWorld_Utils
 		} extraValues1;
 #pragma pack ()
 		// WARNING: this struct can safely grow appending new data at the end (may be need an alignment filler to modify sizeof(extraValues))
-		// remember to update operator== and DBJson
+		// remember to update operator== and DBJson (breakpoint in TerrainEdit::deserialize to verify in debug correct behavior)
 
 		__declspec(dllexport) TerrainEdit(enum class TerrainEdit::TerrainType terrainType = TerrainEdit::TerrainType::empty);
 		__declspec(dllexport) void setTextureNameForTerrainType(enum class TerrainEdit::TextureType textureType);
