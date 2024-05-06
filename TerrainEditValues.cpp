@@ -158,9 +158,9 @@ namespace TheWorld_Utils
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = true;
 
-			extraValues1.numBlendingCycles = 2;
-			extraValues1.postGenerateElevation = 0.0f;
-			extraValues1.ignoreDesideredMinHeight = true;
+			extraValues.numBlendingCycles = 2;
+			extraValues.postGenerateElevation = 0.0f;
+			extraValues.ignoreDesideredMinHeight = true;
 		}
 		break;
 		case TerrainEdit::TerrainType::jagged_1:
@@ -195,9 +195,9 @@ namespace TheWorld_Utils
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = false;
 
-			extraValues1.numBlendingCycles = 2;
-			extraValues1.postGenerateElevation = 0.0f;
-			extraValues1.ignoreDesideredMinHeight = true;
+			extraValues.numBlendingCycles = 2;
+			extraValues.postGenerateElevation = 0.0f;
+			extraValues.ignoreDesideredMinHeight = true;
 		}
 		break;
 		case TerrainEdit::TerrainType::campaign_1:
@@ -232,9 +232,9 @@ namespace TheWorld_Utils
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = true;
 
-			extraValues1.numBlendingCycles = 2;
-			extraValues1.postGenerateElevation = 0.0f;
-			extraValues1.ignoreDesideredMinHeight = true;
+			extraValues.numBlendingCycles = 2;
+			extraValues.postGenerateElevation = 0.0f;
+			extraValues.ignoreDesideredMinHeight = true;
 		}
 		break;
 		case TerrainEdit::TerrainType::plateau_1:
@@ -269,9 +269,9 @@ namespace TheWorld_Utils
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = false;
 
-			extraValues1.numBlendingCycles = 2;
-			extraValues1.postGenerateElevation = 0.0f;
-			extraValues1.ignoreDesideredMinHeight = false;
+			extraValues.numBlendingCycles = 2;
+			extraValues.postGenerateElevation = 0.0f;
+			extraValues.ignoreDesideredMinHeight = false;
 		}
 		break;
 		case TerrainEdit::TerrainType::low_hills:
@@ -306,9 +306,9 @@ namespace TheWorld_Utils
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = true;
 
-			extraValues1.numBlendingCycles = 2;
-			extraValues1.postGenerateElevation = 0.0f;
-			extraValues1.ignoreDesideredMinHeight = true;
+			extraValues.numBlendingCycles = 2;
+			extraValues.postGenerateElevation = 0.0f;
+			extraValues.ignoreDesideredMinHeight = true;
 		}
 		break;
 		case TerrainEdit::TerrainType::high_hills:
@@ -343,9 +343,9 @@ namespace TheWorld_Utils
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = true;
 
-			extraValues1.numBlendingCycles = 2;
-			extraValues1.postGenerateElevation = 500.0f;
-			extraValues1.ignoreDesideredMinHeight = true;
+			extraValues.numBlendingCycles = 2;
+			extraValues.postGenerateElevation = 500.0f;
+			extraValues.ignoreDesideredMinHeight = true;
 		}
 		break;
 		case TerrainEdit::TerrainType::low_mountains:
@@ -381,9 +381,9 @@ namespace TheWorld_Utils
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = true;
 
-			extraValues1.numBlendingCycles = 2;
-			extraValues1.postGenerateElevation = 500.0f;
-			extraValues1.ignoreDesideredMinHeight = true;
+			extraValues.numBlendingCycles = 2;
+			extraValues.postGenerateElevation = 500.0f;
+			extraValues.ignoreDesideredMinHeight = true;
 		}
 		break;
 		case TerrainEdit::TerrainType::low_mountains_grow:
@@ -419,9 +419,9 @@ namespace TheWorld_Utils
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = false;
 
-			extraValues1.numBlendingCycles = 2;
-			extraValues1.postGenerateElevation = 500.0f;
-			extraValues1.ignoreDesideredMinHeight = false;
+			extraValues.numBlendingCycles = 2;
+			extraValues.postGenerateElevation = 500.0f;
+			extraValues.ignoreDesideredMinHeight = false;
 		}
 		break;
 		case TerrainEdit::TerrainType::high_mountains_1:
@@ -457,9 +457,9 @@ namespace TheWorld_Utils
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = true;
 
-			extraValues1.numBlendingCycles = 2;
-			extraValues1.postGenerateElevation = 1000.0f;
-			extraValues1.ignoreDesideredMinHeight = true;
+			extraValues.numBlendingCycles = 2;
+			extraValues.postGenerateElevation = 1000.0f;
+			extraValues.ignoreDesideredMinHeight = true;
 		}
 		break;
 		case TerrainEdit::TerrainType::high_mountains_1_grow:
@@ -495,9 +495,9 @@ namespace TheWorld_Utils
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = false;
 
-			extraValues1.numBlendingCycles = 2;
-			extraValues1.postGenerateElevation = 1000.0f;
-			extraValues1.ignoreDesideredMinHeight = false;
+			extraValues.numBlendingCycles = 2;
+			extraValues.postGenerateElevation = 1000.0f;
+			extraValues.ignoreDesideredMinHeight = false;
 		}
 		break;
 		case TerrainEdit::TerrainType::high_mountains_2:
@@ -533,9 +533,9 @@ namespace TheWorld_Utils
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = true;
 
-			extraValues1.numBlendingCycles = 2;
-			extraValues1.postGenerateElevation = 2000.0f;
-			extraValues1.ignoreDesideredMinHeight = true;
+			extraValues.numBlendingCycles = 2;
+			extraValues.postGenerateElevation = 2000.0f;
+			extraValues.ignoreDesideredMinHeight = true;
 		}
 		break;
 		case TerrainEdit::TerrainType::high_mountains_2_grow:
@@ -571,9 +571,9 @@ namespace TheWorld_Utils
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = false;
 
-			extraValues1.numBlendingCycles = 2;
-			extraValues1.postGenerateElevation = 2000.0f;
-			extraValues1.ignoreDesideredMinHeight = false;
+			extraValues.numBlendingCycles = 2;
+			extraValues.postGenerateElevation = 2000.0f;
+			extraValues.ignoreDesideredMinHeight = false;
 		}
 		break;
 		case TerrainEdit::TerrainType::high_mountains_3:
@@ -609,9 +609,9 @@ namespace TheWorld_Utils
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = true;
 
-			extraValues1.numBlendingCycles = 2;
-			extraValues1.postGenerateElevation = 3000.0f;
-			extraValues1.ignoreDesideredMinHeight = true;
+			extraValues.numBlendingCycles = 2;
+			extraValues.postGenerateElevation = 3000.0f;
+			extraValues.ignoreDesideredMinHeight = true;
 		}
 		break;
 		case TerrainEdit::TerrainType::high_mountains_3_grow:
@@ -647,9 +647,9 @@ namespace TheWorld_Utils
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = false;
 
-			extraValues1.numBlendingCycles = 2;
-			extraValues1.postGenerateElevation = 3000.0f;
-			extraValues1.ignoreDesideredMinHeight = false;
+			extraValues.numBlendingCycles = 2;
+			extraValues.postGenerateElevation = 3000.0f;
+			extraValues.ignoreDesideredMinHeight = false;
 		}
 		break;
 		case TerrainEdit::TerrainType::high_mountains_4:
@@ -685,9 +685,9 @@ namespace TheWorld_Utils
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = true;
 
-			extraValues1.numBlendingCycles = 2;
-			extraValues1.postGenerateElevation = 4000.0f;
-			extraValues1.ignoreDesideredMinHeight = true;
+			extraValues.numBlendingCycles = 2;
+			extraValues.postGenerateElevation = 4000.0f;
+			extraValues.ignoreDesideredMinHeight = true;
 		}
 		break;
 		case TerrainEdit::TerrainType::high_mountains_4_grow:
@@ -723,9 +723,9 @@ namespace TheWorld_Utils
 			noise.desideredMinHeight = 0.0f;
 			noise.desideredMinHeigthMandatory = false;
 
-			extraValues1.numBlendingCycles = 2;
-			extraValues1.postGenerateElevation = 4000.0f;
-			extraValues1.ignoreDesideredMinHeight = false;
+			extraValues.numBlendingCycles = 2;
+			extraValues.postGenerateElevation = 4000.0f;
+			extraValues.ignoreDesideredMinHeight = false;
 		}
 		break;
 		case TerrainEdit::TerrainType::coastal:
@@ -760,9 +760,9 @@ namespace TheWorld_Utils
 			noise.desideredMinHeight = -1000.0f;
 			noise.desideredMinHeigthMandatory = true;
 
-			extraValues1.numBlendingCycles = 2;
-			extraValues1.postGenerateElevation = 0.0f;
-			extraValues1.ignoreDesideredMinHeight = false;
+			extraValues.numBlendingCycles = 2;
+			extraValues.postGenerateElevation = 0.0f;
+			extraValues.ignoreDesideredMinHeight = false;
 		}
 		break;
 		case TerrainEdit::TerrainType::sea_abyss_1:
@@ -797,9 +797,9 @@ namespace TheWorld_Utils
 			noise.desideredMinHeight = -2000.0f;
 			noise.desideredMinHeigthMandatory = true;
 
-			extraValues1.numBlendingCycles = 2;
-			extraValues1.postGenerateElevation = 0.0f;
-			extraValues1.ignoreDesideredMinHeight = false;
+			extraValues.numBlendingCycles = 2;
+			extraValues.postGenerateElevation = 0.0f;
+			extraValues.ignoreDesideredMinHeight = false;
 		}
 		break;
 		case TerrainEdit::TerrainType::sea_abyss_2:
@@ -834,9 +834,9 @@ namespace TheWorld_Utils
 			noise.desideredMinHeight = -3000.0f;
 			noise.desideredMinHeigthMandatory = true;
 
-			extraValues1.numBlendingCycles = 2;
-			extraValues1.postGenerateElevation = 0.0f;
-			extraValues1.ignoreDesideredMinHeight = false;
+			extraValues.numBlendingCycles = 2;
+			extraValues.postGenerateElevation = 0.0f;
+			extraValues.ignoreDesideredMinHeight = false;
 		}
 		break;
 		case TerrainEdit::TerrainType::sea_abyss_3:
@@ -871,9 +871,9 @@ namespace TheWorld_Utils
 			noise.desideredMinHeight = -4000.0f;
 			noise.desideredMinHeigthMandatory = true;
 
-			extraValues1.numBlendingCycles = 2;
-			extraValues1.postGenerateElevation = 0.0f;
-			extraValues1.ignoreDesideredMinHeight = false;
+			extraValues.numBlendingCycles = 2;
+			extraValues.postGenerateElevation = 0.0f;
+			extraValues.ignoreDesideredMinHeight = false;
 		}
 		break;
 		case TerrainEdit::TerrainType::noise_1:

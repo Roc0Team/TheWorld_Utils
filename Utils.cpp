@@ -388,9 +388,9 @@ namespace TheWorld_Utils
 		//memset(extraValues.highElevationTexName_g, 0, sizeof(extraValues.highElevationTexName_g));
 		//memset(extraValues.dirtTexName_b, 0, sizeof(extraValues.dirtTexName_b));
 		//memset(extraValues.rocksTexName_a, 0, sizeof(extraValues.rocksTexName_a));
-		extraValues.splatmapNeedRegen = true;
-		extraValues.colormapNeedRegen = true;
-		extraValues.globalmapNeedRegen = true;
+		splatmapNeedRegen = true;
+		colormapNeedRegen = true;
+		globalmapNeedRegen = true;
 	}
 
 	bool TerrainEdit::operator==(const TerrainEdit& o) const
@@ -433,11 +433,11 @@ namespace TheWorld_Utils
 			return false;
 		if (strcmp(extraValues.rocksTexName_a, o.extraValues.rocksTexName_a) != 0)
 			return false;
-		if (extraValues.splatmapNeedRegen != o.extraValues.splatmapNeedRegen)
+		if (splatmapNeedRegen != o.splatmapNeedRegen)
 			return false;
-		if (extraValues.colormapNeedRegen != o.extraValues.colormapNeedRegen)
+		if (colormapNeedRegen != o.colormapNeedRegen)
 			return false;
-		if (extraValues.globalmapNeedRegen != o.extraValues.globalmapNeedRegen)
+		if (globalmapNeedRegen != o.globalmapNeedRegen)
 			return false;
 		if (extraValues.slopeVerticalFactor != o.extraValues.slopeVerticalFactor)
 			return false;
@@ -451,23 +451,23 @@ namespace TheWorld_Utils
 			return false;
 		if (extraValues.amplitudeBlendFactor != o.extraValues.amplitudeBlendFactor)
 			return false;
-		if (extraValues1.postGenerateElevation != o.extraValues1.postGenerateElevation)
+		if (extraValues.postGenerateElevation != o.extraValues.postGenerateElevation)
 			return false;
-		if (extraValues1.ignoreDesideredMinHeight != o.extraValues1.ignoreDesideredMinHeight)
+		if (extraValues.ignoreDesideredMinHeight != o.extraValues.ignoreDesideredMinHeight)
 			return false;
-		if (extraValues1.numBlendingCycles != o.extraValues1.numBlendingCycles)
+		if (extraValues.numBlendingCycles != o.extraValues.numBlendingCycles)
 			return false;
-		if (extraValues1.blendingBendingFactor != o.extraValues1.blendingBendingFactor)
+		if (extraValues.blendingBendingFactor != o.extraValues.blendingBendingFactor)
 			return false;
-		if (extraValues1.minRandomBendingExtension != o.extraValues1.minRandomBendingExtension)
+		if (extraValues.minRandomBendingExtension != o.extraValues.minRandomBendingExtension)
 			return false;
-		if (extraValues1.maxRandomBendingExtension != o.extraValues1.maxRandomBendingExtension)
+		if (extraValues.maxRandomBendingExtension != o.extraValues.maxRandomBendingExtension)
 			return false;
-		if (extraValues1.heightsNeedRegen != o.extraValues1.heightsNeedRegen)
+		if (heightsNeedRegen != o.heightsNeedRegen)
 			return false;
-		if (extraValues1.seaInfoSet != o.extraValues1.seaInfoSet)
+		if (extraValues.seaInfoSet != o.extraValues.seaInfoSet)
 			return false;
-		if (extraValues1.containsSea != o.extraValues1.containsSea)
+		if (extraValues.containsSea != o.extraValues.containsSea)
 			return false;
 		return true;
 	}
@@ -653,8 +653,6 @@ namespace TheWorld_Utils
 		TerrainEdit* p = (TerrainEdit*)buffer.ptr();
 		init(p->terrainType);
 		memcpy(this, buffer.ptr(), minLen);
-		if (buffer.size() == 456 && buffer.size() < saveSize)
-			extraValues1.heightsNeedRegen = false;
 		size = saveSize;
 	}
 
@@ -662,19 +660,19 @@ namespace TheWorld_Utils
 	{
 		bool done = false;
 
-		if (!extraValues1.heightsNeedRegen && extraValues1.seaInfoSet == 0)
+		if (!heightsNeedRegen && extraValues.seaInfoSet == 0)
 		{
-			extraValues1.containsSea = 0;
+			extraValues.containsSea = 0;
 
 			if (terrainType == TerrainType::coastal || terrainType == TerrainType::sea_abyss_1 || terrainType == TerrainType::sea_abyss_2 || terrainType == TerrainType::sea_abyss_3)
 			{
 				if (minHeight <= THEWORLD_SEA_LEVEL)
 				{
-					extraValues1.containsSea = 1;
+					extraValues.containsSea = 1;
 				}
 			}
 
-			extraValues1.seaInfoSet = 1;
+			extraValues.seaInfoSet = 1;
 			done = true;
 		}
 
@@ -1199,8 +1197,11 @@ namespace TheWorld_Utils
 	{
 		std::string dirPath = MeshCacheBuffer::cacheDir(cacheDir, mapName, gridStepInWU, numVerticesPerSize, level);
 		std::string workDirPath = getWorkCacheDirPathStatic(dirPath);
-		fs::remove_all(workDirPath);
-		fs::create_directory(workDirPath);
+		if (workDirPath[workDirPath.size() - 1] == '\\')
+			workDirPath.pop_back();
+		if (fs::exists(workDirPath))
+			fs::remove_all(workDirPath);
+		fs::create_directories(workDirPath);
 	}
 
 	void MeshCacheBuffer::getAllDiskCache(std::string _cacheDir, std::string mapName, float gridStepInWU, size_t numVerticesPerSize, int level, std::map<TheWorld_Utils::QuadrantPos, TheWorld_Utils::MeshCacheBuffer>& cacheMap, std::time_t& fromFileTimeType, bool workDir)
@@ -1952,16 +1953,16 @@ namespace TheWorld_Utils
 		{
 			//TheWorld_Utils::GuardProfiler profiler(std::string("EditGenerate 1.3 ") + __FUNCTION__, "Adjust desidered min height");
 
-			if ((terrainEdit->noise.desideredMinHeight != FLT_MIN && !terrainEdit->extraValues1.ignoreDesideredMinHeight)
-				|| terrainEdit->extraValues1.postGenerateElevation != 0)
+			if ((terrainEdit->noise.desideredMinHeight != FLT_MIN && !terrainEdit->extraValues.ignoreDesideredMinHeight)
+				|| terrainEdit->extraValues.postGenerateElevation != 0)
 			{
 				float corrector = 0;
 
-				if (terrainEdit->noise.desideredMinHeight != FLT_MIN && !terrainEdit->extraValues1.ignoreDesideredMinHeight)
+				if (terrainEdit->noise.desideredMinHeight != FLT_MIN && !terrainEdit->extraValues.ignoreDesideredMinHeight)
 					corrector += terrainEdit->noise.desideredMinHeight - terrainEdit->minHeight;
 
-				if (terrainEdit->extraValues1.postGenerateElevation != 0)
-					corrector += terrainEdit->extraValues1.postGenerateElevation;
+				if (terrainEdit->extraValues.postGenerateElevation != 0)
+					corrector += terrainEdit->extraValues.postGenerateElevation;
 
 				size_t idx = 0;
 				for (int z = 0; z < numVerticesPerSize; z++)
@@ -2837,7 +2838,7 @@ namespace TheWorld_Utils
 				TerrainEdit terrainEdit;
 				terrainEdit.deserialize(*cacheQuadrantData.terrainEditValues);
 				if (numHeights16 > 0 && terrainEdit.terrainType == TerrainEdit::TerrainType::empty)
-					terrainEdit.extraValues1.heightsNeedRegen = false;
+					terrainEdit.heightsNeedRegen = false;
 				//memcpy(_streamBuffer, cacheQuadrantData.terrainEditValues->ptr(), terrainEditValueSize);
 				memcpy(_streamBuffer, &terrainEdit, terrainEditValueSize);
 				_streamBuffer += terrainEditValueSize;
@@ -2947,11 +2948,11 @@ namespace TheWorld_Utils
 		//BYTE shortBuffer[256 + 1];	size_t size = 0;
 		//TheWorld_Utils::serializeToByteStream<size_t>(sizeof(size_t), shortBuffer, size);
 		TheWorld_Utils::TerrainEdit terrainEdit;
-		terrainEdit.extraValues1.heightsNeedRegen = true;
+		terrainEdit.heightsNeedRegen = true;
 		terrainEdit.normalsNeedRegen = true;
-		terrainEdit.extraValues.splatmapNeedRegen = true;
-		terrainEdit.extraValues.globalmapNeedRegen = true;
-		terrainEdit.extraValues.colormapNeedRegen = true;
+		terrainEdit.splatmapNeedRegen = true;
+		terrainEdit.globalmapNeedRegen = true;
+		terrainEdit.colormapNeedRegen = true;
 		TheWorld_Utils::MemoryBuffer terrainEditValuesBuffer((BYTE*)&terrainEdit, terrainEdit.size);
 		cacheQuadrantData.minHeight = 0.0f;
 		cacheQuadrantData.maxHeight = 0.0f;
@@ -4105,23 +4106,23 @@ namespace TheWorld_Utils
 						//	PLOG_DEBUG << "x=" << std::to_string(x) << " z=" << std::to_string(z) << "/" << std::to_string(maxIndex - z) << " increment= " << std::to_string(increment) << " " << std::to_string(h) << " ==> " << std::to_string(data.heights32Buffer->at<float>(x, z, numVerticesPerSize)) << " " << std::to_string(hNorth) << " ==> " << std::to_string(northData.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize));
 					}
 
-					// DISABLED ATM BECAUSE terrainEdit->extraValues1.blendingBendingFactor IS ALWAYS ZERO
-					if (terrainEdit->extraValues1.blendingBendingFactor != 0 && lastPhase)
+					// DISABLED ATM BECAUSE terrainEdit->extraValues.blendingBendingFactor IS ALWAYS ZERO
+					if (terrainEdit->extraValues.blendingBendingFactor != 0 && lastPhase)
 					{
 						std::hash<std::string> hasher;
 						size_t seed = hasher(data.meshId + northData.meshId);
 						srand((unsigned int)(seed));
 						int random_i = (rand() % 100) + 1;			// random integer between 1 and 100
-						float random_f = (((terrainEdit->extraValues1.maxRandomBendingExtension - terrainEdit->extraValues1.minRandomBendingExtension) / 100) * random_i) + terrainEdit->extraValues1.minRandomBendingExtension;
+						float random_f = (((terrainEdit->extraValues.maxRandomBendingExtension - terrainEdit->extraValues.minRandomBendingExtension) / 100) * random_i) + terrainEdit->extraValues.minRandomBendingExtension;
 						numVerticesToAdjustInEachQuadrant = size_t(ceilf(numVerticesToAdjustInEachQuadrant * random_f));
 						float radiantStepPerVertex = TheWorld_Utils::kPi / (numVerticesToAdjustInEachQuadrant);
 
 						float gapToFlatten1 = data.heights32Buffer->at<float>(x, numVerticesToAdjustInEachQuadrant, numVerticesPerSize) - data.heights32Buffer->at<float>(x, 0, numVerticesPerSize);
 						float heightStep1 = gapToFlatten1 / numVerticesToAdjustInEachQuadrant;
-						float heightStepFactor1 = heightStep1 * terrainEdit->extraValues1.blendingBendingFactor;
+						float heightStepFactor1 = heightStep1 * terrainEdit->extraValues.blendingBendingFactor;
 						float gapToFlatten2 = northData.heights32Buffer->at<float>(x, maxIndex - numVerticesToAdjustInEachQuadrant, numVerticesPerSize) - northData.heights32Buffer->at<float>(x, maxIndex, numVerticesPerSize);
 						float heightStep2 = gapToFlatten2 / numVerticesToAdjustInEachQuadrant;
-						float heightStepFactor2 = heightStep2 * terrainEdit->extraValues1.blendingBendingFactor;
+						float heightStepFactor2 = heightStep2 * terrainEdit->extraValues.blendingBendingFactor;
 						size_t idx = 0;
 						for (int z = (int)numVerticesToAdjustInEachQuadrant; z >= 0; z--)
 						{
@@ -4261,23 +4262,23 @@ namespace TheWorld_Utils
 						}
 					}
 
-					// DISABLED ATM BECAUSE terrainEdit->extraValues1.blendingBendingFactor IS ALWAYS ZERO
-					if (terrainEdit->extraValues1.blendingBendingFactor != 0 && lastPhase)
+					// DISABLED ATM BECAUSE terrainEdit->extraValues.blendingBendingFactor IS ALWAYS ZERO
+					if (terrainEdit->extraValues.blendingBendingFactor != 0 && lastPhase)
 					{
 						std::hash<std::string> hasher;
 						size_t seed = hasher(data.meshId + southData.meshId);
 						srand((unsigned int)(seed));
 						int random_i = (rand() % 100) + 1;			// random integer between 1 and 100
-						float random_f = (((terrainEdit->extraValues1.maxRandomBendingExtension - terrainEdit->extraValues1.minRandomBendingExtension) / 100) * random_i) + terrainEdit->extraValues1.minRandomBendingExtension;
+						float random_f = (((terrainEdit->extraValues.maxRandomBendingExtension - terrainEdit->extraValues.minRandomBendingExtension) / 100) * random_i) + terrainEdit->extraValues.minRandomBendingExtension;
 						numVerticesToAdjustInEachQuadrant = size_t(ceilf(numVerticesToAdjustInEachQuadrant * random_f));
 						float radiantStepPerVertex = TheWorld_Utils::kPi / (numVerticesToAdjustInEachQuadrant);
 
 						float gapToFlatten1 = data.heights32Buffer->at<float>(x, maxIndex - numVerticesToAdjustInEachQuadrant, numVerticesPerSize) - data.heights32Buffer->at<float>(x, maxIndex, numVerticesPerSize);
 						float heightStep1 = gapToFlatten1 / numVerticesToAdjustInEachQuadrant;
-						float heightStepFactor1 = heightStep1 * terrainEdit->extraValues1.blendingBendingFactor;
+						float heightStepFactor1 = heightStep1 * terrainEdit->extraValues.blendingBendingFactor;
 						float gapToFlatten2 = southData.heights32Buffer->at<float>(x, numVerticesToAdjustInEachQuadrant, numVerticesPerSize) - southData.heights32Buffer->at<float>(x, 0, numVerticesPerSize);
 						float heightStep2 = gapToFlatten2 / numVerticesToAdjustInEachQuadrant;
-						float heightStepFactor2 = heightStep2 * terrainEdit->extraValues1.blendingBendingFactor;
+						float heightStepFactor2 = heightStep2 * terrainEdit->extraValues.blendingBendingFactor;
 						size_t idx = 0;
 						for (int z = (int)numVerticesToAdjustInEachQuadrant; z >= 0; z--)
 						{
@@ -4416,23 +4417,23 @@ namespace TheWorld_Utils
 						}
 					}
 					
-					// DISABLED ATM BECAUSE terrainEdit->extraValues1.blendingBendingFactor IS ALWAYS ZERO
-					if (terrainEdit->extraValues1.blendingBendingFactor != 0 && lastPhase)
+					// DISABLED ATM BECAUSE terrainEdit->extraValues.blendingBendingFactor IS ALWAYS ZERO
+					if (terrainEdit->extraValues.blendingBendingFactor != 0 && lastPhase)
 					{
 						std::hash<std::string> hasher;
 						size_t seed = hasher(data.meshId + westData.meshId);
 						srand((unsigned int)(seed));
 						int random_i = (rand() % 100) + 1;			// random integer between 1 and 100
-						float random_f = (((terrainEdit->extraValues1.maxRandomBendingExtension - terrainEdit->extraValues1.minRandomBendingExtension) / 100) * random_i) + terrainEdit->extraValues1.minRandomBendingExtension;
+						float random_f = (((terrainEdit->extraValues.maxRandomBendingExtension - terrainEdit->extraValues.minRandomBendingExtension) / 100) * random_i) + terrainEdit->extraValues.minRandomBendingExtension;
 						numVerticesToAdjustInEachQuadrant = size_t(ceilf(numVerticesToAdjustInEachQuadrant * random_f));
 						float radiantStepPerVertex = TheWorld_Utils::kPi / (numVerticesToAdjustInEachQuadrant);
 
 						float gapToFlatten1 = data.heights32Buffer->at<float>(numVerticesToAdjustInEachQuadrant, z, numVerticesPerSize) - data.heights32Buffer->at<float>(0, z, numVerticesPerSize);
 						float heightStep1 = gapToFlatten1 / numVerticesToAdjustInEachQuadrant;
-						float heightStepFactor1 = heightStep1 * terrainEdit->extraValues1.blendingBendingFactor;
+						float heightStepFactor1 = heightStep1 * terrainEdit->extraValues.blendingBendingFactor;
 						float gapToFlatten2 = westData.heights32Buffer->at<float>(maxIndex - numVerticesToAdjustInEachQuadrant, z, numVerticesPerSize) - westData.heights32Buffer->at<float>(maxIndex, z, numVerticesPerSize);
 						float heightStep2 = gapToFlatten2 / numVerticesToAdjustInEachQuadrant;
-						float heightStepFactor2 = heightStep2 * terrainEdit->extraValues1.blendingBendingFactor;
+						float heightStepFactor2 = heightStep2 * terrainEdit->extraValues.blendingBendingFactor;
 						size_t idx = 0;
 						for (int x = (int)numVerticesToAdjustInEachQuadrant; x >= 0; x--)
 						{
@@ -4571,23 +4572,23 @@ namespace TheWorld_Utils
 						}
 					}
 
-					// DISABLED ATM BECAUSE terrainEdit->extraValues1.blendingBendingFactor IS ALWAYS ZERO
-					if (terrainEdit->extraValues1.blendingBendingFactor != 0 && lastPhase)
+					// DISABLED ATM BECAUSE terrainEdit->extraValues.blendingBendingFactor IS ALWAYS ZERO
+					if (terrainEdit->extraValues.blendingBendingFactor != 0 && lastPhase)
 					{
 						std::hash<std::string> hasher;
 						size_t seed = hasher(data.meshId + eastData.meshId);
 						srand((unsigned int)(seed));
 						int random_i = (rand() % 100) + 1;			// random integer between 1 and 100
-						float random_f = (((terrainEdit->extraValues1.maxRandomBendingExtension - terrainEdit->extraValues1.minRandomBendingExtension) / 100) * random_i) + terrainEdit->extraValues1.minRandomBendingExtension;
+						float random_f = (((terrainEdit->extraValues.maxRandomBendingExtension - terrainEdit->extraValues.minRandomBendingExtension) / 100) * random_i) + terrainEdit->extraValues.minRandomBendingExtension;
 						numVerticesToAdjustInEachQuadrant = size_t(ceilf(numVerticesToAdjustInEachQuadrant * random_f));
 						float radiantStepPerVertex = TheWorld_Utils::kPi / (numVerticesToAdjustInEachQuadrant);
 
 						float gapToFlatten1 = data.heights32Buffer->at<float>(maxIndex - numVerticesToAdjustInEachQuadrant, z, numVerticesPerSize) - data.heights32Buffer->at<float>(maxIndex, z, numVerticesPerSize);
 						float heightStep1 = gapToFlatten1 / numVerticesToAdjustInEachQuadrant;
-						float heightStepFactor1 = heightStep1 * terrainEdit->extraValues1.blendingBendingFactor;
+						float heightStepFactor1 = heightStep1 * terrainEdit->extraValues.blendingBendingFactor;
 						float gapToFlatten2 = eastData.heights32Buffer->at<float>(numVerticesToAdjustInEachQuadrant, z, numVerticesPerSize) - eastData.heights32Buffer->at<float>(0, z, numVerticesPerSize);
 						float heightStep2 = gapToFlatten2 / numVerticesToAdjustInEachQuadrant;
-						float heightStepFactor2 = heightStep2 * terrainEdit->extraValues1.blendingBendingFactor;
+						float heightStepFactor2 = heightStep2 * terrainEdit->extraValues.blendingBendingFactor;
 						size_t idx = 0;
 						for (int x = (int)numVerticesToAdjustInEachQuadrant; x >= 0; x--)
 						{

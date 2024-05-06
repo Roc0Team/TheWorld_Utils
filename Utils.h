@@ -76,6 +76,42 @@ namespace TheWorld_Utils
 	//	return output;
 	//}
 
+	class MapManagerProceduralGenerationStatus
+	{
+	public:
+		//MapManagerProceduralGenerationStatus(void)
+		//{
+		//}
+		//MapManagerProceduralGenerationStatus(const MapManagerProceduralGenerationStatus& o)
+		//{
+
+
+		//	*this = o;
+		//}
+		//void operator=(const MapManagerProceduralGenerationStatus& o)
+		//{
+		//	m_proceduralProcessingInProgress = o.m_proceduralProcessingInProgress;
+		//	m_quadrantsWithHeigthsGenerated = o.m_quadrantsWithHeigthsGenerated;
+		//	m_quadrantsToGenerateHeights = o.m_quadrantsToGenerateHeights;
+		//	m_numBlendingCycles = o.m_numBlendingCycles;
+		//	m_currentBlendingCycle = o.m_currentBlendingCycle;
+		//	m_numBlendedQuadrants = o.m_numBlendedQuadrants;
+		//	m_numQuadrantsToBlend = o.m_numQuadrantsToBlend;
+		//}
+
+	public:
+		size_t m_numVerticesPerSize = 0;
+		int m_level = 0;
+		bool m_proceduralProcessingInProgress = false;
+		size_t m_currentHeightGenCycle = 0;
+		size_t m_quadrantsWithHeigthsGenerated = 0;
+		size_t m_quadrantsToGenerateHeights = 0;
+		size_t m_numBlendingCycles = 0;
+		size_t m_currentBlendingCycle = 0;
+		size_t m_numBlendedQuadrants = 0;
+		size_t m_numQuadrantsToBlend = 0;
+	};
+	
 	class Exception : public std::exception
 	{
 	public:
@@ -640,9 +676,13 @@ namespace TheWorld_Utils
 		__declspec(dllexport) static std::string getDefaultTextureNameForTerrainType(enum class TerrainType terrainType, enum class TextureType textureType);
 
 		size_t size;
-		bool needUploadToServer;
-		bool normalsNeedRegen;
 		enum class TerrainType terrainType;
+		bool needUploadToServer = false;
+		bool heightsNeedRegen = false;
+		bool normalsNeedRegen = false;
+		bool splatmapNeedRegen = false;
+		bool colormapNeedRegen = false;
+		bool globalmapNeedRegen = false;
 
 		float minHeight;
 		float maxHeight;
@@ -660,9 +700,6 @@ namespace TheWorld_Utils
 			char highElevationTexName_g[51] = "";
 			char dirtTexName_b[51] = "";
 			char rocksTexName_a[51] = "";
-			bool splatmapNeedRegen = false;
-			bool colormapNeedRegen = false;
-			bool globalmapNeedRegen = false;
 			float slopeVerticalFactor = 4.0f;
 			float slopeFlatFactor = 1.0f;
 			float dirtOnRocksFactor = 2.0f;
@@ -670,26 +707,19 @@ namespace TheWorld_Utils
 			float lowElevationFactor = 2.0f;
 			size_t splatMapMode = 1;
 			float amplitudeBlendFactor = THEWORLD_DEFAULT_AMPLITUDE_BLEND_FACTOR;
-		} extraValues;
-
-#pragma pack (1)
-		struct
-		{
 			float postGenerateElevation = 0;
 			bool ignoreDesideredMinHeight = false;
 			size_t numBlendingCycles = 2;
 			float blendingBendingFactor = 1.0f;
 			float minRandomBendingExtension = 0.2f;
 			float maxRandomBendingExtension = 0.5f;
-			float filler1 = 0.1f;
-			float filler2 = 0.2f;
-			float filler3 = 0.3f;
-			float filler4 = 0.4f;
-			float filler5 = 0.5f;
-			bool heightsNeedRegen = true;
-			float filler6 = 0.6f;
 			int32_t seaInfoSet = 0;		// used as bool
 			int32_t containsSea = 0;	// used as bool
+		} extraValues;
+
+#pragma pack (1)
+		struct
+		{
 		} extraValues1;
 #pragma pack ()
 		// WARNING: this struct can safely grow appending new data at the end (may be need an alignment filler to modify sizeof(extraValues))
