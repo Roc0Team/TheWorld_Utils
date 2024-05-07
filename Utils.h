@@ -753,6 +753,7 @@ namespace TheWorld_Utils
 			_method = method;
 			_tickMsg = tickMsg;
 			_tockMsg = tockMsg;
+			_start = _end = ClockT::now();
 		}
 
 		~Timer()
