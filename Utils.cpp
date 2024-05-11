@@ -471,6 +471,14 @@ namespace TheWorld_Utils
 			return false;
 		if (extraValues.containsSea != o.extraValues.containsSea)
 			return false;
+		if (eastNeighbourXPlus != o.eastNeighbourXPlus)
+			return false;
+		if (westNeighbourXMinus != o.westNeighbourXMinus)
+			return false;
+		if (southNeighbourZPlus != o.southNeighbourZPlus)
+			return false;
+		if (northNeighbourZMinus != o.northNeighbourZMinus)
+			return false;
 		return true;
 	}
 
@@ -1830,10 +1838,10 @@ namespace TheWorld_Utils
 
 		if (fs::exists(path.c_str()))
 			if (remove(path.c_str()) != 0)
-				throw(GDN_TheWorld_Exception(__FUNCTION__, std::string("Remove error!").c_str()));
+				throw(GDN_TheWorld_Exception(__FUNCTION__, (std::string("Remove error! errno=") + std::to_string(errno) + " _doserrno=" + std::to_string(_doserrno)).c_str()));
 
 		if (rename(tempPath.c_str(), path.c_str()) != 0)
-			throw(GDN_TheWorld_Exception(__FUNCTION__, std::string("Rename error!").c_str()));
+			throw(GDN_TheWorld_Exception(__FUNCTION__, (std::string("Rename error! errno=") + std::to_string(errno) + " _doserrno=" + std::to_string(_doserrno)).c_str()));
 	}
 
 	void MeshCacheBuffer::generateHeightsWithNoise(size_t numVerticesPerSize, float gridStepInWU, float lowerXGridVertex, float lowerZGridVertex, TerrainEdit* terrainEdit, std::vector<float>& vectGridHeights)

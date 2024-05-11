@@ -639,6 +639,49 @@ namespace TheWorld_Utils
 		__declspec(dllexport) static void generateGroundImage(std::string outdir, std::string groundTypeName, size_t imageSize, bool flipY, MemoryBuffer& colorImage, MemoryBuffer& bumpImage, MemoryBuffer& normalImage, MemoryBuffer& roughImage);
 		__declspec(dllexport) static void generateGroundImage(MemoryBuffer& albedoBumpImage, MemoryBuffer& normalRoughnessImage, std::string groundTypeName, size_t imageSize, bool flipY, MemoryBuffer& colorImage, MemoryBuffer& bumpImage, MemoryBuffer& normalImage, MemoryBuffer& roughImage);
 
+		class TerrainNeighbourQuadrantInfo
+		{
+		public:
+			TerrainNeighbourQuadrantInfo(void)
+			{
+				memset(m_filler, 0, sizeof(m_filler));
+			}
+			~TerrainNeighbourQuadrantInfo(void)
+			{
+			}
+
+			bool operator==(const TerrainNeighbourQuadrantInfo& o) const
+			{
+				if (m_minHeight != o.m_minHeight)
+					return false;
+				if (m_maxHeight != o.m_maxHeight)
+					return false;
+				return true;
+			}
+
+			float minHeight(void) const
+			{
+				return m_minHeight;
+			}
+			void minHeight(float f)
+			{
+				m_minHeight = f;
+			}
+			float maxHeight(void) const
+			{
+				return m_maxHeight;
+			}
+			void maxHeight(float f)
+			{
+				m_maxHeight = f;
+			}
+
+		private:
+			float m_minHeight = FLT_MAX;
+			float m_maxHeight = FLT_MIN;
+			char m_filler[100];
+		};
+
 		enum class TextureType
 		{
 			lowElevation = 0
@@ -719,6 +762,11 @@ namespace TheWorld_Utils
 		} extraValues;
 
 #pragma pack (1)
+		TerrainNeighbourQuadrantInfo eastNeighbourXPlus;		// X growing
+		TerrainNeighbourQuadrantInfo westNeighbourXMinus;		// X lowering
+		TerrainNeighbourQuadrantInfo southNeighbourZPlus;		// Z growing
+		TerrainNeighbourQuadrantInfo northNeighbourZMinus;		// Z lowering
+
 		struct
 		{
 		} extraValues1;
