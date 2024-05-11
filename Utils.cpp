@@ -102,6 +102,8 @@ namespace TheWorld_Utils
 		cursor += m_tagSize;
 
 		m_sizeInWU = (m_numVerticesPerSize - 1) * m_gridStepInWU;
+		m_centerX = m_lowerXGridVertex + (m_sizeInWU / 2);
+		m_centerZ = m_lowerZGridVertex + (m_sizeInWU / 2);
 		resetIndexPos();
 		resetName();
 	}
@@ -740,6 +742,7 @@ namespace TheWorld_Utils
 		buffer.clear();
 		buffer.reserve(sz);
 		buffer.append((char*)ptr(), sz);
+		//buffer = std::string((char*)ptr(), sz);
 	}
 
 	void MemoryBuffer::set(BYTE* in, size_t size)
@@ -1263,7 +1266,7 @@ namespace TheWorld_Utils
 			}
 	}
 	
-	std::string MeshCacheBuffer::getMeshIdFromDisk(bool workDir)
+	std::string MeshCacheBuffer::getMeshIdFromDisk(bool workDir, TerrainEdit* terrainEdit)
 	{
 		//TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer getMeshIdFromCache 1") + __FUNCTION__, "ALL");
 
@@ -1319,6 +1322,29 @@ namespace TheWorld_Utils
 		}
 		// and deserialize it
 		m_meshId = std::string((char*)shortBuffer, meshIdSize);
+
+		if (terrainEdit != nullptr)
+		{
+			// read the serialized size of TerrainEdit
+			if (fread(shortBuffer, size_t_size, 1, inFile) != 1)
+			{
+				fclose(inFile);
+				throw(GDN_TheWorld_Exception(__FUNCTION__, std::string("Read error 2!").c_str()));
+			}
+			// and deserialize it
+			size_t terrainEditSize = TheWorld_Utils::deserializeFromByteStream<size_t>(shortBuffer, size);
+
+			// read TerrainEdit
+			TheWorld_Utils::MemoryBuffer terrainEditBuffer;
+			terrainEditBuffer.reserve(terrainEditSize);
+			if (fread(terrainEditBuffer.ptr(), terrainEditSize, 1, inFile) != 1)
+			{
+				fclose(inFile);
+				throw(GDN_TheWorld_Exception(__FUNCTION__, std::string("Read error 2!").c_str()));
+			}
+			terrainEditBuffer.adjustSize(terrainEditSize);
+			terrainEdit->deserialize(terrainEditBuffer);
+		}
 
 		fclose(inFile);
 
@@ -1522,7 +1548,10 @@ namespace TheWorld_Utils
 			}
 
 			if (updateCache)
-				writeBufferToDiskCache(buffer, bufferSize);
+			{
+				std::string meshId;
+				writeBufferToDiskCache(buffer, bufferSize, meshId);
+			}
 		}
 		else
 		{
@@ -1593,7 +1622,7 @@ namespace TheWorld_Utils
 	}
 
 	
-	void MeshCacheBuffer::readBufferFromDisk(std::string _meshId, TheWorld_Utils::MemoryBuffer& buffer, bool workDir)
+	void MeshCacheBuffer::readBufferFromDisk(std::string _meshId, TheWorld_Utils::MemoryBuffer& buffer, bool workDir, TerrainEdit* terrainEdit)
 	{
 		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer readBufferFromDisk 1 ") + __FUNCTION__, "ALL");
 
@@ -1662,6 +1691,29 @@ namespace TheWorld_Utils
 
 		m_meshId = meshId;
 
+		if (terrainEdit != nullptr)
+		{
+			// read the serialized size of TerrainEdit
+			if (fread(shortBuffer, size_t_size, 1, inFile) != 1)
+			{
+				fclose(inFile);
+				throw(GDN_TheWorld_Exception(__FUNCTION__, std::string("Read error 2!").c_str()));
+			}
+			// and deserialize it
+			size_t terrainEditSize = TheWorld_Utils::deserializeFromByteStream<size_t>(shortBuffer, size);
+			
+			// read TerrainEdit
+			TheWorld_Utils::MemoryBuffer terrainEditBuffer;
+			terrainEditBuffer.reserve(terrainEditSize);
+			if (fread(terrainEditBuffer.ptr(), terrainEditSize, 1, inFile) != 1)
+			{
+				fclose(inFile);
+				throw(GDN_TheWorld_Exception(__FUNCTION__, std::string("Read error 2!").c_str()));
+			}
+			terrainEditBuffer.adjustSize(terrainEditSize);
+			terrainEdit->deserialize(terrainEditBuffer);
+		}
+		
 		buffer.reserve(streamBufferSize);
 		BYTE* streamBuffer = buffer.ptr();
 
@@ -1688,11 +1740,11 @@ namespace TheWorld_Utils
 		buffer.adjustSize(streamBufferSize);
 	}
 
-	void MeshCacheBuffer::readBufferFromDisk(std::string _meshId, std::string& _buffer, bool workDir)
+	void MeshCacheBuffer::readBufferFromDisk(std::string _meshId, std::string& _buffer, bool workDir, TerrainEdit* terrainEdit)
 	{
 		TheWorld_Utils::MemoryBuffer buffer;
 
-		readBufferFromDisk(_meshId, buffer, workDir);
+		readBufferFromDisk(_meshId, buffer, workDir, terrainEdit);
 		
 		size_t size = buffer.size();
 
@@ -1701,17 +1753,17 @@ namespace TheWorld_Utils
 		_buffer.append((char*)buffer.ptr(), size);
 	}
 		
-	void MeshCacheBuffer::writeBufferToDiskCache(std::string& buffer, bool renewMeshId, bool workDir) const
+	void MeshCacheBuffer::writeBufferToDiskCache(std::string& buffer, std::string& meshId, bool renewMeshId, bool workDir, TerrainEdit* terrainEdit) const
 	{
-		writeBufferToDiskCache((BYTE*)buffer.c_str(), buffer.size(), renewMeshId, workDir);
+		writeBufferToDiskCache((BYTE*)buffer.c_str(), buffer.size(), meshId, renewMeshId, workDir, terrainEdit);
 	}
 
-	void MeshCacheBuffer::writeBufferToDiskCache(TheWorld_Utils::MemoryBuffer& buffer, bool renewMeshId, bool workDir) const
+	void MeshCacheBuffer::writeBufferToDiskCache(TheWorld_Utils::MemoryBuffer& buffer, std::string& meshId, bool renewMeshId, bool workDir, TerrainEdit* terrainEdit) const
 	{
-		writeBufferToDiskCache(buffer.ptr(), buffer.size(), renewMeshId, workDir);
+		writeBufferToDiskCache(buffer.ptr(), buffer.size(), meshId, renewMeshId, workDir, terrainEdit);
 	}
 
-	void MeshCacheBuffer::writeBufferToDiskCache(const BYTE* buffer, const size_t bufferSize, bool renewMeshId, bool workDir) const
+	void MeshCacheBuffer::writeBufferToDiskCache(const BYTE* buffer, const size_t bufferSize, std::string& meshId, bool renewMeshId, bool workDir, TerrainEdit* terrainEdit) const
 	{
 		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer writeBufferToCache 1 ") + __FUNCTION__, "ALL");
 
@@ -1724,21 +1776,33 @@ namespace TheWorld_Utils
 		BYTE shortBuffer[256 + 1];
 		size_t bufferSize_size = 0;	// get size of a size_t
 
+		char* movingStreamBuffer = (char*)buffer + 1;	// bypass "0"
+		size_t size = 0;
+
 		if (renewMeshId)
 		{
 			std::string newMeshId = generateNewMeshId();
-
-			char* movingStreamBuffer = (char*)buffer;
-			char* endOfBuffer = movingStreamBuffer + bufferSize;
-
-			movingStreamBuffer++;	// bypass "0"
-
-			size_t size = 0;
 			size_t meshIdSize = TheWorld_Utils::deserializeFromByteStream<size_t>((BYTE*)movingStreamBuffer, size);
-			movingStreamBuffer += size;
-
+			movingStreamBuffer += size;			// bypass MeshId size
 			my_assert(meshIdSize == newMeshId.size())
-			memcpy(movingStreamBuffer, newMeshId.c_str(), meshIdSize);
+			memcpy(movingStreamBuffer, newMeshId.c_str(), meshIdSize);	// replace MeshId
+			movingStreamBuffer += meshIdSize;	// bypass MeshId
+			meshId = newMeshId;
+		}
+		else
+		{
+			size_t meshIdSize = TheWorld_Utils::deserializeFromByteStream<size_t>((BYTE*)movingStreamBuffer, size);
+			movingStreamBuffer += size;						// bypass MeshId size
+			meshId = std::string(movingStreamBuffer, meshIdSize);
+			movingStreamBuffer += meshIdSize;				// bypass MeshId
+		}
+
+		if (terrainEdit != nullptr)
+		{
+			size_t terrainEditSize = TheWorld_Utils::deserializeFromByteStream<size_t>((BYTE*)movingStreamBuffer, size);
+			movingStreamBuffer += size;			// bypass TerrainEdit size
+			TheWorld_Utils::MemoryBuffer terrainEditBuffer((BYTE*)movingStreamBuffer, terrainEditSize);
+			terrainEdit->deserialize(terrainEditBuffer);
 		}
 				
 		TheWorld_Utils::serializeToByteStream<size_t>(bufferSize, shortBuffer, bufferSize_size);
