@@ -49,7 +49,23 @@ namespace TheWorld_Utils
 		std::transform(ret.begin(), ret.end(), ret.begin(), ::tolower);
 		return ret;
 	}
+	inline std::wstring convert(const std::string& as)
+	{
+		// deal with trivial case of empty string
+		if (as.empty())    return std::wstring();
 
+		// determine required length of new string
+		size_t reqLength = ::MultiByteToWideChar(CP_UTF8, 0, as.c_str(), (int)as.length(), 0, 0);
+
+		// construct new string of required length
+		std::wstring ret(reqLength, L'\0');
+
+		// convert old string to new string
+		::MultiByteToWideChar(CP_UTF8, 0, as.c_str(), (int)as.length(), &ret[0], (int)ret.length());
+
+		// return new string ( compiler should optimize this away )
+		return ret;
+	}
 	void QuadrantPos::serialize(TheWorld_Utils::MemoryBuffer& buffer) const
 	{
 		buffer.reserve(sizeof(QuadrantPos) + m_tag.length() + m_name.length());
@@ -1274,7 +1290,7 @@ namespace TheWorld_Utils
 			}
 	}
 	
-	std::string MeshCacheBuffer::getMeshIdFromDisk(bool workDir, TerrainEdit* terrainEdit)
+	std::string MeshCacheBuffer::getMeshIdFromDisk(bool workDir, TerrainEdit* terrainEdit, bool updateLastAccessTime)
 	{
 		//TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer getMeshIdFromCache 1") + __FUNCTION__, "ALL");
 
@@ -1356,6 +1372,32 @@ namespace TheWorld_Utils
 
 		fclose(inFile);
 
+		if (updateLastAccessTime)
+		{
+			HANDLE hFile = CreateFile(convert(cacheFilePath).c_str(), FILE_WRITE_ATTRIBUTES, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+			if (hFile != INVALID_HANDLE_VALUE) {
+				SYSTEMTIME st;	GetSystemTime(&st); // Gets the current system time
+				FILETIME ft;	SystemTimeToFileTime(&st, &ft); // Converts the current system time to file time format
+				// set new LastAccess Time
+				DWORD dwLastErr = ERROR_SUCCESS;
+				bool bResult = false;
+				if (!(bResult = SetFileTime(hFile, NULL, &ft, NULL)))
+					dwLastErr = GetLastError();
+				CloseHandle(hFile);
+				SetLastError(dwLastErr);
+			}
+
+			errno_t err = fopen_s(&inFile, cacheFilePath.c_str(), "rb");
+			struct _stat stat;
+			int result = _stat(cacheFilePath.c_str(), &stat);
+			fclose(inFile);
+			char buffer1[512];																// DEBUG ONLY
+			ctime_s(buffer1, sizeof(buffer1), &stat.st_atime);								// DEBUG ONLY
+			time_t ltime;	time(&ltime); //Gets the system time elapse in secs
+			double timeDifference = difftime(ltime, stat.st_atime);			//get the time difference between current time and file last modified time		
+			double timeDiffInDays = (timeDifference / 60 / 60 / 24);		//get time difference in days
+		}
+		
 		return m_meshId;
 	}
 

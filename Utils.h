@@ -55,6 +55,7 @@ namespace TheWorld_Utils
 
 	__declspec(dllexport) void to_lower_implace(std::string& s);
 	__declspec(dllexport) std::string to_lower(std::string s);
+	__declspec(dllexport) inline std::wstring convert(const std::string& as);
 
 	//std::vector<std::string> split(const std::string& s, char seperator)
 	//{
@@ -1034,7 +1035,7 @@ namespace TheWorld_Utils
 		__declspec(dllexport) static std::chrono::system_clock::time_point getTimeFromMeshId(std::string& meshId, std::string& meshIdWithoutBinaryTime);
 		__declspec(dllexport) static std::string meshIdToPrint(std::string& meshId);
 		__declspec(dllexport) static std::string meshIdToPrint1(std::string meshId);
-		__declspec(dllexport) std::string getMeshIdFromDisk(bool workDir = false, TerrainEdit* terrainEdit = nullptr);
+		__declspec(dllexport) std::string getMeshIdFromDisk(bool workDir = false, TerrainEdit* terrainEdit = nullptr, bool updateLastAccessTime = false);
 		__declspec(dllexport) static void getAllDiskCache(std::string cacheDir, std::string mapName, float gridStepInWU, size_t numVerticesPerSize, int level, std::map<TheWorld_Utils::QuadrantPos, TheWorld_Utils::MeshCacheBuffer>& diskCacheMap, std::time_t& fromFileTimeType, bool workDir = false);
 		__declspec(dllexport) static void clearWorkCacheDir(std::string cacheDir, std::string mapName, float gridStepInWU, size_t numVerticesPerSize, int level);
 		__declspec(dllexport) std::string getMeshIdStr(void);
