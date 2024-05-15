@@ -35,6 +35,8 @@
 ////#define	MAX_STEP_MODIFIER_FACTOR	100.0f	// crescendo incrementa la curvatura
 //#define	MAX_STEP_MODIFIER_FACTOR	0.0f	// crescendo incrementa la curvatura
 
+#define EMPTY_QUADRANTS_TERRAIN_HEIGHT	-500
+
 namespace fs = std::filesystem;
 
 namespace TheWorld_Utils
@@ -409,6 +411,8 @@ namespace TheWorld_Utils
 		splatmapNeedRegen = true;
 		colormapNeedRegen = true;
 		globalmapNeedRegen = true;
+
+		memset(extraValues1.m_filler, 0, sizeof(extraValues1.m_filler));
 	}
 
 	bool TerrainEdit::operator==(const TerrainEdit& o) const
@@ -485,7 +489,7 @@ namespace TheWorld_Utils
 			return false;
 		if (extraValues.seaInfoSet != o.extraValues.seaInfoSet)
 			return false;
-		if (extraValues.containsSea != o.extraValues.containsSea)
+		if (extraValues.canContainSea != o.extraValues.canContainSea)
 			return false;
 		if (eastNeighbourXPlus != o.eastNeighbourXPlus)
 			return false;
@@ -686,19 +690,23 @@ namespace TheWorld_Utils
 	{
 		bool done = false;
 
-		if (!heightsNeedRegen && extraValues.seaInfoSet == 0)
+		if ((extraValues.seaInfoSet != QUADRANT_SEA_INFO_SET_FALSE && extraValues.seaInfoSet != QUADRANT_SEA_INFO_SET_TRUE)
+			|| (!heightsNeedRegen && extraValues.seaInfoSet == QUADRANT_SEA_INFO_SET_FALSE))
 		{
-			extraValues.containsSea = 0;
-
-			if (terrainType == TerrainType::coastal || terrainType == TerrainType::sea_abyss_1 || terrainType == TerrainType::sea_abyss_2 || terrainType == TerrainType::sea_abyss_3)
+			if (!heightsNeedRegen)
 			{
+				extraValues.canContainSea = QUADRANT_SEA_INFO_SET_FALSE;
+
+				//if (terrainType == TerrainType::coastal || terrainType == TerrainType::sea_abyss_1 || terrainType == TerrainType::sea_abyss_2 || terrainType == TerrainType::sea_abyss_3)
+				//{
 				if (minHeight <= THEWORLD_SEA_LEVEL)
 				{
-					extraValues.containsSea = 1;
+					extraValues.canContainSea = QUADRANT_SEA_INFO_SET_TRUE;
 				}
+				//}
 			}
 
-			extraValues.seaInfoSet = 1;
+			extraValues.seaInfoSet = QUADRANT_SEA_INFO_SET_TRUE;
 			done = true;
 		}
 
@@ -1387,15 +1395,16 @@ namespace TheWorld_Utils
 				SetLastError(dwLastErr);
 			}
 
-			errno_t err = fopen_s(&inFile, cacheFilePath.c_str(), "rb");
-			struct _stat stat;
-			int result = _stat(cacheFilePath.c_str(), &stat);
-			fclose(inFile);
-			char buffer1[512];																// DEBUG ONLY
-			ctime_s(buffer1, sizeof(buffer1), &stat.st_atime);								// DEBUG ONLY
-			time_t ltime;	time(&ltime); //Gets the system time elapse in secs
-			double timeDifference = difftime(ltime, stat.st_atime);			//get the time difference between current time and file last modified time		
-			double timeDiffInDays = (timeDifference / 60 / 60 / 24);		//get time difference in days
+			// Read last acces time
+			//errno_t err = fopen_s(&inFile, cacheFilePath.c_str(), "rb");
+			//struct _stat stat;
+			//int result = _stat(cacheFilePath.c_str(), &stat);
+			//fclose(inFile);
+			//char buffer1[512];																// DEBUG ONLY
+			//ctime_s(buffer1, sizeof(buffer1), &stat.st_atime);								// DEBUG ONLY
+			//time_t ltime;	time(&ltime); //Gets the system time elapse in secs
+			//double timeDifference = difftime(ltime, stat.st_atime);			//get the time difference between current time and file last modified time		
+			//double timeDiffInDays = (timeDifference / 60 / 60 / 24);		//get time difference in days
 		}
 		
 		return m_meshId;
@@ -1922,16 +1931,16 @@ namespace TheWorld_Utils
 		}
 		else if (terrainEdit->terrainType == TheWorld_Utils::TerrainEdit::TerrainType::empty)
 		{
-			terrainEdit->minHeight = 0;
-			terrainEdit->maxHeight = 0;
-			terrainEdit->eastSideXPlus.minHeight = 0;
-			terrainEdit->eastSideXPlus.maxHeight = 0;
-			terrainEdit->westSideXMinus.minHeight = 0;
-			terrainEdit->westSideXMinus.maxHeight = 0;
-			terrainEdit->southSideZPlus.minHeight = 0;
-			terrainEdit->southSideZPlus.maxHeight = 0;
-			terrainEdit->northSideZMinus.minHeight = 0;
-			terrainEdit->northSideZMinus.maxHeight = 0;
+			terrainEdit->minHeight = EMPTY_QUADRANTS_TERRAIN_HEIGHT;
+			terrainEdit->maxHeight = EMPTY_QUADRANTS_TERRAIN_HEIGHT;
+			terrainEdit->eastSideXPlus.minHeight = EMPTY_QUADRANTS_TERRAIN_HEIGHT;
+			terrainEdit->eastSideXPlus.maxHeight = EMPTY_QUADRANTS_TERRAIN_HEIGHT;
+			terrainEdit->westSideXMinus.minHeight = EMPTY_QUADRANTS_TERRAIN_HEIGHT;
+			terrainEdit->westSideXMinus.maxHeight = EMPTY_QUADRANTS_TERRAIN_HEIGHT;
+			terrainEdit->southSideZPlus.minHeight = EMPTY_QUADRANTS_TERRAIN_HEIGHT;
+			terrainEdit->southSideZPlus.maxHeight = EMPTY_QUADRANTS_TERRAIN_HEIGHT;
+			terrainEdit->northSideZMinus.minHeight = EMPTY_QUADRANTS_TERRAIN_HEIGHT;
+			terrainEdit->northSideZMinus.maxHeight = EMPTY_QUADRANTS_TERRAIN_HEIGHT;
 			adjustHeights = false;
 		}
 		else
@@ -2791,7 +2800,7 @@ namespace TheWorld_Utils
 					s_flatFloat32HeightsBuffer.reserve(float32HeightsBufferSize);
 					float* _float32HeightsBuffer = (float*)s_flatFloat32HeightsBuffer.ptr();
 
-					TheWorld_Utils::FLOAT_32 f(0.0f);
+					TheWorld_Utils::FLOAT_32 f(EMPTY_QUADRANTS_TERRAIN_HEIGHT);
 					uint16_t emptyHalf = half_from_float(f.u32);
 					{		// first impl.
 						for (size_t z = 0; z < numVerticesPerSize; z++)
@@ -2799,7 +2808,7 @@ namespace TheWorld_Utils
 							{
 								*_float16HeightsBuffer = emptyHalf;
 								_float16HeightsBuffer++;
-								*_float32HeightsBuffer = 0.0f;
+								*_float32HeightsBuffer = EMPTY_QUADRANTS_TERRAIN_HEIGHT;
 								_float32HeightsBuffer++;
 							}
 					}

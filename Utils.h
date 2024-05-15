@@ -758,8 +758,10 @@ namespace TheWorld_Utils
 			float blendingBendingFactor = 1.0f;
 			float minRandomBendingExtension = 0.2f;
 			float maxRandomBendingExtension = 0.5f;
-			int32_t seaInfoSet = 0;		// used as bool
-			int32_t containsSea = 0;	// used as bool
+#define QUADRANT_SEA_INFO_SET_TRUE		1
+#define QUADRANT_SEA_INFO_SET_FALSE		0
+			int32_t seaInfoSet = QUADRANT_SEA_INFO_SET_FALSE;		// used as bool
+			int32_t canContainSea = QUADRANT_SEA_INFO_SET_FALSE;	// used as bool
 		} extraValues;
 
 #pragma pack (1)
@@ -770,6 +772,7 @@ namespace TheWorld_Utils
 
 		struct
 		{
+			char m_filler[100];
 		} extraValues1;
 #pragma pack ()
 		// WARNING: this struct can safely grow appending new data at the end (may be need an alignment filler to modify sizeof(extraValues))
