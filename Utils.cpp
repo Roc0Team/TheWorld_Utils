@@ -35,8 +35,6 @@
 ////#define	MAX_STEP_MODIFIER_FACTOR	100.0f	// crescendo incrementa la curvatura
 //#define	MAX_STEP_MODIFIER_FACTOR	0.0f	// crescendo incrementa la curvatura
 
-#define EMPTY_QUADRANTS_TERRAIN_HEIGHT	-500
-
 namespace fs = std::filesystem;
 
 namespace TheWorld_Utils
@@ -690,25 +688,25 @@ namespace TheWorld_Utils
 	{
 		bool done = false;
 
-		if ((extraValues.seaInfoSet != QUADRANT_SEA_INFO_SET_FALSE && extraValues.seaInfoSet != QUADRANT_SEA_INFO_SET_TRUE)
-			|| (!heightsNeedRegen && extraValues.seaInfoSet == QUADRANT_SEA_INFO_SET_FALSE))
-		{
-			if (!heightsNeedRegen)
-			{
-				extraValues.canContainSea = QUADRANT_SEA_INFO_SET_FALSE;
+		//if ((extraValues.seaInfoSet != QUADRANT_SEA_INFO_SET_FALSE && extraValues.seaInfoSet != QUADRANT_SEA_INFO_SET_TRUE)
+		//	|| (!heightsNeedRegen && extraValues.seaInfoSet == QUADRANT_SEA_INFO_SET_FALSE))
+		//{
+		//	if (!heightsNeedRegen)
+		//	{
+		//		extraValues.canContainSea = QUADRANT_SEA_INFO_SET_FALSE;
 
-				//if (terrainType == TerrainType::coastal || terrainType == TerrainType::sea_abyss_1 || terrainType == TerrainType::sea_abyss_2 || terrainType == TerrainType::sea_abyss_3)
-				//{
-				if (minHeight <= THEWORLD_SEA_LEVEL)
-				{
-					extraValues.canContainSea = QUADRANT_SEA_INFO_SET_TRUE;
-				}
-				//}
-			}
+		//		//if (terrainType == TerrainType::coastal || terrainType == TerrainType::sea_abyss_1 || terrainType == TerrainType::sea_abyss_2 || terrainType == TerrainType::sea_abyss_3)
+		//		//{
+		//		if (minHeight <= THEWORLD_SEA_LEVEL)
+		//		{
+		//			extraValues.canContainSea = QUADRANT_SEA_INFO_SET_TRUE;
+		//		}
+		//		//}
+		//	}
 
-			extraValues.seaInfoSet = QUADRANT_SEA_INFO_SET_TRUE;
-			done = true;
-		}
+		//	extraValues.seaInfoSet = QUADRANT_SEA_INFO_SET_TRUE;
+		//	done = true;
+		//}
 
 		return done;
 	}
@@ -1908,18 +1906,18 @@ namespace TheWorld_Utils
 		{
 			//TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer generateHeights 1.2 ") + __FUNCTION__, "Generate flat Heights");
 
-			terrainEdit->minHeight = 0;
-			terrainEdit->maxHeight = 0;
-			terrainEdit->eastSideXPlus.minHeight = 0;
-			terrainEdit->eastSideXPlus.maxHeight = 0;
-			terrainEdit->westSideXMinus.minHeight = 0;
-			terrainEdit->westSideXMinus.maxHeight = 0;
-			terrainEdit->southSideZPlus.minHeight = 0;
-			terrainEdit->southSideZPlus.maxHeight = 0;
-			terrainEdit->northSideZMinus.minHeight = 0;
-			terrainEdit->northSideZMinus.maxHeight = 0;
+			terrainEdit->minHeight = FLAT_QUADRANTS_TERRAIN_HEIGHT;
+			terrainEdit->maxHeight = FLAT_QUADRANTS_TERRAIN_HEIGHT;
+			terrainEdit->eastSideXPlus.minHeight = FLAT_QUADRANTS_TERRAIN_HEIGHT;
+			terrainEdit->eastSideXPlus.maxHeight = FLAT_QUADRANTS_TERRAIN_HEIGHT;
+			terrainEdit->westSideXMinus.minHeight = FLAT_QUADRANTS_TERRAIN_HEIGHT;
+			terrainEdit->westSideXMinus.maxHeight = FLAT_QUADRANTS_TERRAIN_HEIGHT;
+			terrainEdit->southSideZPlus.minHeight = FLAT_QUADRANTS_TERRAIN_HEIGHT;
+			terrainEdit->southSideZPlus.maxHeight = FLAT_QUADRANTS_TERRAIN_HEIGHT;
+			terrainEdit->northSideZMinus.minHeight = FLAT_QUADRANTS_TERRAIN_HEIGHT;
+			terrainEdit->northSideZMinus.maxHeight = FLAT_QUADRANTS_TERRAIN_HEIGHT;
 
-			float altitude = 0.0f;
+			float altitude = FLAT_QUADRANTS_TERRAIN_HEIGHT;
 			size_t maxIndex = numVerticesPerSize - 1;
 			size_t idx = 0;
 			for (int z = 0; z < numVerticesPerSize; z++)

@@ -33,7 +33,9 @@
 #include <Eigen/Dense>
 #pragma warning(pop)
 
-#define THEWORLD_SEA_LEVEL														0
+#define THEWORLD_SEA_LEVEL				0.0f
+#define EMPTY_QUADRANTS_TERRAIN_HEIGHT	-500.0f
+#define FLAT_QUADRANTS_TERRAIN_HEIGHT	(THEWORLD_SEA_LEVEL + 1.0f)
 
 #define THEWORLD_DEFAULT_AMPLITUDE_BLEND_FACTOR									2.0f
 
@@ -758,6 +760,7 @@ namespace TheWorld_Utils
 			float blendingBendingFactor = 1.0f;
 			float minRandomBendingExtension = 0.2f;
 			float maxRandomBendingExtension = 0.5f;
+#define QUADRANT_SEA_INFO_SET_NOTSET	-1
 #define QUADRANT_SEA_INFO_SET_TRUE		1
 #define QUADRANT_SEA_INFO_SET_FALSE		0
 			int32_t seaInfoSet = QUADRANT_SEA_INFO_SET_FALSE;		// used as bool
