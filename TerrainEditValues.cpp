@@ -161,6 +161,12 @@ namespace TheWorld_Utils
 			extraValues.numBlendingCycles = 2;
 			extraValues.postGenerateElevation = 0.0f;
 			extraValues.ignoreDesideredMinHeight = true;
+
+			if (terrainType == TerrainEdit::TerrainType::empty)
+			{
+				minHeight = EMPTY_QUADRANTS_TERRAIN_HEIGHT;
+				maxHeight = EMPTY_QUADRANTS_TERRAIN_HEIGHT;
+			}
 		}
 		break;
 		case TerrainEdit::TerrainType::jagged_1:

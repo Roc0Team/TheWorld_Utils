@@ -509,7 +509,7 @@ namespace TheWorld_Utils
 			//return *this;
 		}
 
-		std::string getIdStr(void)
+		std::string getIdStr(void) const
 		{
 			return "ST" + std::to_string(m_gridStepInWU) + "_SZ" + std::to_string(m_numVerticesPerSize) + "_L" + std::to_string(m_level) + "_X" + std::to_string(m_lowerXGridVertex) + "_Z" + std::to_string(m_lowerZGridVertex);
 		}
@@ -791,6 +791,7 @@ namespace TheWorld_Utils
 		__declspec(dllexport) void adjustValues(TerrainEdit* northSideZMinus, TerrainEdit* southSideZPlus, TerrainEdit* westSideXMinus, TerrainEdit* eastSideXPlus);
 		__declspec(dllexport) bool operator==(const TerrainEdit& terrainEdit) const;
 		__declspec(dllexport) bool detectSeaInQuadrant(void);
+		__declspec(dllexport) bool seaQuadrant(void) const;
 	};
 
 	template<> MYAPI void MemoryBuffer::populateVector<float>(std::vector<float>& v);
@@ -976,7 +977,7 @@ namespace TheWorld_Utils
 				if (terrainEditValues == nullptr)
 					m_terrainDataPtr = nullptr;
 				else
-					m_terrainDataPtr =(TheWorld_Utils::TerrainEdit*)terrainEditValues->ptr();
+					m_terrainDataPtr = (TheWorld_Utils::TerrainEdit*)terrainEditValues->ptr();
 				
 				return m_terrainDataPtr;
 			}
