@@ -1467,8 +1467,8 @@ namespace TheWorld_Utils
 			TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromDisk 1.4  ") + __FUNCTION__, "refreshMapsFromBuffer");
 			std::string meshIdFromBuffer;
 			refreshMapsFromBuffer(buffer, meshIdFromBuffer, terrainEditValues, minAltitude, maxAltitude, float16HeigthsBuffer, float32HeigthsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, false);
-			assert(meshIdFromBuffer == _meshId);
-			if (meshIdFromBuffer != _meshId)
+			assert(_meshId.size() == 0 || meshIdFromBuffer == _meshId);
+			if (_meshId.size() > 0 && meshIdFromBuffer != _meshId)
 			{
 				throw(GDN_TheWorld_Exception(__FUNCTION__, (std::string("meshId from cache buffer (") + meshIdFromBuffer + ") not equal to meshId in input (" + _meshId).c_str()));
 			}
