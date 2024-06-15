@@ -13,14 +13,14 @@ namespace TheWorld_Utils
 		{
 		case TerrainType::empty:
 			if (textureType == TerrainEdit::TextureType::lowElevation)
-				ret = "Marble021_1K";
+				ret = EMPTY_QUADRANT_TERRAIN_TEXTURE;
 				//ret = "Ground037_1K";
 			else if (textureType == TerrainEdit::TextureType::highElevation)
-				ret = "Marble021_1K";
+				ret = EMPTY_QUADRANT_TERRAIN_TEXTURE;
 			else if (textureType == TerrainEdit::TextureType::dirt)
-				ret = "Marble021_1K";
+				ret = EMPTY_QUADRANT_TERRAIN_TEXTURE;
 			else if (textureType == TerrainEdit::TextureType::rocks)
-				ret = "Marble021_1K";
+				ret = EMPTY_QUADRANT_TERRAIN_TEXTURE;
 			break;
 		case TerrainType::flat:
 			if (textureType == TerrainEdit::TextureType::lowElevation)
