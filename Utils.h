@@ -58,6 +58,9 @@ namespace TheWorld_Utils
 	__declspec(dllexport) void packNormal(float normalX, float normalY, float normalZ, float& packedNormalX, float& packedNormalY, float& packedNormalZ);
 	__declspec(dllexport) void unpackNormal(float packedNormalX, float packedNormalY, float packedNormalZ, float& normalX, float& normalY, float& normalZ);
 
+	__declspec(dllexport) double deg_to_rad(double deg);
+	__declspec(dllexport) double rad_to_deg(double rad);
+
 	__declspec(dllexport) void to_lower_implace(std::string& s);
 	__declspec(dllexport) std::string to_lower(std::string s);
 	__declspec(dllexport) inline std::wstring convert(const std::string& as);

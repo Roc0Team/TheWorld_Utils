@@ -39,16 +39,28 @@ namespace fs = std::filesystem;
 
 namespace TheWorld_Utils
 {
+	double deg_to_rad(double deg)
+	{
+		return (deg * TheWorld_Utils::kPi) / 180;
+	}
+	
+	double rad_to_deg(double rad)
+	{
+		return (rad * 180) / TheWorld_Utils::kPi;
+	}
+
 	void to_lower_implace(std::string& s)
 	{
 		std::transform(s.begin(), s.end(), s.begin(), ::tolower);
 	}
+	
 	std::string to_lower(std::string s)
 	{
 		std::string ret = s;
 		std::transform(ret.begin(), ret.end(), ret.begin(), ::tolower);
 		return ret;
 	}
+	
 	inline std::wstring convert(const std::string& as)
 	{
 		// deal with trivial case of empty string
