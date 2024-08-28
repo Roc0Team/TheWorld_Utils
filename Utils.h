@@ -85,6 +85,10 @@ namespace TheWorld_Utils
 	//	return output;
 	//}
 
+	__declspec(dllexport) void padStrTo(std::string& str, const size_t num, const char paddingChar = ' ');
+	template <typename T> __declspec(dllexport) std::string padValueTo(T val, const size_t num, const char paddingChar = '0');
+	__declspec(dllexport) std::string padIntValueTo(int val, const size_t num, const char paddingChar = '0');
+
 	class MapManagerProceduralGenerationStatus
 	{
 	public:

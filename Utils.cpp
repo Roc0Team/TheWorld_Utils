@@ -78,6 +78,25 @@ namespace TheWorld_Utils
 		// return new string ( compiler should optimize this away )
 		return ret;
 	}
+
+	__declspec(dllexport) void padStrTo(std::string& str, const size_t num, const char paddingChar)
+	{
+		if (num > str.size())
+			str.insert(0, num - str.size(), paddingChar);
+	}
+
+	template <typename T> __declspec(dllexport) std::string padValueTo(T val, const size_t num, const char paddingChar)
+	{
+		std::string str = std::to_string(val);
+		padStrTo(str, num, paddingChar);
+		return str;
+	}
+
+	std::string padIntValueTo(int val, const size_t num, const char paddingChar)
+	{
+		return padValueTo<int>(val, num, paddingChar);
+	}
+
 	void QuadrantPos::serialize(TheWorld_Utils::MemoryBuffer& buffer) const
 	{
 		buffer.reserve(sizeof(QuadrantPos) + m_tag.length() + m_name.length());
