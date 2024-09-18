@@ -626,6 +626,86 @@ namespace TheWorld_Utils
 		// WARNING
 	};
 
+	class MapTextureRectPos
+	{
+	public:
+		__declspec(dllexport) MapTextureRectPos();
+		__declspec(dllexport) MapTextureRectPos(int32_t idxX, int32_t idxY, int32_t numQuadrantsPerSize, float quadrantGlobalSize, float quadrantWorldSize);
+		__declspec(dllexport) MapTextureRectPos(float globalPosX, float globalPosY, int32_t numQuadrantsPerSize, float quadrantGlobalSize, float quadrantWorldSize);
+		__declspec(dllexport) ~MapTextureRectPos(void) {}
+
+		float getGlobalLowerPosX() const
+		{
+			return m_globalLowerPosX;
+		}
+		float getGlobalLowerPosY() const
+		{
+			return m_globalLowerPosY;
+		}
+		float getGlobalHigherPosX() const
+		{
+			return m_globalLowerPosX + m_globalSize;
+		}
+		float getGlobalHigherPosY() const
+		{
+			return m_globalLowerPosY + m_globalSize;
+		}
+		int32_t getIdxX() const
+		{
+			return m_idxX;
+		}
+		int32_t getIdxY() const
+		{
+			return m_idxY;
+		}
+		float getGlobalSize() const
+		{
+			return m_globalSize;
+		}
+		float getWorldSize() const
+		{
+			return m_worldSize;
+		}
+		float getQuadrantGlobalSize() const
+		{
+			return m_quadrantGlobalSize;
+		}
+		float getQuadrantWorldSize() const
+		{
+			return m_quadrantWorldSize;
+		}
+		int32_t getNumQuadrantsPerSize() const
+		{
+			return m_numQuadrantsPerSize;
+		}
+
+		__declspec(dllexport) bool operator==(const MapTextureRectPos& textureRectPos) const;
+		__declspec(dllexport) void operator=(const MapTextureRectPos& textureRectPos);
+		__declspec(dllexport) MapTextureRectPos operator+(const MapTextureRectPos& textureRectPos) const;
+		__declspec(dllexport) bool operator<(const MapTextureRectPos& textureRectPos) const;
+
+		__declspec(dllexport) bool initialized(void) const;
+		__declspec(dllexport) void globalPosToWorldPos(float globalPosX, float globalPosY, float& worldPosX, float& worldPosY) const;
+		__declspec(dllexport) void worldPosToGlobalPos(float worldPosX, float worldPosY, float& globalPosX, float& globalPosY) const;
+		__declspec(dllexport) void getQuadrantsPosContained(std::vector<TheWorld_Utils::QuadrantPos>& quadrantsPos, int worldViewerLevel, int numVerticesPerQuadrantSize, float gridStepInWU);
+		__declspec(dllexport) bool getQuadrantRelativeIndices(const TheWorld_Utils::QuadrantPos& quadrantPos, int32_t& idxX, int32_t& idxY);
+
+
+	private:
+		void reset(void);
+
+	private:
+		float m_globalLowerPosX;
+		float m_globalLowerPosY;
+		int32_t m_idxX;
+		int32_t m_idxY;
+		int32_t m_numQuadrantsPerSize;
+		float m_quadrantGlobalSize;
+		float m_quadrantWorldSize;
+		float m_globalSize;
+		float m_worldSize;
+	};
+
 	class TerrainSideInfo
 	{
 	public:

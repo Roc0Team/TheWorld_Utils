@@ -97,6 +97,154 @@ namespace TheWorld_Utils
 		return padValueTo<int>(val, num, paddingChar);
 	}
 
+	MapTextureRectPos::MapTextureRectPos(void)
+	{
+		reset();
+	}
+
+	void MapTextureRectPos::reset(void)
+	{
+		m_numQuadrantsPerSize = 0;
+		m_quadrantGlobalSize = 0;
+		m_quadrantWorldSize = 0;
+		m_globalSize = 0;
+		m_worldSize = 0;
+		m_globalLowerPosX = 0;
+		m_globalLowerPosY = 0;
+		m_idxX = 0;
+		m_idxY = 0;
+	}
+	
+	MapTextureRectPos::MapTextureRectPos(float globalPosX, float globalPosY, int32_t numQuadrantsPerSize, float quadrantGlobalSize, float quadrantWorldSize)
+	{
+		m_numQuadrantsPerSize = numQuadrantsPerSize;
+		m_quadrantGlobalSize = quadrantGlobalSize;
+		m_quadrantWorldSize = quadrantWorldSize;
+		m_globalSize = m_numQuadrantsPerSize * m_quadrantGlobalSize;
+		m_worldSize = m_numQuadrantsPerSize * m_quadrantWorldSize;
+		m_globalLowerPosX = floor(globalPosX / m_globalSize) * m_globalSize;
+		m_globalLowerPosY = floor(globalPosY / m_globalSize) * m_globalSize;
+		m_idxX = (int32_t)(m_globalLowerPosX / m_globalSize);
+		m_idxY = (int32_t)(m_globalLowerPosY / m_globalSize);
+	}
+
+	MapTextureRectPos::MapTextureRectPos(int32_t idxX, int32_t idxY, int32_t numQuadrantsPerSize, float quadrantGlobalSize, float quadrantWorldSize)
+	{
+		m_numQuadrantsPerSize = numQuadrantsPerSize;
+		m_quadrantGlobalSize = quadrantGlobalSize;
+		m_quadrantWorldSize = quadrantWorldSize;
+		m_globalSize = m_numQuadrantsPerSize * m_quadrantGlobalSize;
+		m_worldSize = m_numQuadrantsPerSize * m_quadrantWorldSize;
+		m_idxX = idxX;
+		m_idxY = idxY;
+		m_globalLowerPosX = float(m_idxX * m_globalSize);
+		m_globalLowerPosY = float(m_idxY * m_globalSize);
+	}
+
+	bool MapTextureRectPos::operator==(const MapTextureRectPos& textureRectPos) const
+	{
+		if (m_globalLowerPosX == textureRectPos.m_globalLowerPosX
+			and m_globalLowerPosY == textureRectPos.m_globalLowerPosY
+			and m_numQuadrantsPerSize == textureRectPos.m_numQuadrantsPerSize
+			and m_quadrantGlobalSize == textureRectPos.m_quadrantGlobalSize
+			and m_quadrantWorldSize == textureRectPos.m_quadrantWorldSize)
+			return true;
+		else
+			return false;
+	}
+	void MapTextureRectPos::operator=(const MapTextureRectPos& textureRectPos)
+	{
+		m_numQuadrantsPerSize = textureRectPos.m_numQuadrantsPerSize;
+		m_quadrantGlobalSize = textureRectPos.m_quadrantGlobalSize;
+		m_quadrantWorldSize = textureRectPos.m_quadrantWorldSize;
+		m_globalSize = textureRectPos.m_globalSize;
+		m_worldSize = textureRectPos.m_worldSize;
+		m_idxX = textureRectPos.m_idxX;
+		m_idxY = textureRectPos.m_idxY;
+		m_globalLowerPosX = textureRectPos.m_globalLowerPosX;
+		m_globalLowerPosY = textureRectPos.m_globalLowerPosY;
+	}
+	MapTextureRectPos MapTextureRectPos::operator+(const MapTextureRectPos& textureRectPos) const
+	{
+		MapTextureRectPos ret(m_idxX + textureRectPos.m_idxX, m_idxY + textureRectPos.m_idxY, textureRectPos.m_numQuadrantsPerSize, textureRectPos.m_quadrantGlobalSize, textureRectPos.m_quadrantWorldSize);
+		return ret;
+	}
+
+	bool MapTextureRectPos::operator<(const MapTextureRectPos& textureRectPos) const
+	{
+		assert(initialized()
+			and m_numQuadrantsPerSize == textureRectPos.m_numQuadrantsPerSize
+			and m_quadrantGlobalSize == textureRectPos.m_quadrantGlobalSize
+			and m_quadrantWorldSize == textureRectPos.m_quadrantWorldSize);
+
+		if (m_globalLowerPosY < textureRectPos.m_globalLowerPosY)
+			return true;
+		if (m_globalLowerPosY > textureRectPos.m_globalLowerPosY)
+			return false;
+
+		return m_globalLowerPosX < textureRectPos.m_globalLowerPosX;
+	}
+
+	bool MapTextureRectPos::initialized(void) const
+	{
+		if (m_numQuadrantsPerSize > 0 and m_quadrantGlobalSize > 0 and m_quadrantWorldSize > 0)
+			return true;
+		else
+			return false;
+	}
+
+	void MapTextureRectPos::globalPosToWorldPos(float globalPosX, float globalPosY, float& worldPosX, float& worldPosY) const
+	{
+		worldPosX = (globalPosX / getQuadrantGlobalSize()) * getQuadrantWorldSize();
+		worldPosY = (globalPosY / getQuadrantGlobalSize()) * getQuadrantWorldSize();
+	}
+
+	void MapTextureRectPos::worldPosToGlobalPos(float worldPosX, float worldPosY, float& globalPosX, float& globalPosY) const
+	{
+		globalPosX = (worldPosX / getQuadrantWorldSize()) * getQuadrantGlobalSize();
+		globalPosY = (worldPosY / getQuadrantWorldSize()) * getQuadrantGlobalSize();
+	}
+
+	void MapTextureRectPos::getQuadrantsPosContained(std::vector<TheWorld_Utils::QuadrantPos>& quadrantsPos, int worldViewerLevel, int numVerticesPerQuadrantSize, float gridStepInWU)
+	{
+		quadrantsPos.clear();
+
+		for (int quadrantsIdxY = 0; quadrantsIdxY < getNumQuadrantsPerSize(); quadrantsIdxY++)
+		{
+			for (int quadrantsIdxX = 0; quadrantsIdxX < getNumQuadrantsPerSize(); quadrantsIdxX++)
+			{
+				float globalPosX = getGlobalLowerPosX() + quadrantsIdxX * getQuadrantGlobalSize();
+				float globalPosY = getGlobalLowerPosY() + quadrantsIdxY * getQuadrantGlobalSize();
+				float worldPosX, worldPosY;
+				globalPosToWorldPos(globalPosX, globalPosY, worldPosX, worldPosY);
+				TheWorld_Utils::QuadrantPos pos(worldPosX, worldPosY, worldViewerLevel, numVerticesPerQuadrantSize, gridStepInWU);
+				quadrantsPos.push_back(pos);
+			}
+		}
+
+	}
+
+	bool MapTextureRectPos::getQuadrantRelativeIndices(const TheWorld_Utils::QuadrantPos& quadrantPos, int32_t& idxX, int32_t& idxY)
+	{
+		float globalPosX, globalPosY;
+		worldPosToGlobalPos(quadrantPos.getLowerXGridVertex(), quadrantPos.getLowerZGridVertex(), globalPosX, globalPosY);
+
+		if (quadrantPos.getSizeInWU() != getQuadrantWorldSize())
+			return false;
+		
+		// if quadrant not contained in rect we return false
+		if (globalPosX < getGlobalLowerPosX() or globalPosX + getQuadrantGlobalSize() > getGlobalHigherPosX()
+			or globalPosY < getGlobalLowerPosY() or globalPosY + getQuadrantGlobalSize() > getGlobalHigherPosY())
+			return false;
+
+		float offsetX = globalPosX - getGlobalLowerPosX();
+		idxX = int32_t(offsetX / getQuadrantGlobalSize());
+		float offsetY = globalPosY - getGlobalLowerPosY();
+		idxY = int32_t(offsetY / getQuadrantGlobalSize());
+
+		return true;
+	}
+
 	void QuadrantPos::serialize(TheWorld_Utils::MemoryBuffer& buffer) const
 	{
 		buffer.reserve(sizeof(QuadrantPos) + m_tag.length() + m_name.length());
