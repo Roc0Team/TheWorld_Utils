@@ -205,7 +205,7 @@ namespace TheWorld_Utils
 		globalPosY = (worldPosY / getQuadrantWorldSize()) * getQuadrantGlobalSize();
 	}
 
-	void MapTextureRectPos::getQuadrantsPosContained(std::vector<TheWorld_Utils::QuadrantPos>& quadrantsPos, int worldViewerLevel, int numVerticesPerQuadrantSize, float gridStepInWU)
+	void MapTextureRectPos::getAllContainedQuadrantPos(std::vector<TheWorld_Utils::QuadrantPos>& quadrantsPos, int worldViewerLevel, int numVerticesPerQuadrantSize, float gridStepInWU)
 	{
 		quadrantsPos.clear();
 
