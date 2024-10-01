@@ -104,6 +104,7 @@ namespace TheWorld_Utils
 
 	void MapTextureRectPos::reset(void)
 	{
+		m_level = 0;
 		m_numQuadrantsPerSize = 0;
 		m_quadrantGlobalSize = 0;
 		m_quadrantWorldSize = 0;
@@ -113,10 +114,12 @@ namespace TheWorld_Utils
 		m_globalLowerPosY = 0;
 		m_idxX = 0;
 		m_idxY = 0;
+		m_name.clear();
 	}
 	
-	MapTextureRectPos::MapTextureRectPos(float globalPosX, float globalPosY, int32_t numQuadrantsPerSize, float quadrantGlobalSize, float quadrantWorldSize)
+	MapTextureRectPos::MapTextureRectPos(float globalPosX, float globalPosY, int32_t level, int32_t numQuadrantsPerSize, float quadrantGlobalSize, float quadrantWorldSize)
 	{
+		m_level = level;
 		m_numQuadrantsPerSize = numQuadrantsPerSize;
 		m_quadrantGlobalSize = quadrantGlobalSize;
 		m_quadrantWorldSize = quadrantWorldSize;
@@ -126,10 +129,12 @@ namespace TheWorld_Utils
 		m_globalLowerPosY = floor(globalPosY / m_globalSize) * m_globalSize;
 		m_idxX = (int32_t)(m_globalLowerPosX / m_globalSize);
 		m_idxY = (int32_t)(m_globalLowerPosY / m_globalSize);
+		internalSetName();
 	}
 
-	MapTextureRectPos::MapTextureRectPos(int32_t idxX, int32_t idxY, int32_t numQuadrantsPerSize, float quadrantGlobalSize, float quadrantWorldSize)
+	MapTextureRectPos::MapTextureRectPos(int32_t idxX, int32_t idxY, int32_t level, int32_t numQuadrantsPerSize, float quadrantGlobalSize, float quadrantWorldSize)
 	{
+		m_level = level;
 		m_numQuadrantsPerSize = numQuadrantsPerSize;
 		m_quadrantGlobalSize = quadrantGlobalSize;
 		m_quadrantWorldSize = quadrantWorldSize;
@@ -139,6 +144,39 @@ namespace TheWorld_Utils
 		m_idxY = idxY;
 		m_globalLowerPosX = float(m_idxX * m_globalSize);
 		m_globalLowerPosY = float(m_idxY * m_globalSize);
+		internalSetName();
+	}
+
+	MapTextureRectPos::MapTextureRectPos(TheWorld_Utils::QuadrantPos& quadrantPos, int32_t numQuadrantsPerSize, float quadrantGlobalSize, float quadrantWorldSize)
+	{
+		m_numQuadrantsPerSize = numQuadrantsPerSize;
+		m_quadrantGlobalSize = quadrantGlobalSize;
+		m_quadrantWorldSize = quadrantWorldSize;
+
+		float globalPosX, globalPosY;
+		worldPosToGlobalPos(quadrantPos.getLowerXGridVertex(), quadrantPos.getLowerZGridVertex(), globalPosX, globalPosY);
+
+		*this = MapTextureRectPos(globalPosX, globalPosY, quadrantPos.getLevel(), numQuadrantsPerSize, quadrantGlobalSize, quadrantWorldSize);
+	}
+
+	void MapTextureRectPos::internalSetName(void)
+	{
+		constexpr size_t NUM_PADDING_ZEROES = 6;
+		std::string strPosX, strPosY, strLevel;
+		int32_t posX = int32_t(m_globalLowerPosX), posY = int32_t(m_globalLowerPosY), level = int32_t(m_level);
+		if (posX < 0)
+			strPosX = "-" + TheWorld_Utils::padIntValueTo(-posX, NUM_PADDING_ZEROES);
+		else
+			strPosX = TheWorld_Utils::padIntValueTo(posX, NUM_PADDING_ZEROES);
+		if (posY < 0)
+			strPosY = "-" + TheWorld_Utils::padIntValueTo(-posY, NUM_PADDING_ZEROES);
+		else
+			strPosY = TheWorld_Utils::padIntValueTo(posY, NUM_PADDING_ZEROES);
+		if (level < 0)
+			strLevel = "-" + TheWorld_Utils::padIntValueTo(-level, NUM_PADDING_ZEROES);
+		else
+			strLevel = TheWorld_Utils::padIntValueTo(level, NUM_PADDING_ZEROES);
+		m_name = "MapRect_" + strLevel + "_" + strPosX + "_" + strPosY;
 	}
 
 	bool MapTextureRectPos::operator==(const MapTextureRectPos& textureRectPos) const
@@ -147,13 +185,15 @@ namespace TheWorld_Utils
 			and m_globalLowerPosY == textureRectPos.m_globalLowerPosY
 			and m_numQuadrantsPerSize == textureRectPos.m_numQuadrantsPerSize
 			and m_quadrantGlobalSize == textureRectPos.m_quadrantGlobalSize
-			and m_quadrantWorldSize == textureRectPos.m_quadrantWorldSize)
+			and m_quadrantWorldSize == textureRectPos.m_quadrantWorldSize
+			and m_level == textureRectPos.m_level)
 			return true;
 		else
 			return false;
 	}
 	void MapTextureRectPos::operator=(const MapTextureRectPos& textureRectPos)
 	{
+		m_level = textureRectPos.m_level;
 		m_numQuadrantsPerSize = textureRectPos.m_numQuadrantsPerSize;
 		m_quadrantGlobalSize = textureRectPos.m_quadrantGlobalSize;
 		m_quadrantWorldSize = textureRectPos.m_quadrantWorldSize;
@@ -163,10 +203,11 @@ namespace TheWorld_Utils
 		m_idxY = textureRectPos.m_idxY;
 		m_globalLowerPosX = textureRectPos.m_globalLowerPosX;
 		m_globalLowerPosY = textureRectPos.m_globalLowerPosY;
+		m_name = textureRectPos.m_name;
 	}
 	MapTextureRectPos MapTextureRectPos::operator+(const MapTextureRectPos& textureRectPos) const
 	{
-		MapTextureRectPos ret(m_idxX + textureRectPos.m_idxX, m_idxY + textureRectPos.m_idxY, textureRectPos.m_numQuadrantsPerSize, textureRectPos.m_quadrantGlobalSize, textureRectPos.m_quadrantWorldSize);
+		MapTextureRectPos ret(m_idxX + textureRectPos.m_idxX, m_idxY + textureRectPos.m_idxY, textureRectPos.m_level, textureRectPos.m_numQuadrantsPerSize, textureRectPos.m_quadrantGlobalSize, textureRectPos.m_quadrantWorldSize);
 		return ret;
 	}
 
@@ -176,6 +217,11 @@ namespace TheWorld_Utils
 			and m_numQuadrantsPerSize == textureRectPos.m_numQuadrantsPerSize
 			and m_quadrantGlobalSize == textureRectPos.m_quadrantGlobalSize
 			and m_quadrantWorldSize == textureRectPos.m_quadrantWorldSize);
+
+		if (m_level < textureRectPos.m_level)
+			return true;
+		if (m_level > textureRectPos.m_level)
+			return false;
 
 		if (m_globalLowerPosY < textureRectPos.m_globalLowerPosY)
 			return true;
@@ -243,6 +289,68 @@ namespace TheWorld_Utils
 		idxY = int32_t(offsetY / getQuadrantGlobalSize());
 
 		return true;
+	}
+
+	void MapTextureRectPos::serialize(TheWorld_Utils::MemoryBuffer& buffer) const
+	{
+		buffer.reserve(sizeof(MapTextureRectPos));
+
+		size_t size;
+		size_t cursor = 0;
+
+		serializeToByteStream<float>(m_globalLowerPosX, buffer.ptr() + cursor, size);
+		cursor += size;
+		serializeToByteStream<float>(m_globalLowerPosY, buffer.ptr() + cursor, size);
+		cursor += size;
+		serializeToByteStream<int32_t>(m_idxX, buffer.ptr() + cursor, size);
+		cursor += size;
+		serializeToByteStream<int32_t>(m_idxY, buffer.ptr() + cursor, size);
+		cursor += size;
+		serializeToByteStream<int32_t>(m_level, buffer.ptr() + cursor, size);
+		cursor += size;
+		serializeToByteStream<int32_t>(m_numQuadrantsPerSize, buffer.ptr() + cursor, size);
+		cursor += size;
+		serializeToByteStream<float>(m_quadrantGlobalSize, buffer.ptr() + cursor, size);
+		cursor += size;
+		serializeToByteStream<float>(m_quadrantWorldSize, buffer.ptr() + cursor, size);
+		cursor += size;
+		serializeToByteStream<float>(m_globalSize, buffer.ptr() + cursor, size);
+		cursor += size;
+		serializeToByteStream<float>(m_worldSize, buffer.ptr() + cursor, size);
+		cursor += size;
+
+		buffer.adjustSize(cursor);
+	}
+
+	void MapTextureRectPos::deserialize(TheWorld_Utils::MemoryBuffer& buffer)
+	{
+		reset();
+
+		size_t size;
+		size_t cursor = 0;
+
+		m_globalLowerPosX = deserializeFromByteStream<float>(buffer.ptr() + cursor, size);
+		cursor += size;
+		m_globalLowerPosY = deserializeFromByteStream<float>(buffer.ptr() + cursor, size);
+		cursor += size;
+		m_idxX = deserializeFromByteStream<int32_t>(buffer.ptr() + cursor, size);
+		cursor += size;
+		m_idxY = deserializeFromByteStream<int32_t>(buffer.ptr() + cursor, size);
+		cursor += size;
+		m_level = deserializeFromByteStream<int32_t>(buffer.ptr() + cursor, size);
+		cursor += size;
+		m_numQuadrantsPerSize = deserializeFromByteStream<int32_t>(buffer.ptr() + cursor, size);
+		cursor += size;
+		m_quadrantGlobalSize = deserializeFromByteStream<float>(buffer.ptr() + cursor, size);
+		cursor += size;
+		m_quadrantWorldSize = deserializeFromByteStream<float>(buffer.ptr() + cursor, size);
+		cursor += size;
+		m_globalSize = deserializeFromByteStream<float>(buffer.ptr() + cursor, size);
+		cursor += size;
+		m_worldSize = deserializeFromByteStream<float>(buffer.ptr() + cursor, size);
+		cursor += size;
+
+		internalSetName();
 	}
 
 	void QuadrantPos::serialize(TheWorld_Utils::MemoryBuffer& buffer) const
@@ -408,9 +516,9 @@ namespace TheWorld_Utils
 		// Color image formal controls
 		d = sqrt(colorImage.size() / sizeof(struct TheWorld_Utils::_RGB));
 		if (colorImage.size() == 0)
-			throw(std::exception((std::string(__FUNCTION__) + std::string("Color image empty")).c_str()));
+			throw(std::exception((std::string(__FUNCTION__) + std::string(" Color image empty")).c_str()));
 		if (d * d * sizeof(struct TheWorld_Utils::_RGB) != colorImage.size())
-			throw(std::exception((std::string(__FUNCTION__) + std::string("Color image length not valid")).c_str()));
+			throw(std::exception((std::string(__FUNCTION__) + std::string(" Color image length not valid")).c_str()));
 		width = heigth = (size_t)d;
 
 		// Bump/Displ/Depth image formal controls
@@ -418,9 +526,9 @@ namespace TheWorld_Utils
 		{
 			d = sqrt(bumpImage.size());
 			if (d * d != bumpImage.size())
-				throw(std::exception((std::string(__FUNCTION__) + std::string("Normal image length not valid")).c_str()));
+				throw(std::exception((std::string(__FUNCTION__) + std::string(" Normal image length not valid")).c_str()));
 			if ((size_t)d != width)
-				throw(std::exception((std::string(__FUNCTION__) + std::string("Normal image differs from color image size")).c_str()));
+				throw(std::exception((std::string(__FUNCTION__) + std::string(" Normal image differs from color image size")).c_str()));
 		}
 
 		// Normal image formal controls
@@ -428,9 +536,9 @@ namespace TheWorld_Utils
 		{
 			d = sqrt(normalImage.size() / sizeof(struct TheWorld_Utils::_RGB));
 			if (d * d * sizeof(struct TheWorld_Utils::_RGB) != normalImage.size())
-				throw(std::exception((std::string(__FUNCTION__) + std::string("Normal image length not valid")).c_str()));
+				throw(std::exception((std::string(__FUNCTION__) + std::string(" Normal image length not valid")).c_str()));
 			if ((size_t)d != width)
-				throw(std::exception((std::string(__FUNCTION__) + std::string("Normal image differs from color image size")).c_str()));
+				throw(std::exception((std::string(__FUNCTION__) + std::string(" Normal image differs from color image size")).c_str()));
 		}
 
 		// Rough image formal controls
@@ -438,9 +546,9 @@ namespace TheWorld_Utils
 		{
 			d = sqrt(roughImage.size());
 			if (d * d != roughImage.size())
-				throw(std::exception((std::string(__FUNCTION__) + std::string("Rough image length not valid")).c_str()));
+				throw(std::exception((std::string(__FUNCTION__) + std::string(" Rough image length not valid")).c_str()));
 			if ((size_t)d != width)
-				throw(std::exception((std::string(__FUNCTION__) + std::string("Rough image differs from color image size")).c_str()));
+				throw(std::exception((std::string(__FUNCTION__) + std::string(" Rough image differs from color image size")).c_str()));
 		}
 
 		size_t bufferSize = width * heigth * sizeof(struct TheWorld_Utils::_RGBA);
@@ -990,7 +1098,7 @@ namespace TheWorld_Utils
 		{
 			BYTE* ptr = (BYTE*)calloc(1, newLen);
 			if (ptr == nullptr)
-				throw(std::exception((std::string(__FUNCTION__) + std::string("Allocation error")).c_str()));
+				throw(std::exception((std::string(__FUNCTION__) + std::string(" Allocation error")).c_str()));
 			m_bufferSize = newLen;
 
 			if (m_ptr != nullptr)
@@ -1130,6 +1238,11 @@ namespace TheWorld_Utils
 	MeshCacheBuffer::MeshCacheBuffer(const MeshCacheBuffer& c)
 	{
 		*this = c;
+	}
+
+	MeshCacheBuffer::MeshCacheBuffer(std::string& cacheDir, std::string& mapName, TheWorld_Utils::QuadrantPos& quadrantPos)
+	{
+		*this = MeshCacheBuffer(cacheDir, mapName, quadrantPos.getGridStepInWU(), quadrantPos.getNumVerticesPerSize(), quadrantPos.getLevel(), quadrantPos.getLowerXGridVertex(), quadrantPos.getLowerZGridVertex());
 	}
 
 	std::string MeshCacheBuffer::cacheDir(std::string cacheDir, std::string mapName, float gridStepInWU, size_t numVerticesPerSize, int level)
@@ -1329,24 +1442,26 @@ namespace TheWorld_Utils
 		//BYTE shortBuffer[256 + 1];
 
 		std::chrono::system_clock::time_point firstTime;
-		std::string sFirstTime;
+		//std::string sFirstTime;	// DEBUG
 		std::vector<std::string> v = TheWorld_Utils::Utils::split(firstMeshId, ':');
 		my_assert(v.size() >= 1);
 		if (v.size() > 1)
 		{
-			if (v.size() >= 4)
-				assert(v.size() >= 4);	// DEBUGBREAKPOINT
+			//if (v.size() >= 4)
+			//	assert(v.size() >= 4);	// DEBUGBREAKPOINT
 			my_assert(v.size() > 2);
 			size_t headerToDiscardSize = v[0].size() + v[1].size() + 2;
 			std::string s = firstMeshId.substr(headerToDiscardSize);
 			size_t sz = s.size();
 			firstTime = TheWorld_Utils::deserializeFromByteStream<std::chrono::system_clock::time_point>((BYTE*)s.c_str(), size);
-			{
-				time_t t = std::chrono::system_clock::to_time_t(firstTime);
-				std::tm t1;	localtime_s(&t1, &t);
-				char buff[70];	strftime(buff, sizeof buff, "%Y %m %e %T", &t1);
-				sFirstTime = buff;
-			}
+			// DEBUG
+			//{
+			//	time_t t = std::chrono::system_clock::to_time_t(firstTime);
+			//	std::tm t1;	localtime_s(&t1, &t);
+			//	char buff[70];	strftime(buff, sizeof buff, "%Y %m %e %T", &t1);
+			//	sFirstTime = buff;
+			//}
+			// DEBUG
 		}
 
 		////time_t firstTime = 0;
@@ -1359,7 +1474,7 @@ namespace TheWorld_Utils
 		//}
 
 		std::chrono::system_clock::time_point secondTime;
-		std::string sSecondTime;
+		//std::string sSecondTime;	// DEBUG
 		v = TheWorld_Utils::Utils::split(secondMeshId, ':');
 		my_assert(v.size() >= 1);
 		if (v.size() > 1)
@@ -1371,12 +1486,14 @@ namespace TheWorld_Utils
 			std::string s = secondMeshId.substr(headerToDiscardSize);
 			size_t sz = s.size();
 			secondTime = TheWorld_Utils::deserializeFromByteStream<std::chrono::system_clock::time_point>((BYTE*)s.c_str(), size);
-			{
-				time_t t = std::chrono::system_clock::to_time_t(secondTime);
-				std::tm t1;	localtime_s(&t1, &t);
-				char buff[70];	strftime(buff, sizeof buff, "%Y %m %e %T", &t1);
-				sSecondTime = buff;
-			}
+			// DEBUG
+			//{
+			//	time_t t = std::chrono::system_clock::to_time_t(secondTime);
+			//	std::tm t1;	localtime_s(&t1, &t);
+			//	char buff[70];	strftime(buff, sizeof buff, "%Y %m %e %T", &t1);
+			//	sSecondTime = buff;
+			//}
+			// DEBUG
 		}
 
 		////time_t secondTime = 0;
@@ -3299,7 +3416,7 @@ namespace TheWorld_Utils
 
 			_streamBuffer = streamBuffer = (BYTE*)calloc(1, streamBufferSize);
 			if (streamBuffer == nullptr)
-				throw(std::exception((std::string(__FUNCTION__) + std::string("Allocation error")).c_str()));
+				throw(std::exception((std::string(__FUNCTION__) + std::string(" Allocation error")).c_str()));
 
 			if (float16HeightmapSize > 0)
 			{
@@ -3307,7 +3424,7 @@ namespace TheWorld_Utils
 				if (tempFloat16HeithmapBuffer == nullptr)
 				{
 					free(streamBuffer);
-					throw(std::exception((std::string(__FUNCTION__) + std::string("Allocation error")).c_str()));
+					throw(std::exception((std::string(__FUNCTION__) + std::string(" Allocation error")).c_str()));
 				}
 			}
 
@@ -3318,7 +3435,7 @@ namespace TheWorld_Utils
 				{
 					free(streamBuffer);
 					free(tempFloat16HeithmapBuffer);
-					throw(std::exception((std::string(__FUNCTION__) + std::string("Allocation error")).c_str()));
+					throw(std::exception((std::string(__FUNCTION__) + std::string(" Allocation error")).c_str()));
 				}
 			}
 		}

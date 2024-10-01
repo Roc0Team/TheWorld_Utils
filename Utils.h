@@ -245,7 +245,7 @@ namespace TheWorld_Utils
 
 	private:
 		MemoryBuffer(const MemoryBuffer&);
-		void operator=(const MemoryBuffer&);
+		//void operator=(const MemoryBuffer&);
 
 		BYTE* m_ptr;
 		size_t m_size;
@@ -630,8 +630,9 @@ namespace TheWorld_Utils
 	{
 	public:
 		__declspec(dllexport) MapTextureRectPos();
-		__declspec(dllexport) MapTextureRectPos(int32_t idxX, int32_t idxY, int32_t numQuadrantsPerSize, float quadrantGlobalSize, float quadrantWorldSize);
-		__declspec(dllexport) MapTextureRectPos(float globalPosX, float globalPosY, int32_t numQuadrantsPerSize, float quadrantGlobalSize, float quadrantWorldSize);
+		__declspec(dllexport) MapTextureRectPos(int32_t idxX, int32_t idxY, int32_t level, int32_t numQuadrantsPerSize, float quadrantGlobalSize, float quadrantWorldSize);
+		__declspec(dllexport) MapTextureRectPos(float globalPosX, float globalPosY, int32_t level, int32_t numQuadrantsPerSize, float quadrantGlobalSize, float quadrantWorldSize);
+		__declspec(dllexport) MapTextureRectPos(TheWorld_Utils::QuadrantPos& quadrantPos, int32_t numQuadrantsPerSize, float quadrantGlobalSize, float quadrantWorldSize);
 		__declspec(dllexport) ~MapTextureRectPos(void) {}
 
 		float getGlobalLowerPosX() const
@@ -674,9 +675,17 @@ namespace TheWorld_Utils
 		{
 			return m_quadrantWorldSize;
 		}
+		int32_t getLevel() const
+		{
+			return m_level;
+		}
 		int32_t getNumQuadrantsPerSize() const
 		{
 			return m_numQuadrantsPerSize;
+		}
+		std::string getName() const
+		{
+			return m_name;
 		}
 
 		__declspec(dllexport) bool operator==(const MapTextureRectPos& textureRectPos) const;
@@ -689,21 +698,25 @@ namespace TheWorld_Utils
 		__declspec(dllexport) void worldPosToGlobalPos(float worldPosX, float worldPosY, float& globalPosX, float& globalPosY) const;
 		__declspec(dllexport) void getAllContainedQuadrantPos(std::vector<TheWorld_Utils::QuadrantPos>& quadrantsPos, int worldViewerLevel, int numVerticesPerQuadrantSize, float gridStepInWU);
 		__declspec(dllexport) bool getQuadrantRelativeIndices(const TheWorld_Utils::QuadrantPos& quadrantPos, int32_t& idxX, int32_t& idxY);
-
+		__declspec(dllexport) void serialize(TheWorld_Utils::MemoryBuffer& buffer) const;
+		__declspec(dllexport) void deserialize(TheWorld_Utils::MemoryBuffer& buffer);
 
 	private:
 		void reset(void);
+		void internalSetName(void);
 
 	private:
 		float m_globalLowerPosX;
 		float m_globalLowerPosY;
 		int32_t m_idxX;
 		int32_t m_idxY;
+		int32_t m_level;
 		int32_t m_numQuadrantsPerSize;
 		float m_quadrantGlobalSize;
 		float m_quadrantWorldSize;
 		float m_globalSize;
 		float m_worldSize;
+		std::string m_name;
 	};
 
 	class TerrainSideInfo
@@ -1116,6 +1129,7 @@ namespace TheWorld_Utils
 		__declspec(dllexport) ~MeshCacheBuffer(void);
 		__declspec(dllexport) MeshCacheBuffer(std::string cacheDir, std::string mapName, float gridStepInWU, size_t numVerticesPerSize, int level, float lowerXGridVertex, float lowerZGridVertex);
 		__declspec(dllexport) MeshCacheBuffer(const MeshCacheBuffer& c);
+		__declspec(dllexport) MeshCacheBuffer(std::string& cacheDir, std::string& mapName, TheWorld_Utils::QuadrantPos& quadrantPos);
 
 		__declspec(dllexport) void operator=(const MeshCacheBuffer& c);
 		bool operator<(const MeshCacheBuffer& c) const;
@@ -1124,6 +1138,11 @@ namespace TheWorld_Utils
 		__declspec(dllexport) static uint16_t halfFromFloat(uint32_t f);
 		__declspec(dllexport) static uint32_t halfToFloat(uint16_t f);
 
+		__declspec(dllexport) TheWorld_Utils::QuadrantPos getQuadrantPos(void)
+		{
+			return TheWorld_Utils::QuadrantPos(m_lowerXGridVertex, m_lowerZGridVertex, m_level, (int)m_numVerticesPerSize, m_gridStepInWU);
+		}
+		
 		__declspec(dllexport) static std::string cacheDir(std::string cacheDir, std::string mapName, float gridStepInWU, size_t numVerticesPerSize, int level);
 		__declspec(dllexport) static std::string generateNewMeshId(void);
 		__declspec(dllexport) static std::string generateNewMeshIdForEmptyBuffer(void);
