@@ -79,6 +79,70 @@ namespace TheWorld_Utils
 		return ret;
 	}
 
+	std::time_t last_write_time(const std::string& path)
+	{
+		// Read last modified time
+		//struct _stat stat;
+		//int result = _stat(path.c_str(), &stat);
+		//return stat.st_mtime;
+		
+		const auto fileTime_utc = std::filesystem::last_write_time(path);					// UTC Time
+		//std::string fileTime_str1_utc = std::format("{}", fileTime_utc);					// DEBUG
+		const auto systemTime_utc = std::chrono::clock_cast<std::chrono::system_clock>(fileTime_utc);
+		std::time_t fileTime_time_t_utc = std::chrono::system_clock::to_time_t(systemTime_utc);
+		return fileTime_time_t_utc;
+	}
+	std::string last_write_time_str(const std::string& path)
+	{
+		// Read last modified time
+		//char buffer[512];
+		//std::tm tm;
+		//std::time_t t = last_write_time(path);
+		//localtime_s(&tm, &t);
+		//std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tm);
+		//strcat_s(buffer, sizeof(buffer), ".0");
+		//return buffer;	// es: 2023-09-04 19:33:24.702639224
+
+		std::chrono::system_clock::time_point fileTime_tp_utc = std::chrono::system_clock::from_time_t(last_write_time(path));
+		std::string fileTime_str_utc = std::format("{}", fileTime_tp_utc);
+		return fileTime_str_utc;	// es: 2023-09-04 19:33:24.000000000
+	}
+
+	std::time_t current_utc_time(void)
+	{
+		std::chrono::system_clock::time_point now_tp_utc = std::chrono::system_clock::now();		// UTC Time
+		//std::string now_str_utc = std::format("{}", now_tp_utc);									// DEBUG
+		std::time_t now_time_t_utc = std::chrono::system_clock::to_time_t(now_tp_utc);
+		return now_time_t_utc;
+	}
+
+	std::time_t str_time_to_time_t(const std::string& time /* es: 2023-09-04 19:33:24.702639224 */ )
+	{
+		std::time_t ret = 0;
+		std::vector<std::string> v = TheWorld_Utils::Utils::split(time, '.');
+		std::tm t = {};
+		std::istringstream ss(v[0]);
+		ss >> std::get_time(&t, "%Y-%m-%d %H:%M:%S");
+		if (ss.fail())
+			return ret;
+		//ret = std::mktime(&t);	// wrong: convert to time_t according local time
+		ret = _mkgmtime(&t);		// correct: correct to time_t ignoring local calendar (it assumes input time is in UTC format and mantains it)
+		return ret;
+	}
+
+	std::string time_t_to_str_time(std::time_t time)
+	{
+		//char buffer[512];
+		//std::tm tm;
+		//localtime_s(&tm, &time);
+		//std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tm);
+		//return buffer;	// es: 2023-09-04 19:33:24
+
+		std::chrono::system_clock::time_point tp = std::chrono::system_clock::from_time_t(time);
+		std::string str = std::format("{}", tp);
+		return str;
+	}
+
 	__declspec(dllexport) void padStrTo(std::string& str, const size_t num, const char paddingChar)
 	{
 		if (num > str.size())
@@ -1372,13 +1436,13 @@ namespace TheWorld_Utils
 			throw(GDN_TheWorld_Exception(__FUNCTION__, msg.c_str()));
 		}
 
-		std::chrono::system_clock::time_point oldestTime;
-		std::time_t oldest_time_t = std::chrono::system_clock::to_time_t(oldestTime);
+		std::chrono::system_clock::time_point timeZeroTime;
+		std::time_t time_zero_time_t = std::chrono::system_clock::to_time_t(timeZeroTime);
 		tm local_tm;
-		localtime_s(&local_tm, &oldest_time_t);
+		localtime_s(&local_tm, &time_zero_time_t);
 		BYTE shortBuffer[256 + 1];
 		size_t size = 0;
-		TheWorld_Utils::serializeToByteStream<std::chrono::system_clock::time_point>(oldestTime, shortBuffer, size);
+		TheWorld_Utils::serializeToByteStream<std::chrono::system_clock::time_point>(timeZeroTime, shortBuffer, size);
 		size_t n_zero = 2;
 		std::string year = std::to_string(local_tm.tm_year + 1900);
 		std::string month = std::to_string(local_tm.tm_mon + 1);
@@ -1703,9 +1767,9 @@ namespace TheWorld_Utils
 			//int result = _stat(cacheFilePath.c_str(), &stat);
 			//fclose(inFile);
 			//char buffer1[512];																// DEBUG ONLY
-			//ctime_s(buffer1, sizeof(buffer1), &stat.st_atime);								// DEBUG ONLY
+			//ctime_s(buffer1, sizeof(buffer1), &stat.st_mtime);								// DEBUG ONLY
 			//time_t ltime;	time(&ltime); //Gets the system time elapse in secs
-			//double timeDifference = difftime(ltime, stat.st_atime);			//get the time difference between current time and file last modified time		
+			//double timeDifference = difftime(ltime, stat.st_mtime);			//get the time difference between current time and file last modified time		
 			//double timeDiffInDays = (timeDifference / 60 / 60 / 24);		//get time difference in days
 		}
 		

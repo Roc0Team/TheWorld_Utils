@@ -25,6 +25,7 @@
 #include <mutex>
 #include <functional>
 #include <exception>
+#include <filesystem>
 #include <plog/Log.h>
 #include "gsl\assert"
 
@@ -64,6 +65,15 @@ namespace TheWorld_Utils
 	__declspec(dllexport) void to_lower_implace(std::string& s);
 	__declspec(dllexport) std::string to_lower(std::string s);
 	__declspec(dllexport) inline std::wstring convert(const std::string& as);
+	__declspec(dllexport) inline std::wstring convert(const std::string& as);
+
+	__declspec(dllexport) std::time_t current_utc_time(void);
+
+	__declspec(dllexport) std::time_t last_write_time(const std::string& path);
+	__declspec(dllexport) std::string last_write_time_str(const std::string& path);		// es: 2023-09-04 19:33:24.702639224
+
+	__declspec(dllexport) std::time_t str_time_to_time_t(const std::string& time);
+	__declspec(dllexport) std::string time_t_to_str_time(std::time_t time);
 
 	//std::vector<std::string> split(const std::string& s, char seperator)
 	//{
