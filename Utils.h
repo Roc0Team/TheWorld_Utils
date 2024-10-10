@@ -69,11 +69,11 @@ namespace TheWorld_Utils
 
 	__declspec(dllexport) std::time_t current_utc_time(void);
 
-	__declspec(dllexport) std::time_t last_write_time(const std::string& path);
-	__declspec(dllexport) std::string last_write_time_str(const std::string& path);		// es: 2023-09-04 19:33:24.702639224
+	__declspec(dllexport) std::time_t last_write_time_utc(const std::string& path);
+	__declspec(dllexport) std::string last_write_time_utc_str(const std::string& path);		// es: 2023-09-04 19:33:24.702639224
 
 	__declspec(dllexport) std::time_t str_time_to_time_t(const std::string& time);
-	__declspec(dllexport) std::string time_t_to_str_time(std::time_t time);
+	__declspec(dllexport) std::string time_t_to_str_time(std::time_t time, bool onlyseconds = true);
 
 	//std::vector<std::string> split(const std::string& s, char seperator)
 	//{

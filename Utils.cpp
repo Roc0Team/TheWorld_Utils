@@ -79,7 +79,7 @@ namespace TheWorld_Utils
 		return ret;
 	}
 
-	std::time_t last_write_time(const std::string& path)
+	std::time_t last_write_time_utc(const std::string& path)
 	{
 		// Read last modified time
 		//struct _stat stat;
@@ -92,7 +92,7 @@ namespace TheWorld_Utils
 		std::time_t fileTime_time_t_utc = std::chrono::system_clock::to_time_t(systemTime_utc);
 		return fileTime_time_t_utc;
 	}
-	std::string last_write_time_str(const std::string& path)
+	std::string last_write_time_utc_str(const std::string& path)
 	{
 		// Read last modified time
 		//char buffer[512];
@@ -103,7 +103,7 @@ namespace TheWorld_Utils
 		//strcat_s(buffer, sizeof(buffer), ".0");
 		//return buffer;	// es: 2023-09-04 19:33:24.702639224
 
-		std::chrono::system_clock::time_point fileTime_tp_utc = std::chrono::system_clock::from_time_t(last_write_time(path));
+		std::chrono::system_clock::time_point fileTime_tp_utc = std::chrono::system_clock::from_time_t(last_write_time_utc(path));
 		std::string fileTime_str_utc = std::format("{}", fileTime_tp_utc);
 		return fileTime_str_utc;	// es: 2023-09-04 19:33:24.000000000
 	}
@@ -130,7 +130,7 @@ namespace TheWorld_Utils
 		return ret;
 	}
 
-	std::string time_t_to_str_time(std::time_t time)
+	std::string time_t_to_str_time(std::time_t time, bool onlyseconds)
 	{
 		//char buffer[512];
 		//std::tm tm;
@@ -140,6 +140,11 @@ namespace TheWorld_Utils
 
 		std::chrono::system_clock::time_point tp = std::chrono::system_clock::from_time_t(time);
 		std::string str = std::format("{}", tp);
+		if (onlyseconds)
+		{
+			std::vector<std::string> v = TheWorld_Utils::Utils::split(str, '.');
+			str = v[0];
+		}
 		return str;
 	}
 
@@ -1382,27 +1387,41 @@ namespace TheWorld_Utils
 		}
 
 		std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-		std::time_t now_time_t = std::chrono::system_clock::to_time_t(now);
-		tm local_tm;
-		localtime_s(&local_tm , &now_time_t);
+		std::string str = std::format("{}", now);			// DEBUG
 		BYTE shortBuffer[256 + 1];
 		size_t size = 0;
 		TheWorld_Utils::serializeToByteStream<std::chrono::system_clock::time_point>(now, shortBuffer, size);
-		size_t n_zero = 2;
-		std::string year = std::to_string(local_tm.tm_year + 1900);
-		std::string month = std::to_string(local_tm.tm_mon + 1);
-		month = std::string(n_zero - std::min(n_zero, month.length()), '0') + month;
-		std::string day = std::to_string(local_tm.tm_mday);
-		day = std::string(n_zero - std::min(n_zero, day.length()), '0') + day;
-		std::string hours = std::to_string(local_tm.tm_hour);
-		hours = std::string(n_zero - std::min(n_zero, hours.length()), '0') + hours;
-		std::string minutes = std::to_string(local_tm.tm_min);
-		minutes = std::string(n_zero - std::min(n_zero, minutes.length()), '0') + minutes;
-		std::string seconds = std::to_string(local_tm.tm_sec);
-		seconds = std::string(n_zero - std::min(n_zero, seconds.length()), '0') + seconds;
+		
+		//std::time_t now_time_t = std::chrono::system_clock::to_time_t(now);
+		//tm local_tm;
+		//localtime_s(&local_tm, &now_time_t);
+		//std::string year = std::to_string(local_tm.tm_year + 1900);
+		//std::string month = std::to_string(local_tm.tm_mon + 1);
+		//size_t n_zero = 2;
+		//month = std::string(n_zero - std::min(n_zero, month.length()), '0') + month;
+		//std::string day = std::to_string(local_tm.tm_mday);
+		//day = std::string(n_zero - std::min(n_zero, day.length()), '0') + day;
+		//std::string hours = std::to_string(local_tm.tm_hour);
+		//hours = std::string(n_zero - std::min(n_zero, hours.length()), '0') + hours;
+		//std::string minutes = std::to_string(local_tm.tm_min);
+		//minutes = std::string(n_zero - std::min(n_zero, minutes.length()), '0') + minutes;
+		//std::string seconds = std::to_string(local_tm.tm_sec);
+		//seconds = std::string(n_zero - std::min(n_zero, seconds.length()), '0') + seconds;
+		//std::string meshId = ToString(&newId)
+		//	+ ":" + year + "-" + month  + "-" + day + "_" + hours + "-" + minutes + "-" + seconds
+		//	+ ":" + std::string((char*)shortBuffer, size);
+		//return meshId;
+
+		std::time_t now_time_t_utc = std::chrono::system_clock::to_time_t(now);
+		std::string now_str = TheWorld_Utils::time_t_to_str_time(now_time_t_utc);
+		std::replace(now_str.begin(), now_str.end(), ' ', '_');
+		std::replace(now_str.begin(), now_str.end(), ':', '-');
 		std::string meshId = ToString(&newId)
-			+ ":" + year + "-" + month  + "-" + day + "_" + hours + "-" + minutes + "-" + seconds
+			+ ":" + now_str
 			+ ":" + std::string((char*)shortBuffer, size);
+
+		//assert(meshId.length() == meshId1.length());
+		//assert(meshId == meshId1);
 
 		return meshId;
 	}
@@ -1437,27 +1456,41 @@ namespace TheWorld_Utils
 		}
 
 		std::chrono::system_clock::time_point timeZeroTime;
-		std::time_t time_zero_time_t = std::chrono::system_clock::to_time_t(timeZeroTime);
-		tm local_tm;
-		localtime_s(&local_tm, &time_zero_time_t);
+		std::string str = std::format("{}", timeZeroTime);			// DEBUG
 		BYTE shortBuffer[256 + 1];
 		size_t size = 0;
 		TheWorld_Utils::serializeToByteStream<std::chrono::system_clock::time_point>(timeZeroTime, shortBuffer, size);
-		size_t n_zero = 2;
-		std::string year = std::to_string(local_tm.tm_year + 1900);
-		std::string month = std::to_string(local_tm.tm_mon + 1);
-		month = std::string(n_zero - std::min(n_zero, month.length()), '0') + month;
-		std::string day = std::to_string(local_tm.tm_mday);
-		day = std::string(n_zero - std::min(n_zero, day.length()), '0') + day;
-		std::string hours = std::to_string(local_tm.tm_hour);
-		hours = std::string(n_zero - std::min(n_zero, hours.length()), '0') + hours;
-		std::string minutes = std::to_string(local_tm.tm_min);
-		minutes = std::string(n_zero - std::min(n_zero, minutes.length()), '0') + minutes;
-		std::string seconds = std::to_string(local_tm.tm_sec);
-		seconds = std::string(n_zero - std::min(n_zero, seconds.length()), '0') + seconds;
+		
+		//std::time_t time_zero_time_t = std::chrono::system_clock::to_time_t(timeZeroTime);
+		//tm local_tm;
+		//localtime_s(&local_tm, &time_zero_time_t);
+		//std::string year = std::to_string(local_tm.tm_year + 1900);
+		//std::string month = std::to_string(local_tm.tm_mon + 1);
+		//size_t n_zero = 2;
+		//month = std::string(n_zero - std::min(n_zero, month.length()), '0') + month;
+		//std::string day = std::to_string(local_tm.tm_mday);
+		//day = std::string(n_zero - std::min(n_zero, day.length()), '0') + day;
+		//std::string hours = std::to_string(local_tm.tm_hour);
+		//hours = std::string(n_zero - std::min(n_zero, hours.length()), '0') + hours;
+		//std::string minutes = std::to_string(local_tm.tm_min);
+		//minutes = std::string(n_zero - std::min(n_zero, minutes.length()), '0') + minutes;
+		//std::string seconds = std::to_string(local_tm.tm_sec);
+		//seconds = std::string(n_zero - std::min(n_zero, seconds.length()), '0') + seconds;
+		//std::string meshId = ToString(&newId)
+		//	+ ":" + year + "-" + month + "-" + day + "_" + hours + "-" + minutes + "-" + seconds
+		//	+ ":" + std::string((char*)shortBuffer, size);
+		//return meshId;
+
+		std::time_t now_time_t_utc = std::chrono::system_clock::to_time_t(timeZeroTime);
+		std::string now_str = TheWorld_Utils::time_t_to_str_time(now_time_t_utc);
+		std::replace(now_str.begin(), now_str.end(), ' ', '_');
+		std::replace(now_str.begin(), now_str.end(), ':', '-');
 		std::string meshId = ToString(&newId)
-			+ ":" + year + "-" + month + "-" + day + "_" + hours + "-" + minutes + "-" + seconds
+			+ ":" + now_str
 			+ ":" + std::string((char*)shortBuffer, size);
+
+		//assert(meshId.length() == meshId1.length());
+		//assert(meshId == meshId1);
 
 		return meshId;
 	}
@@ -1480,6 +1513,7 @@ namespace TheWorld_Utils
 			std::string s = meshId.substr(headerToDiscardSize);
 			size_t sz = s.size();
 			time = TheWorld_Utils::deserializeFromByteStream<std::chrono::system_clock::time_point>((BYTE*)s.c_str(), size);
+			std::string time_str = std::format("{}", time);									// DEBUG
 		}
 				
 		return time;
