@@ -706,8 +706,8 @@ namespace TheWorld_Utils
 		__declspec(dllexport) bool initialized(void) const;
 		__declspec(dllexport) void globalPosToWorldPos(float globalPosX, float globalPosY, float& worldPosX, float& worldPosY) const;
 		__declspec(dllexport) void worldPosToGlobalPos(float worldPosX, float worldPosY, float& globalPosX, float& globalPosY) const;
-		__declspec(dllexport) void getAllContainedQuadrantPos(std::vector<TheWorld_Utils::QuadrantPos>& quadrantsPos, int worldViewerLevel, int numVerticesPerQuadrantSize, float gridStepInWU);
-		__declspec(dllexport) bool getQuadrantRelativeIndices(const TheWorld_Utils::QuadrantPos& quadrantPos, int32_t& idxX, int32_t& idxY);
+		__declspec(dllexport) void getAllContainedQuadrantPos(std::vector<TheWorld_Utils::QuadrantPos>& quadrantsPos, int worldViewerLevel, int numVerticesPerQuadrantSize, float gridStepInWU) const;
+		__declspec(dllexport) bool getQuadrantRelativeIndices(const TheWorld_Utils::QuadrantPos& quadrantPos, int32_t& idxX, int32_t& idxY) const;
 		__declspec(dllexport) void serialize(TheWorld_Utils::MemoryBuffer& buffer) const;
 		__declspec(dllexport) void deserialize(TheWorld_Utils::MemoryBuffer& buffer);
 

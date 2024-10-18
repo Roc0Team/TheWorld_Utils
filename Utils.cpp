@@ -320,7 +320,7 @@ namespace TheWorld_Utils
 		globalPosY = (worldPosY / getQuadrantWorldSize()) * getQuadrantGlobalSize();
 	}
 
-	void MapTextureRectPos::getAllContainedQuadrantPos(std::vector<TheWorld_Utils::QuadrantPos>& quadrantsPos, int worldViewerLevel, int numVerticesPerQuadrantSize, float gridStepInWU)
+	void MapTextureRectPos::getAllContainedQuadrantPos(std::vector<TheWorld_Utils::QuadrantPos>& quadrantsPos, int worldViewerLevel, int numVerticesPerQuadrantSize, float gridStepInWU) const
 	{
 		quadrantsPos.clear();
 
@@ -339,7 +339,7 @@ namespace TheWorld_Utils
 
 	}
 
-	bool MapTextureRectPos::getQuadrantRelativeIndices(const TheWorld_Utils::QuadrantPos& quadrantPos, int32_t& idxX, int32_t& idxY)
+	bool MapTextureRectPos::getQuadrantRelativeIndices(const TheWorld_Utils::QuadrantPos& quadrantPos, int32_t& idxX, int32_t& idxY) const
 	{
 		float globalPosX, globalPosY;
 		worldPosToGlobalPos(quadrantPos.getLowerXGridVertex(), quadrantPos.getLowerZGridVertex(), globalPosX, globalPosY);
