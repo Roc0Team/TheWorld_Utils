@@ -67,13 +67,16 @@ namespace TheWorld_Utils
 	__declspec(dllexport) inline std::wstring convert(const std::string& as);
 	__declspec(dllexport) inline std::wstring convert(const std::string& as);
 
-	__declspec(dllexport) std::time_t current_utc_time(void);
+	__declspec(dllexport) std::chrono::system_clock::time_point current_utc_time_point(void);
+	__declspec(dllexport) std::time_t current_utc_time_t(void);
 
 	__declspec(dllexport) std::time_t last_write_time_utc(const std::string& path);
-	__declspec(dllexport) std::string last_write_time_utc_str(const std::string& path);		// es: 2023-09-04 19:33:24.702639224
+	__declspec(dllexport) std::string last_write_time_utc_str(const std::string& path);								// es: 2023-09-04 19:33:24.702639224
 
-	__declspec(dllexport) std::time_t str_time_to_time_t(const std::string& time);
-	__declspec(dllexport) std::string time_t_to_str_time(std::time_t time, bool onlyseconds = true);
+	/* *** TODO *** */__declspec(dllexport) std::chrono::system_clock::time_point str_time_to_time_point(const std::string& time);	// es: 2023-09-04 19:33:24.702639224
+	__declspec(dllexport) std::string time_point_to_str_time(std::chrono::system_clock::time_point time);			// es: 2023-09-04 19:33:24.702639224
+	__declspec(dllexport) std::time_t str_time_to_time_t(const std::string& time);									// es: 2023-09-04 19:33:24.702639224
+	__declspec(dllexport) std::string time_t_to_str_time(std::time_t time, bool onlyseconds = true);				// es: 2023-09-04 19:33:24.702639224
 
 	//std::vector<std::string> split(const std::string& s, char seperator)
 	//{
@@ -224,6 +227,7 @@ namespace TheWorld_Utils
 		__declspec(dllexport) bool empty(void) const;
 		__declspec(dllexport) void clear(std::string lastActor = "");
 		__declspec(dllexport) void adjustSize(size_t size);
+		__declspec(dllexport) void adjustCursorAndSize(size_t& cursor, size_t size);
 		__declspec(dllexport) void copyFrom(MemoryBuffer& inBuffer, std::string lastActor);
 		__declspec(dllexport) void populateFloatVector(std::vector<float>& v) const;
 		__declspec(dllexport) void populateUint16Vector(std::vector<uint16_t>& v) const;

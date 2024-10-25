@@ -108,12 +108,31 @@ namespace TheWorld_Utils
 		return fileTime_str_utc;	// es: 2023-09-04 19:33:24.000000000
 	}
 
-	std::time_t current_utc_time(void)
+	std::chrono::system_clock::time_point current_utc_time_point(void)
 	{
 		std::chrono::system_clock::time_point now_tp_utc = std::chrono::system_clock::now();		// UTC Time
+		return now_tp_utc;
+	}
+
+	std::time_t current_utc_time_t(void)
+	{
+		std::chrono::system_clock::time_point now_tp_utc = current_utc_time_point();		// UTC Time
 		//std::string now_str_utc = std::format("{}", now_tp_utc);									// DEBUG
 		std::time_t now_time_t_utc = std::chrono::system_clock::to_time_t(now_tp_utc);
 		return now_time_t_utc;
+	}
+
+	std::chrono::system_clock::time_point str_time_to_time_point(const std::string& time /* es: 2023-09-04 19:33:24.702639224 */ )
+	{
+		// TODO
+		std::chrono::system_clock::time_point tp;
+		return tp;
+	}
+		
+	std::string time_point_to_str_time(std::chrono::system_clock::time_point time)		/* es: 2023-09-04 19:33:24.702639224 */
+	{
+		std::string fileTime_str_utc = std::format("{}", time);
+		return fileTime_str_utc;	// es: 2023-09-04 19:33:24.000000000
 	}
 
 	std::time_t str_time_to_time_t(const std::string& time /* es: 2023-09-04 19:33:24.702639224 */ )
@@ -130,7 +149,7 @@ namespace TheWorld_Utils
 		return ret;
 	}
 
-	std::string time_t_to_str_time(std::time_t time, bool onlyseconds)
+	std::string time_t_to_str_time(std::time_t time, bool onlyseconds)		/* es: 2023-09-04 19:33:24.702639224 */
 	{
 		//char buffer[512];
 		//std::tm tm;
@@ -1216,6 +1235,12 @@ namespace TheWorld_Utils
 	void MemoryBuffer::adjustSize(size_t size)
 	{
 		m_size = size;
+	}
+
+	void MemoryBuffer::adjustCursorAndSize(size_t& cursor, size_t size)
+	{
+		cursor += size;
+		adjustSize(cursor);
 	}
 
 	void MemoryBuffer::copyFrom(MemoryBuffer& inBuffer, std::string lastActor)
