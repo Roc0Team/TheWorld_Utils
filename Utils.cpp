@@ -1160,9 +1160,9 @@ namespace TheWorld_Utils
 		m_size += size;
 	}
 
-	void MemoryBuffer::reserve(size_t size)
+	void MemoryBuffer::reserve(size_t newLen)
 	{
-		size_t newLen = size;
+		//size_t newLen = size;
 		if (newLen > m_bufferSize)
 		{
 			BYTE* ptr = (BYTE*)calloc(1, newLen);
