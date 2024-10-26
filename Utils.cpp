@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <functional>
 #include <chrono>
+#include <sstream>
 
 #include <plog/Initializers/RollingFileInitializer.h>
 //#include <Eigen/Dense>
@@ -79,35 +80,6 @@ namespace TheWorld_Utils
 		return ret;
 	}
 
-	std::time_t last_write_time_utc(const std::string& path)
-	{
-		// Read last modified time
-		//struct _stat stat;
-		//int result = _stat(path.c_str(), &stat);
-		//return stat.st_mtime;
-		
-		const auto fileTime_utc = std::filesystem::last_write_time(path);					// UTC Time
-		//std::string fileTime_str1_utc = std::format("{}", fileTime_utc);					// DEBUG
-		const auto systemTime_utc = std::chrono::clock_cast<std::chrono::system_clock>(fileTime_utc);
-		std::time_t fileTime_time_t_utc = std::chrono::system_clock::to_time_t(systemTime_utc);
-		return fileTime_time_t_utc;
-	}
-	std::string last_write_time_utc_str(const std::string& path)
-	{
-		// Read last modified time
-		//char buffer[512];
-		//std::tm tm;
-		//std::time_t t = last_write_time(path);
-		//localtime_s(&tm, &t);
-		//std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tm);
-		//strcat_s(buffer, sizeof(buffer), ".0");
-		//return buffer;	// es: 2023-09-04 19:33:24.702639224
-
-		std::chrono::system_clock::time_point fileTime_tp_utc = std::chrono::system_clock::from_time_t(last_write_time_utc(path));
-		std::string fileTime_str_utc = std::format("{}", fileTime_tp_utc);
-		return fileTime_str_utc;	// es: 2023-09-04 19:33:24.000000000
-	}
-
 	std::chrono::system_clock::time_point current_utc_time_point(void)
 	{
 		std::chrono::system_clock::time_point now_tp_utc = std::chrono::system_clock::now();		// UTC Time
@@ -117,25 +89,90 @@ namespace TheWorld_Utils
 	std::time_t current_utc_time_t(void)
 	{
 		std::chrono::system_clock::time_point now_tp_utc = current_utc_time_point();		// UTC Time
-		//std::string now_str_utc = std::format("{}", now_tp_utc);									// DEBUG
+		//std::string now_str_utc = std::format("{}", now_tp_utc);							// DEBUG
 		std::time_t now_time_t_utc = std::chrono::system_clock::to_time_t(now_tp_utc);
 		return now_time_t_utc;
 	}
 
-	std::chrono::system_clock::time_point str_time_to_time_point(const std::string& time /* es: 2023-09-04 19:33:24.702639224 */ )
+	std::chrono::system_clock::time_point last_write_time_point_utc(const std::string& path)
 	{
-		// TODO
+		const std::filesystem::file_time_type fileTime_utc = std::filesystem::last_write_time(path);					// UTC Time
+		//std::string fileTime_str1_utc = std::format("{}", fileTime_utc);					// DEBUG
+		const auto systemTime_utc = std::chrono::clock_cast<std::chrono::system_clock>(fileTime_utc);
+		return systemTime_utc;
+	}
+
+	std::time_t last_write_time_t_utc(const std::string& path)
+	{
+		const std::chrono::system_clock::time_point systemTime_utc = last_write_time_point_utc(path);
+		std::time_t fileTime_time_t_utc = std::chrono::system_clock::to_time_t(systemTime_utc);
+		return fileTime_time_t_utc;
+	}
+
+	std::string last_write_time_str_utc(const std::string& path)
+	{
+		// Read last modified time
+		//char buffer[512];
+		//std::tm tm;
+		//std::time_t t = last_write_time(path);
+		//localtime_s(&tm, &t);
+		//std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tm);
+		//strcat_s(buffer, sizeof(buffer), ".0");
+		//return buffer;	// es: 2023-09-04 19:33:24.7026392
+
+		//std::chrono::system_clock::time_point fileTime_tp_utc = std::chrono::system_clock::from_time_t(last_write_time_t_utc(path));
+		std::chrono::system_clock::time_point fileTime_tp_utc = last_write_time_point_utc(path);
+		std::string fileTime_str_utc = std::format("{}", fileTime_tp_utc);
+		return fileTime_str_utc;	// es: 2023-09-04 19:33:24.0000000
+	}
+
+	void last_write_time_point_utc(const std::string& path, const std::chrono::system_clock::time_point time)
+	{
+		const std::filesystem::file_time_type ftime = std::chrono::clock_cast<std::chrono::file_clock>(time);
+		std::filesystem::last_write_time(path, ftime);
+	}
+
+	void last_write_time_t_utc(const std::string& path, const std::time_t time)
+	{
+		const std::chrono::system_clock::time_point tp = std::chrono::system_clock::from_time_t(time);
+		const std::filesystem::file_time_type ftime = std::chrono::clock_cast<std::chrono::file_clock>(tp);
+		std::filesystem::last_write_time(path, ftime);
+	}
+
+	void last_write_time_str_utc(const std::string& path, const std::string& time /* es: 2023-09-04 19:33:24.7026392 */)
+	{
+		const std::chrono::system_clock::time_point tp = str_time_to_time_point(time);
+		last_write_time_point_utc(path, tp);
+	}
+
+	std::chrono::system_clock::time_point time_t_to_time_point(const std::time_t time)
+	{
+		const std::chrono::system_clock::time_point tp = std::chrono::system_clock::from_time_t(time);
+		return tp;
+	}
+
+	std::time_t time_point_to_time_t(const std::chrono::system_clock::time_point time)
+	{
+		std::time_t t = std::chrono::system_clock::to_time_t(time);
+		return t;
+	}
+
+	std::chrono::system_clock::time_point str_time_to_time_point(const std::string& time /* es: 2023-09-04 19:33:24.7026392 */ )
+	{
 		std::chrono::system_clock::time_point tp;
+		std::istringstream in{ time };
+		in >> std::chrono::parse("%F %T", tp);
+		//std::string tp_str = std::format("{}", tp);							// DEBUG
 		return tp;
 	}
 		
-	std::string time_point_to_str_time(std::chrono::system_clock::time_point time)		/* es: 2023-09-04 19:33:24.702639224 */
+	std::string time_point_to_str_time(std::chrono::system_clock::time_point time)		/* es: 2023-09-04 19:33:24.7026392 */
 	{
 		std::string fileTime_str_utc = std::format("{}", time);
-		return fileTime_str_utc;	// es: 2023-09-04 19:33:24.000000000
+		return fileTime_str_utc;	// es: 2023-09-04 19:33:24.0000000
 	}
 
-	std::time_t str_time_to_time_t(const std::string& time /* es: 2023-09-04 19:33:24.702639224 */ )
+	std::time_t str_time_to_time_t(const std::string& time /* es: 2023-09-04 19:33:24.7026392 */ )
 	{
 		std::time_t ret = 0;
 		std::vector<std::string> v = TheWorld_Utils::Utils::split(time, '.');
@@ -149,7 +186,7 @@ namespace TheWorld_Utils
 		return ret;
 	}
 
-	std::string time_t_to_str_time(std::time_t time, bool onlyseconds)		/* es: 2023-09-04 19:33:24.702639224 */
+	std::string time_t_to_str_time(std::time_t time, bool onlyseconds)		/* es: 2023-09-04 19:33:24.7026392 */
 	{
 		//char buffer[512];
 		//std::tm tm;

@@ -70,13 +70,21 @@ namespace TheWorld_Utils
 	__declspec(dllexport) std::chrono::system_clock::time_point current_utc_time_point(void);
 	__declspec(dllexport) std::time_t current_utc_time_t(void);
 
-	__declspec(dllexport) std::time_t last_write_time_utc(const std::string& path);
-	__declspec(dllexport) std::string last_write_time_utc_str(const std::string& path);								// es: 2023-09-04 19:33:24.702639224
+	__declspec(dllexport) std::chrono::system_clock::time_point last_write_time_point_utc(const std::string& path);
+	__declspec(dllexport) std::time_t last_write_time_t_utc(const std::string& path);
+	__declspec(dllexport) std::string last_write_time_str_utc(const std::string& path);								// es: 2023-09-04 19:33:24.7026392
+	
+	__declspec(dllexport) void last_write_time_point_utc(const std::string& path, const std::chrono::system_clock::time_point time);
+	__declspec(dllexport) void last_write_time_t_utc(const std::string& path, const std::time_t time);
+	__declspec(dllexport) void last_write_time_str_utc(const std::string& path, const std::string& time /* es: 2023-09-04 19:33:24.7026392 */);
 
-	/* *** TODO *** */__declspec(dllexport) std::chrono::system_clock::time_point str_time_to_time_point(const std::string& time);	// es: 2023-09-04 19:33:24.702639224
-	__declspec(dllexport) std::string time_point_to_str_time(std::chrono::system_clock::time_point time);			// es: 2023-09-04 19:33:24.702639224
-	__declspec(dllexport) std::time_t str_time_to_time_t(const std::string& time);									// es: 2023-09-04 19:33:24.702639224
-	__declspec(dllexport) std::string time_t_to_str_time(std::time_t time, bool onlyseconds = true);				// es: 2023-09-04 19:33:24.702639224
+	__declspec(dllexport) std::chrono::system_clock::time_point time_t_to_time_point(const std::time_t time);
+	__declspec(dllexport) std::time_t time_point_to_time_t(const std::chrono::system_clock::time_point time);
+
+	__declspec(dllexport) std::chrono::system_clock::time_point str_time_to_time_point(const std::string& time);	// es: 2023-09-04 19:33:24.7026392
+	__declspec(dllexport) std::string time_point_to_str_time(std::chrono::system_clock::time_point time);			// es: 2023-09-04 19:33:24.7026392
+	__declspec(dllexport) std::time_t str_time_to_time_t(const std::string& time);									// es: 2023-09-04 19:33:24.7026392
+	__declspec(dllexport) std::string time_t_to_str_time(std::time_t time, bool onlyseconds = true);				// es: 2023-09-04 19:33:24.7026392
 
 	//std::vector<std::string> split(const std::string& s, char seperator)
 	//{
