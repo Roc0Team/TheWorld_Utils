@@ -86,6 +86,8 @@ namespace TheWorld_Utils
 	__declspec(dllexport) std::time_t str_time_to_time_t(const std::string& time);									// es: 2023-09-04 19:33:24.7026392
 	__declspec(dllexport) std::string time_t_to_str_time(std::time_t time, bool onlyseconds = true);				// es: 2023-09-04 19:33:24.7026392
 
+	__declspec(dllexport) bool time_point_zero(std::chrono::system_clock::time_point tp);
+
 	//std::vector<std::string> split(const std::string& s, char seperator)
 	//{
 	//	std::vector<std::string> output;
@@ -240,6 +242,7 @@ namespace TheWorld_Utils
 		__declspec(dllexport) void populateFloatVector(std::vector<float>& v) const;
 		__declspec(dllexport) void populateUint16Vector(std::vector<uint16_t>& v) const;
 		__declspec(dllexport) void toString(std::string& buffer);
+		__declspec(dllexport) void allocationSlotSize(size_t _allocationSlotSize);
 		template <typename T> __declspec(dllexport) T& at(size_t idx)
 		{
 			T* ptr = (T*)m_ptr;
@@ -273,6 +276,7 @@ namespace TheWorld_Utils
 		size_t m_size;
 		size_t m_bufferSize;
 		std::string m_lastActor;
+		size_t m_allocationSlotSize = 100000;
 	};
 
 	class NoiseValues

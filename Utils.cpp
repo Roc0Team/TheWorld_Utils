@@ -204,6 +204,11 @@ namespace TheWorld_Utils
 		return str;
 	}
 
+	bool time_point_zero(std::chrono::system_clock::time_point tp)
+	{
+		return tp.time_since_epoch() == std::chrono::system_clock::duration::zero();
+	}
+
 	__declspec(dllexport) void padStrTo(std::string& str, const size_t num, const char paddingChar)
 	{
 		if (num > str.size())
@@ -1186,6 +1191,11 @@ namespace TheWorld_Utils
 		clear("destructor");
 	}
 
+	void MemoryBuffer::allocationSlotSize(size_t _allocationSlotSize)
+	{
+		m_allocationSlotSize = _allocationSlotSize;
+	}
+
 	void MemoryBuffer::toString(std::string& buffer)
 	{
 		size_t sz = size();
@@ -1221,10 +1231,13 @@ namespace TheWorld_Utils
 		//size_t newLen = size;
 		if (newLen > m_bufferSize)
 		{
-			BYTE* ptr = (BYTE*)calloc(1, newLen);
+			size_t numSlots = size_t(ceil(double(newLen) / double(m_allocationSlotSize)));
+			size_t newLenCalc = numSlots * m_allocationSlotSize;
+			assert(newLenCalc >= newLen);
+			BYTE* ptr = (BYTE*)calloc(1, newLenCalc);
 			if (ptr == nullptr)
 				throw(std::exception((std::string(__FUNCTION__) + std::string(" Allocation error")).c_str()));
-			m_bufferSize = newLen;
+			m_bufferSize = newLenCalc;
 
 			if (m_ptr != nullptr)
 			{
