@@ -671,11 +671,11 @@ namespace TheWorld_Utils
 		}
 		float getGlobalHigherPosX() const
 		{
-			return m_globalLowerPosX + m_globalSize;
+			return m_globalLowerPosX + getGlobalSize();
 		}
 		float getGlobalHigherPosY() const
 		{
-			return m_globalLowerPosY + m_globalSize;
+			return m_globalLowerPosY + getGlobalSize();
 		}
 		int32_t getIdxX() const
 		{
@@ -685,13 +685,17 @@ namespace TheWorld_Utils
 		{
 			return m_idxY;
 		}
+		int32_t getNumPixelsPerSize() const
+		{
+			return (int32_t)getGlobalSize() + 1;
+		}
 		float getGlobalSize() const
 		{
-			return m_globalSize;
+			return m_numQuadrantsPerSize * m_quadrantGlobalSize;
 		}
 		float getWorldSize() const
 		{
-			return m_worldSize;
+			return m_numQuadrantsPerSize * m_quadrantWorldSize;
 		}
 		float getQuadrantGlobalSize() const
 		{
@@ -740,8 +744,8 @@ namespace TheWorld_Utils
 		int32_t m_numQuadrantsPerSize;
 		float m_quadrantGlobalSize;
 		float m_quadrantWorldSize;
-		float m_globalSize;
-		float m_worldSize;
+		//float m_globalSize;
+		//float m_worldSize;
 		std::string m_name;
 	};
 

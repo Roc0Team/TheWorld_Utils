@@ -238,8 +238,8 @@ namespace TheWorld_Utils
 		m_numQuadrantsPerSize = 0;
 		m_quadrantGlobalSize = 0;
 		m_quadrantWorldSize = 0;
-		m_globalSize = 0;
-		m_worldSize = 0;
+		//m_globalSize = 0;
+		//m_worldSize = 0;
 		m_globalLowerPosX = 0;
 		m_globalLowerPosY = 0;
 		m_idxX = 0;
@@ -253,12 +253,12 @@ namespace TheWorld_Utils
 		m_numQuadrantsPerSize = numQuadrantsPerSize;
 		m_quadrantGlobalSize = quadrantGlobalSize;
 		m_quadrantWorldSize = quadrantWorldSize;
-		m_globalSize = m_numQuadrantsPerSize * m_quadrantGlobalSize;
-		m_worldSize = m_numQuadrantsPerSize * m_quadrantWorldSize;
-		m_globalLowerPosX = floor(globalPosX / m_globalSize) * m_globalSize;
-		m_globalLowerPosY = floor(globalPosY / m_globalSize) * m_globalSize;
-		m_idxX = (int32_t)(m_globalLowerPosX / m_globalSize);
-		m_idxY = (int32_t)(m_globalLowerPosY / m_globalSize);
+		//m_globalSize = m_numQuadrantsPerSize * m_quadrantGlobalSize;
+		//m_worldSize = m_numQuadrantsPerSize * m_quadrantWorldSize;
+		m_globalLowerPosX = floor(globalPosX / getGlobalSize()) * getGlobalSize();
+		m_globalLowerPosY = floor(globalPosY / getGlobalSize()) * getGlobalSize();
+		m_idxX = (int32_t)(m_globalLowerPosX / getGlobalSize());
+		m_idxY = (int32_t)(m_globalLowerPosY / getGlobalSize());
 		internalSetName();
 	}
 
@@ -268,12 +268,12 @@ namespace TheWorld_Utils
 		m_numQuadrantsPerSize = numQuadrantsPerSize;
 		m_quadrantGlobalSize = quadrantGlobalSize;
 		m_quadrantWorldSize = quadrantWorldSize;
-		m_globalSize = m_numQuadrantsPerSize * m_quadrantGlobalSize;
-		m_worldSize = m_numQuadrantsPerSize * m_quadrantWorldSize;
+		//m_globalSize = m_numQuadrantsPerSize * m_quadrantGlobalSize;
+		//m_worldSize = m_numQuadrantsPerSize * m_quadrantWorldSize;
 		m_idxX = idxX;
 		m_idxY = idxY;
-		m_globalLowerPosX = float(m_idxX * m_globalSize);
-		m_globalLowerPosY = float(m_idxY * m_globalSize);
+		m_globalLowerPosX = float(m_idxX * getGlobalSize());
+		m_globalLowerPosY = float(m_idxY * getGlobalSize());
 		internalSetName();
 	}
 
@@ -291,7 +291,7 @@ namespace TheWorld_Utils
 
 	void MapTextureRectPos::internalSetName(void)
 	{
-		constexpr size_t NUM_PADDING_ZEROES = 6;
+		constexpr size_t NUM_PADDING_ZEROES = 12;
 		std::string strPosX, strPosY, strLevel;
 		int32_t posX = int32_t(m_globalLowerPosX), posY = int32_t(m_globalLowerPosY), level = int32_t(m_level);
 		if (posX < 0)
@@ -303,9 +303,9 @@ namespace TheWorld_Utils
 		else
 			strPosY = TheWorld_Utils::padIntValueTo(posY, NUM_PADDING_ZEROES);
 		if (level < 0)
-			strLevel = "-" + TheWorld_Utils::padIntValueTo(-level, NUM_PADDING_ZEROES);
+			strLevel = "-" + TheWorld_Utils::padIntValueTo(-level, 2);
 		else
-			strLevel = TheWorld_Utils::padIntValueTo(level, NUM_PADDING_ZEROES);
+			strLevel = TheWorld_Utils::padIntValueTo(level, 2);
 		m_name = "MapRect_" + strLevel + "_" + strPosX + "_" + strPosY;
 	}
 
@@ -327,8 +327,8 @@ namespace TheWorld_Utils
 		m_numQuadrantsPerSize = textureRectPos.m_numQuadrantsPerSize;
 		m_quadrantGlobalSize = textureRectPos.m_quadrantGlobalSize;
 		m_quadrantWorldSize = textureRectPos.m_quadrantWorldSize;
-		m_globalSize = textureRectPos.m_globalSize;
-		m_worldSize = textureRectPos.m_worldSize;
+		//m_globalSize = textureRectPos.m_globalSize;
+		//m_worldSize = textureRectPos.m_worldSize;
 		m_idxX = textureRectPos.m_idxX;
 		m_idxY = textureRectPos.m_idxY;
 		m_globalLowerPosX = textureRectPos.m_globalLowerPosX;
@@ -444,10 +444,10 @@ namespace TheWorld_Utils
 		cursor += size;
 		serializeToByteStream<float>(m_quadrantWorldSize, buffer.ptr() + cursor, size);
 		cursor += size;
-		serializeToByteStream<float>(m_globalSize, buffer.ptr() + cursor, size);
-		cursor += size;
-		serializeToByteStream<float>(m_worldSize, buffer.ptr() + cursor, size);
-		cursor += size;
+		//serializeToByteStream<float>(m_globalSize, buffer.ptr() + cursor, size);
+		//cursor += size;
+		//serializeToByteStream<float>(m_worldSize, buffer.ptr() + cursor, size);
+		//cursor += size;
 
 		buffer.adjustSize(cursor);
 	}
@@ -475,10 +475,10 @@ namespace TheWorld_Utils
 		cursor += size;
 		m_quadrantWorldSize = deserializeFromByteStream<float>(buffer.ptr() + cursor, size);
 		cursor += size;
-		m_globalSize = deserializeFromByteStream<float>(buffer.ptr() + cursor, size);
-		cursor += size;
-		m_worldSize = deserializeFromByteStream<float>(buffer.ptr() + cursor, size);
-		cursor += size;
+		//m_globalSize = deserializeFromByteStream<float>(buffer.ptr() + cursor, size);
+		//cursor += size;
+		//m_worldSize = deserializeFromByteStream<float>(buffer.ptr() + cursor, size);
+		//cursor += size;
 
 		internalSetName();
 	}
