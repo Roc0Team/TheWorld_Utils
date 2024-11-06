@@ -40,6 +40,37 @@ namespace fs = std::filesystem;
 
 namespace TheWorld_Utils
 {
+	std::string getModuleLoadPath(void)
+	{
+		char path[MAX_PATH];
+		HMODULE hm = NULL;
+
+		if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, (LPCWSTR)getModuleLoadPath, &hm) == 0)
+		{
+			int ret = GetLastError();
+			sprintf_s(path, sizeof(path), "GetModuleHandle failed trying to get DLL Load path, error = %d\n", ret);
+			throw(std::exception((std::string(__FUNCTION__) + std::string(path)).c_str()));
+		}
+		if (GetModuleFileNameA(hm, path, sizeof(path)) == 0)
+		{
+			int ret = GetLastError();
+			sprintf_s(path, sizeof(path), "GetModuleFileName failed trying to get DLL Load path, error = %d\n", ret);
+			throw(std::exception((std::string(__FUNCTION__) + std::string(path)).c_str()));
+		}
+
+		int l = (int)strlen(path);
+		for (int i = l; i >= 0; i--)
+			if (path[i] == '\\')
+			{
+				path[i] = '\0';
+				break;
+			}
+
+		std::string s = path;
+
+		return s;
+	}
+
 	double deg_to_rad(double deg)
 	{
 		return (deg * TheWorld_Utils::kPi) / 180;
