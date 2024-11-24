@@ -75,7 +75,7 @@ namespace TheWorld_Utils
 	{
 		return (deg * TheWorld_Utils::kPi) / 180;
 	}
-	
+
 	double rad_to_deg(double rad)
 	{
 		return (rad * 180) / TheWorld_Utils::kPi;
@@ -85,14 +85,14 @@ namespace TheWorld_Utils
 	{
 		std::transform(s.begin(), s.end(), s.begin(), ::tolower);
 	}
-	
+
 	std::string to_lower(std::string s)
 	{
 		std::string ret = s;
 		std::transform(ret.begin(), ret.end(), ret.begin(), ::tolower);
 		return ret;
 	}
-	
+
 	inline std::wstring convert(const std::string& as)
 	{
 		// deal with trivial case of empty string
@@ -188,7 +188,7 @@ namespace TheWorld_Utils
 		return t;
 	}
 
-	std::chrono::system_clock::time_point str_time_to_time_point(const std::string& time /* es: 2023-09-04 19:33:24.7026392 */ )
+	std::chrono::system_clock::time_point str_time_to_time_point(const std::string& time /* es: 2023-09-04 19:33:24.7026392 */)
 	{
 		std::chrono::system_clock::time_point tp;
 		std::istringstream in{ time };
@@ -196,14 +196,14 @@ namespace TheWorld_Utils
 		//std::string tp_str = std::format("{}", tp);							// DEBUG
 		return tp;
 	}
-		
+
 	std::string time_point_to_str_time(std::chrono::system_clock::time_point time)		/* es: 2023-09-04 19:33:24.7026392 */
 	{
 		std::string fileTime_str_utc = std::format("{}", time);
 		return fileTime_str_utc;	// es: 2023-09-04 19:33:24.0000000
 	}
 
-	std::time_t str_time_to_time_t(const std::string& time /* es: 2023-09-04 19:33:24.7026392 */ )
+	std::time_t str_time_to_time_t(const std::string& time /* es: 2023-09-04 19:33:24.7026392 */)
 	{
 		std::time_t ret = 0;
 		std::vector<std::string> v = TheWorld_Utils::Utils::split(time, '.');
@@ -277,7 +277,7 @@ namespace TheWorld_Utils
 		m_idxY = 0;
 		m_name.clear();
 	}
-	
+
 	MapTextureRectPos::MapTextureRectPos(float globalPosX, float globalPosY, int32_t level, int32_t numQuadrantsPerSize, float quadrantGlobalSize, float quadrantWorldSize)
 	{
 		m_level = level;
@@ -318,6 +318,12 @@ namespace TheWorld_Utils
 		worldPosToGlobalPos(quadrantPos.getLowerXGridVertex(), quadrantPos.getLowerZGridVertex(), globalPosX, globalPosY);
 
 		*this = MapTextureRectPos(globalPosX, globalPosY, quadrantPos.getLevel(), numQuadrantsPerSize, quadrantGlobalSize, quadrantWorldSize);
+	}
+
+	MapTextureRectPos MapTextureRectPos::getFromQuadrant(TheWorld_Utils::QuadrantPos& quadrantPos, int32_t numQuadrantsPerSize, float quadrantGlobalSize, float quadrantWorldSize)
+	{
+		MapTextureRectPos pos(quadrantPos, numQuadrantsPerSize, quadrantGlobalSize, quadrantWorldSize);
+		return pos;
 	}
 
 	void MapTextureRectPos::internalSetName(void)
@@ -572,7 +578,7 @@ namespace TheWorld_Utils
 		resetName();
 	}
 
-	QuadrantPos QuadrantPos::getQuadrantPos(enum class DirectionSlot dir, int numSlot)
+	QuadrantPos QuadrantPos::getQuadrantPos(enum class DirectionSlot dir, int numSlot) const
 	{
 		QuadrantPos pos = *this;
 

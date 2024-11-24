@@ -491,21 +491,18 @@ namespace TheWorld_Utils
 
 		bool operator<(const QuadrantPos& quadrantPos) const
 		{
+			// we can compare only initialized quadrants with same size in WUs and num vertices per size
 			assert(m_initialized == true);
 			assert(quadrantPos.m_initialized == true);
-			assert(m_level == quadrantPos.m_level);
+			assert(m_sizeInWU == quadrantPos.m_sizeInWU);
+			assert(m_numVerticesPerSize == quadrantPos.m_numVerticesPerSize);
+
+			// quadrant pos with lower level value are less than quadrant pos with higher level value: using quandrant pos as index in a map force elements to be sorted by value from lower to higher
 			if (m_level < quadrantPos.m_level)
 				return true;
 			if (m_level > quadrantPos.m_level)
 				return false;
 			// m_level == quadrantPos.m_level
-
-			assert(m_sizeInWU == quadrantPos.m_sizeInWU);
-			if (m_sizeInWU < quadrantPos.m_sizeInWU)
-				return true;
-			if (m_sizeInWU > quadrantPos.m_sizeInWU)
-				return false;
-			// m_sizeInWU == quadrantPos.m_sizeInWU
 
 			if (m_lowerZGridVertex < quadrantPos.m_lowerZGridVertex)
 				return true;
@@ -588,12 +585,12 @@ namespace TheWorld_Utils
 			//return (int)(m_lowerZGridVertex / gridSizeInWU);
 			return m_quadrantPosZ;
 		}
-		_declspec(dllexport) QuadrantPos getQuadrantPos(enum class DirectionSlot dir, int numSlot = 1);
+		_declspec(dllexport) QuadrantPos getQuadrantPos(enum class DirectionSlot dir, int numSlot = 1) const;
 		void setTag(std::string tag)
 		{
 			m_tag = tag;
 		}
-		std::string getTag(void)
+		std::string getTag(void) const
 		{
 			return m_tag;
 		}
@@ -604,7 +601,7 @@ namespace TheWorld_Utils
 			return m_initialized;
 		}
 
-		std::string getName(void)
+		std::string getName(void) const
 		{
 			return m_name;
 		}
@@ -662,6 +659,8 @@ namespace TheWorld_Utils
 		__declspec(dllexport) MapTextureRectPos(float globalPosX, float globalPosY, int32_t level, int32_t numQuadrantsPerSize, float quadrantGlobalSize, float quadrantWorldSize);
 		__declspec(dllexport) MapTextureRectPos(TheWorld_Utils::QuadrantPos& quadrantPos, int32_t numQuadrantsPerSize, float quadrantGlobalSize, float quadrantWorldSize);
 		__declspec(dllexport) ~MapTextureRectPos(void) {}
+
+		__declspec(dllexport) static MapTextureRectPos getFromQuadrant(TheWorld_Utils::QuadrantPos& quadrantPos, int32_t numQuadrantsPerSize, float quadrantGlobalSize, float quadrantWorldSize);
 
 		float getGlobalLowerPosX() const
 		{
