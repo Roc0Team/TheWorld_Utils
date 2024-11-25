@@ -12,6 +12,8 @@
 	#define MYAPI   __declspec( dllimport )
 #endif 
 
+#define NO_PROFILING
+
 namespace TheWorld_Utils
 {
 
@@ -72,8 +74,8 @@ namespace TheWorld_Utils
 
 		static std::vector<std::string> names(std::string function);
 		static void startElapsedNonMultithread(std::string function, std::string name);
-		static void addElapsedMcs(std::string function, std::string name, size_t elapsed);
-		static void addElapsedMs(std::string function, std::string name, size_t elapsed);
+		static void addElapsedMcs(std::string& function, std::string& name, size_t elapsed);
+		static void addElapsedMs(std::string& function, std::string& name, size_t elapsed);
 		static void reset(std::string function, std::string name);
 		static size_t num(std::string function, std::string name);
 		static size_t elapsedMcs(std::string function, std::string name, size_t& num);
@@ -97,28 +99,36 @@ namespace TheWorld_Utils
 	public:
 		GuardProfiler(std::string function, std::string name)
 		{
+#ifndef NO_PROFILING
 			if (TheWorld_Utils::Profiler::isActive())
 			{
 				m_function = function;
 				m_name = name;
 				m_clock.tick();
 			}
+#endif
 		}
 		~GuardProfiler(void)
 		{
+#ifndef NO_PROFILING
 			if (m_function.length() > 0)
 			{
 				m_clock.tock();
 				if (!m_name.empty())
 					TheWorld_Utils::Profiler::addElapsedMcs(m_function, m_name, m_clock.duration().count());
 			}
+#endif
 		}
 		size_t partialDuration()
 		{
+#ifndef NO_PROFILING
 			if (m_clock.counterStarted())
 				return m_clock.partialDuration().count();
 			else
 				return 0;
+#else
+			return 0;
+#endif
 		}
 
 	private:

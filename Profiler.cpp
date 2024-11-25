@@ -210,16 +210,20 @@ namespace TheWorld_Utils
 		ProfilerInternal::get().startElapsedNonMultithread(function, name);
 	}
 
-	void Profiler::addElapsedMcs(std::string function, std::string name, size_t elapsed)
+	void Profiler::addElapsedMcs(std::string& function, std::string& name, size_t elapsed)
 	{
+#ifndef NO_PROFILING
 		if (TheWorld_Utils::Profiler::isActive())
 			ProfilerInternal::get().addElapsedMcs(function, name, elapsed);
+#endif
 	}
 
-	void Profiler::addElapsedMs(std::string function, std::string name, size_t elapsed)
+	void Profiler::addElapsedMs(std::string& function, std::string& name, size_t elapsed)
 	{
+#ifndef NO_PROFILING
 		if (TheWorld_Utils::Profiler::isActive())
 			ProfilerInternal::get().addElapsedMcs(function, name, elapsed * 1000);
+#endif
 	}
 
 	void Profiler::reset(std::string function, std::string name)
