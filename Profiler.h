@@ -12,7 +12,7 @@
 	#define MYAPI   __declspec( dllimport )
 #endif 
 
-#define NO_PROFILING
+//#define NO_PROFILING
 
 namespace TheWorld_Utils
 {
