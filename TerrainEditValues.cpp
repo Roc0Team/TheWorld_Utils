@@ -5,6 +5,82 @@
 
 namespace TheWorld_Utils
 {
+	std::string TerrainEdit::getIconNameForTerrainType(enum class TerrainType terrainType)
+	{
+		std::string iconName = "";
+
+		switch (terrainType)
+		{
+		case TerrainType::notset:
+			break;
+		case TerrainType::jagged_1:
+			break;
+		case TerrainType::campaign_1:
+			iconName = "campaign_1_a.png";
+			break;
+		case TerrainType::plateau_1:
+			iconName = "plateau_1_a.png";
+			break;
+		case TerrainType::low_hills:
+			iconName = "low_hills_a.png";
+			break;
+		case TerrainType::high_hills:
+			iconName = "high_hills_a.png";
+			break;
+		case TerrainType::low_mountains:
+			iconName = "low_mountains_a.png";
+			break;
+		case TerrainType::low_mountains_grow:
+			iconName = "low_mountains_a.png";
+			break;
+		case TerrainType::high_mountains_1:
+			iconName = "high_mountains_1_a.png";
+			break;
+		case TerrainType::high_mountains_1_grow:
+			iconName = "high_mountains_1_a.png";
+			break;
+		case TerrainType::high_mountains_2:
+			iconName = "high_mountains_2_a.png";
+			break;
+		case TerrainType::high_mountains_2_grow:
+			iconName = "high_mountains_2_a.png";
+			break;
+		case TerrainType::high_mountains_3:
+			iconName = "high_mountains_3_a.png";
+			break;
+		case TerrainType::high_mountains_3_grow:
+			iconName = "high_mountains_3_a.png";
+			break;
+		case TerrainType::high_mountains_4:
+			iconName = "high_mountains_4_a.png";
+			break;
+		case TerrainType::high_mountains_4_grow:
+			iconName = "high_mountains_4_a.png";
+			break;
+		case TerrainType::noise_1:
+			break;
+		case TerrainType::flat:
+			iconName = "flat_a.png";
+			break;
+		case TerrainType::empty:
+			break;
+		case TerrainType::coastal:
+			iconName = "coastal_a.png";
+			break;
+		case TerrainType::sea_abyss_1:
+			iconName = "sea_abyss_1_a.png";
+			break;
+		case TerrainType::sea_abyss_2:
+			iconName = "sea_abyss_2_a.png";
+			break;
+		case TerrainType::sea_abyss_3:
+			iconName = "sea_abyss_3_a.png";
+			break;
+		}
+
+		return iconName;
+	}
+
 	std::string TerrainEdit::getDefaultTextureNameForTerrainType(enum class TerrainEdit::TerrainType terrainType, enum class TerrainEdit::TextureType textureType)
 	{
 		std::string ret = "";

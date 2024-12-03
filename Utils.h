@@ -853,8 +853,11 @@ namespace TheWorld_Utils
 			, high_mountains_4 = 21
 			, high_mountains_4_grow = 22
 		};
+#define minTerrainTypeValue 0
+#define maxTerrainTypeValue 22
 
 		__declspec(dllexport) static std::string getDefaultTextureNameForTerrainType(enum class TerrainType terrainType, enum class TextureType textureType);
+		__declspec(dllexport) static std::string getIconNameForTerrainType(enum class TerrainType terrainType);
 
 		size_t size;
 		enum class TerrainType terrainType;

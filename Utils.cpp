@@ -1079,7 +1079,7 @@ namespace TheWorld_Utils
 			return TerrainEdit::TerrainType::empty;
 		else if (terrainType == "flat")
 			return TerrainEdit::TerrainType::flat;
-		else if (terrainType == "campaign_1")
+		else if (terrainType == "campaign_!")
 			return TerrainEdit::TerrainType::campaign_1;
 		else if (terrainType == "plateau_1")
 			return TerrainEdit::TerrainType::plateau_1;
