@@ -852,6 +852,8 @@ namespace TheWorld_Utils
 			, high_mountains_3_grow = 20
 			, high_mountains_4 = 21
 			, high_mountains_4_grow = 22
+			, desert_flat_1 = 23
+			, desert_hills_1 = 24
 		};
 #define minTerrainTypeValue 0
 #define maxTerrainTypeValue 22
