@@ -447,6 +447,11 @@ namespace TheWorld_Utils
 
 		bool empty(void) const
 		{
+			return uninitialized();
+		}
+
+		bool uninitialized(void) const
+		{
 			return m_initialized == false;
 		}
 
@@ -853,10 +858,15 @@ namespace TheWorld_Utils
 			, high_mountains_4 = 21
 			, high_mountains_4_grow = 22
 			, desert_flat_1 = 23
-			, desert_hills_1 = 24
+			, desert_low_dunes = 24
+			, desert_low_mountains = 25
+			, desert_low_mountains_grow = 26
+			, desert_high_mountains_1 = 27
+			, desert_high_mountains_1_grow = 28
+			// Warning: update maxTerrainTypeValue
 		};
 #define minTerrainTypeValue 0
-#define maxTerrainTypeValue 22
+#define maxTerrainTypeValue 28
 
 		__declspec(dllexport) static std::string getDefaultTextureNameForTerrainType(enum class TerrainType terrainType, enum class TextureType textureType);
 		__declspec(dllexport) static std::string getIconNameForTerrainType(enum class TerrainType terrainType);

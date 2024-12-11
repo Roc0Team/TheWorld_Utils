@@ -76,6 +76,24 @@ namespace TheWorld_Utils
 		case TerrainType::sea_abyss_3:
 			iconName = "sea_abyss_3_a.png";
 			break;
+		case TerrainType::desert_flat_1:
+			iconName = "desert_flat_1_a.png";
+			break;
+		case TerrainType::desert_low_dunes:
+			iconName = "desert_low_dunes_a.png";
+			break;
+		case TerrainType::desert_low_mountains:
+			iconName = "desert_low_mountains_a.png";
+			break;
+		case TerrainType::desert_low_mountains_grow:
+			iconName = "desert_low_mountains_a.png";
+			break;
+		case TerrainType::desert_high_mountains_1:
+			iconName = "desert_high_mountains_1_a.png";
+			break;
+		case TerrainType::desert_high_mountains_1_grow:
+			iconName = "desert_high_mountains_1_a.png";
+			break;
 		}
 
 		return iconName;
@@ -160,6 +178,48 @@ namespace TheWorld_Utils
 			else if (textureType == TerrainEdit::TextureType::rocks)
 				ret = "sand";
 			break;
+		case TerrainType::desert_flat_1:
+			if (textureType == TerrainEdit::TextureType::lowElevation)
+				ret = "Ground080_1K";
+			else if (textureType == TerrainEdit::TextureType::highElevation)
+				ret = "Ground080_1K";
+			else if (textureType == TerrainEdit::TextureType::dirt)
+				ret = "Ground080_1K";
+			else if (textureType == TerrainEdit::TextureType::rocks)
+				ret = "Ground080_1K";
+			break;
+		case TerrainType::desert_low_dunes:
+			if (textureType == TerrainEdit::TextureType::lowElevation)
+				ret = "Ground080_1K";
+			else if (textureType == TerrainEdit::TextureType::highElevation)
+				ret = "Ground080_1K";
+			else if (textureType == TerrainEdit::TextureType::dirt)
+				ret = "Ground080_1K";
+			else if (textureType == TerrainEdit::TextureType::rocks)
+				ret = "Ground080_1K";
+			break;
+		case TerrainType::desert_low_mountains:
+		case TerrainType::desert_low_mountains_grow:
+			if (textureType == TerrainEdit::TextureType::lowElevation)
+				ret = "Ground080_1K";
+			else if (textureType == TerrainEdit::TextureType::highElevation)
+				ret = "Rock029_1K";
+			else if (textureType == TerrainEdit::TextureType::dirt)
+				ret = "Rocks017_1K";
+			else if (textureType == TerrainEdit::TextureType::rocks)
+				ret = "rocks07";
+			break;
+		case TerrainType::desert_high_mountains_1:
+		case TerrainType::desert_high_mountains_1_grow:
+			if (textureType == TerrainEdit::TextureType::lowElevation)
+				ret = "Rock029_1K";
+			else if (textureType == TerrainEdit::TextureType::highElevation)
+				ret = "Rock029_1K";
+			else if (textureType == TerrainEdit::TextureType::dirt)
+				ret = "Ground080_1K";
+			else if (textureType == TerrainEdit::TextureType::rocks)
+				ret = "rocks07";
+			break;
 		default:
 			if (textureType == TerrainEdit::TextureType::lowElevation)
 				ret = "Ground003_2K";
@@ -235,7 +295,7 @@ namespace TheWorld_Utils
 			noise.desideredMinHeigthMandatory = true;
 
 			extraValues.numBlendingCycles = 2;
-			extraValues.postGenerateElevation = 0.0f;
+			extraValues.postGenerateElevation = 50.0f;
 			extraValues.ignoreDesideredMinHeight = true;
 
 			if (terrainType == TerrainEdit::TerrainType::empty)
@@ -278,11 +338,12 @@ namespace TheWorld_Utils
 			noise.desideredMinHeigthMandatory = false;
 
 			extraValues.numBlendingCycles = 2;
-			extraValues.postGenerateElevation = 0.0f;
+			extraValues.postGenerateElevation = 50.0f;
 			extraValues.ignoreDesideredMinHeight = true;
 		}
 		break;
 		case TerrainEdit::TerrainType::campaign_1:
+		case TerrainEdit::TerrainType::desert_flat_1:
 		{
 			noise.noiseType = FastNoiseLite::NoiseType::NoiseType_Perlin;
 			noise.rotationType3D = FastNoiseLite::RotationType3D::RotationType3D_None;
@@ -315,7 +376,7 @@ namespace TheWorld_Utils
 			noise.desideredMinHeigthMandatory = true;
 
 			extraValues.numBlendingCycles = 2;
-			extraValues.postGenerateElevation = 0.0f;
+			extraValues.postGenerateElevation = 50.0f;
 			extraValues.ignoreDesideredMinHeight = true;
 		}
 		break;
@@ -352,7 +413,7 @@ namespace TheWorld_Utils
 			noise.desideredMinHeigthMandatory = false;
 
 			extraValues.numBlendingCycles = 2;
-			extraValues.postGenerateElevation = 0.0f;
+			extraValues.postGenerateElevation = 50.0f;
 			extraValues.ignoreDesideredMinHeight = false;
 		}
 		break;
@@ -389,7 +450,44 @@ namespace TheWorld_Utils
 			noise.desideredMinHeigthMandatory = true;
 
 			extraValues.numBlendingCycles = 2;
-			extraValues.postGenerateElevation = 0.0f;
+			extraValues.postGenerateElevation = 300.0f;
+			extraValues.ignoreDesideredMinHeight = true;
+		}
+		break;
+		case TerrainEdit::TerrainType::desert_low_dunes:
+		{
+			noise.noiseType = FastNoiseLite::NoiseType::NoiseType_Perlin;
+			noise.rotationType3D = FastNoiseLite::RotationType3D::RotationType3D_None;
+			noise.noiseSeed = 1337;
+			noise.frequency = 0.00008f;
+			noise.fractalType = FastNoiseLite::FractalType::FractalType_FBm;
+			noise.fractalOctaves = 5;
+			noise.fractalLacunarity = 2.0f;
+			noise.fractalGain = 10.0f;
+			noise.fractalWeightedStrength = 0.15f;
+			noise.fractalPingPongStrength = 2.0f;
+
+			noise.cellularDistanceFunction = FastNoiseLite::CellularDistanceFunction::CellularDistanceFunction_EuclideanSq;
+			noise.cellularReturnType = FastNoiseLite::CellularReturnType::CellularReturnType_Distance;
+			noise.cellularJitter = 1.0f;
+
+			noise.warpNoiseDomainWarpType = -1;
+			noise.warpNoiseRotationType3D = FastNoiseLite::RotationType3D::RotationType3D_None;
+			noise.warpNoiseSeed = 1337;
+			noise.warpNoiseDomainWarpAmp = 30.0f;
+			noise.warpNoiseFrequency = 0.005f;
+			noise.warpNoieseFractalType = FastNoiseLite::FractalType::FractalType_None;
+			noise.warpNoiseFractalOctaves = 5;
+			noise.warpNoiseFractalLacunarity = 2.0f;
+			noise.warpNoiseFractalGain = 0.5f;
+
+			noise.heightsAmplitude = 1000;
+			noise.scaleFactor_JagIntensity = 1.0f;
+			noise.desideredMinHeight = 0.0f;
+			noise.desideredMinHeigthMandatory = true;
+
+			extraValues.numBlendingCycles = 2;
+			extraValues.postGenerateElevation = 300.0f;
 			extraValues.ignoreDesideredMinHeight = true;
 		}
 		break;
@@ -431,6 +529,7 @@ namespace TheWorld_Utils
 		}
 		break;
 		case TerrainEdit::TerrainType::low_mountains:
+		case TerrainEdit::TerrainType::desert_low_mountains:
 		{
 			noise.noiseType = FastNoiseLite::NoiseType::NoiseType_Perlin;
 			noise.rotationType3D = FastNoiseLite::RotationType3D::RotationType3D_None;
@@ -464,11 +563,12 @@ namespace TheWorld_Utils
 			noise.desideredMinHeigthMandatory = true;
 
 			extraValues.numBlendingCycles = 2;
-			extraValues.postGenerateElevation = 500.0f;
+			extraValues.postGenerateElevation = 700.0f;
 			extraValues.ignoreDesideredMinHeight = true;
 		}
 		break;
 		case TerrainEdit::TerrainType::low_mountains_grow:
+		case TerrainEdit::TerrainType::desert_low_mountains_grow:
 		{
 			noise.noiseType = FastNoiseLite::NoiseType::NoiseType_Perlin;
 			noise.rotationType3D = FastNoiseLite::RotationType3D::RotationType3D_None;
@@ -502,11 +602,12 @@ namespace TheWorld_Utils
 			noise.desideredMinHeigthMandatory = false;
 
 			extraValues.numBlendingCycles = 2;
-			extraValues.postGenerateElevation = 500.0f;
+			extraValues.postGenerateElevation = 700.0f;
 			extraValues.ignoreDesideredMinHeight = false;
 		}
 		break;
 		case TerrainEdit::TerrainType::high_mountains_1:
+		case TerrainEdit::TerrainType::desert_high_mountains_1:
 		{
 			noise.noiseType = FastNoiseLite::NoiseType::NoiseType_Perlin;
 			noise.rotationType3D = FastNoiseLite::RotationType3D::RotationType3D_None;
@@ -545,6 +646,7 @@ namespace TheWorld_Utils
 		}
 		break;
 		case TerrainEdit::TerrainType::high_mountains_1_grow:
+		case TerrainEdit::TerrainType::desert_high_mountains_1_grow:
 		{
 			noise.noiseType = FastNoiseLite::NoiseType::NoiseType_Perlin;
 			noise.rotationType3D = FastNoiseLite::RotationType3D::RotationType3D_None;

@@ -1063,6 +1063,36 @@ namespace TheWorld_Utils
 			return "sea_abyss_3";
 		}
 		break;
+		case TerrainEdit::TerrainType::desert_flat_1:
+		{
+			return "desert_flat_1";
+		}
+		break;
+		case TerrainEdit::TerrainType::desert_low_dunes:
+		{
+			return "desert_low_dunes";
+		}
+		break;
+		case TerrainEdit::TerrainType::desert_low_mountains:
+		{
+			return "desert_low_mountains";
+		}
+		break;
+		case TerrainEdit::TerrainType::desert_low_mountains_grow:
+		{
+			return "desert_low_mountains_grow";
+		}
+		break;
+		case TerrainEdit::TerrainType::desert_high_mountains_1:
+		{
+			return "desert_high_mountains_1";
+		}
+		break;
+		case TerrainEdit::TerrainType::desert_high_mountains_1_grow:
+		{
+			return "desert_high_mountains_1_grow";
+		}
+		break;
 		default:
 		{
 			return "notset";
@@ -1115,6 +1145,18 @@ namespace TheWorld_Utils
 			return TerrainEdit::TerrainType::sea_abyss_2;
 		else if (terrainType == "sea_abyss_3")
 			return TerrainEdit::TerrainType::sea_abyss_3;
+		else if (terrainType == "desert_flat_1")
+			return TerrainEdit::TerrainType::desert_flat_1;
+		else if (terrainType == "desert_low_dunes")
+			return TerrainEdit::TerrainType::desert_low_dunes;
+		else if (terrainType == "desert_low_mountains")
+			return TerrainEdit::TerrainType::desert_low_mountains;
+		else if (terrainType == "desert_low_mountains_grow")
+			return TerrainEdit::TerrainType::desert_low_mountains_grow;
+		else if (terrainType == "desert_high_mountains_1")
+			return TerrainEdit::TerrainType::desert_high_mountains_1;
+		else if (terrainType == "desert_high_mountains_1_grow")
+			return TerrainEdit::TerrainType::desert_high_mountains_1_grow;
 		else
 			return TerrainEdit::TerrainType::notset;
 	}
@@ -1973,10 +2015,11 @@ namespace TheWorld_Utils
 			TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromDisk 1.4  ") + __FUNCTION__, "refreshMapsFromBuffer");
 			std::string meshIdFromBuffer;
 			refreshMapsFromBuffer(buffer, meshIdFromBuffer, terrainEditValues, minAltitude, maxAltitude, float16HeigthsBuffer, float32HeigthsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, false);
-			assert(_meshId.size() == 0 || meshIdFromBuffer == _meshId);
+			//assert(_meshId.size() == 0 || meshIdFromBuffer == _meshId);
 			if (_meshId.size() > 0 && meshIdFromBuffer != _meshId)
 			{
-				throw(GDN_TheWorld_Exception(__FUNCTION__, (std::string("meshId from cache buffer (") + meshIdFromBuffer + ") not equal to meshId in input (" + _meshId).c_str()));
+				PLOG_DEBUG << "meshId from cache buffer (" << meshIdFromBuffer << ") not equal to meshId in input (" << _meshId;
+				//throw(GDN_TheWorld_Exception(__FUNCTION__, (std::string("meshId from cache buffer (") + meshIdFromBuffer + ") not equal to meshId in input (" + _meshId).c_str()));
 			}
 		}
 
@@ -2256,8 +2299,9 @@ namespace TheWorld_Utils
 
 		if (_meshId.length() > 0 && meshId != _meshId)
 		{
-			fclose(inFile);
-			throw(GDN_TheWorld_Exception(__FUNCTION__, (std::string("meshId from cache (") + meshId + ") not equal to meshId from server (" + _meshId).c_str()));
+			PLOG_DEBUG << "meshId from cache (" << meshId << ") not equal to meshId from server(" << _meshId;
+			//fclose(inFile);
+			//throw(GDN_TheWorld_Exception(__FUNCTION__, (std::string("meshId from cache (") + meshId + ") not equal to meshId from server (" + _meshId).c_str()));
 		}
 
 		m_meshId = meshId;
@@ -2382,7 +2426,9 @@ namespace TheWorld_Utils
 		errno_t err = fopen_s(&outFile, tempPath.c_str(), "wb");
 		if (err != 0)
 		{
-			throw(GDN_TheWorld_Exception(__FUNCTION__, std::string("Open " + tempPath + " in errore - Err=" + std::to_string(err)).c_str()));
+			char errMsg[512];
+			strerror_s(errMsg, sizeof(errMsg), err);
+			throw(GDN_TheWorld_Exception(__FUNCTION__, std::string("Open " + tempPath + " in errore - Err=" + std::to_string(err) + " " + errMsg).c_str()));
 		}
 
 		if (fwrite(shortBuffer, bufferSize_size, 1, outFile) != 1)
@@ -2401,10 +2447,20 @@ namespace TheWorld_Utils
 
 		if (fs::exists(path.c_str()))
 			if (remove(path.c_str()) != 0)
-				throw(GDN_TheWorld_Exception(__FUNCTION__, (std::string("Remove error! errno=") + std::to_string(errno) + " _doserrno=" + std::to_string(_doserrno)).c_str()));
+			{
+				int err = errno;
+				char errMsg[512];
+				strerror_s(errMsg, sizeof(errMsg), err);
+				throw(GDN_TheWorld_Exception(__FUNCTION__, (std::string("Remove error! errno=") + std::to_string(err) + " " + errMsg + " - _doserrno=" + std::to_string(_doserrno)).c_str()));
+			}
 
 		if (rename(tempPath.c_str(), path.c_str()) != 0)
-			throw(GDN_TheWorld_Exception(__FUNCTION__, (std::string("Rename error! errno=") + std::to_string(errno) + " _doserrno=" + std::to_string(_doserrno)).c_str()));
+		{
+			int err = errno;
+			char errMsg[512];
+			strerror_s(errMsg, sizeof(errMsg), err);
+			throw(GDN_TheWorld_Exception(__FUNCTION__, (std::string("Rename error! errno=") + std::to_string(err) + " " + errMsg + " _doserrno=" + std::to_string(_doserrno)).c_str()));
+		}
 	}
 
 	void MeshCacheBuffer::generateHeightsWithNoise(size_t numVerticesPerSize, float gridStepInWU, float lowerXGridVertex, float lowerZGridVertex, TerrainEdit* terrainEdit, std::vector<float>& vectGridHeights)
