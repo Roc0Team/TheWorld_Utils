@@ -125,6 +125,11 @@ namespace TheWorld_Utils
 		return now_time_t_utc;
 	}
 
+	bool is_time_point_null(std::chrono::system_clock::time_point tp)
+	{
+		return (tp == std::chrono::system_clock::time_point());
+	}
+
 	std::chrono::system_clock::time_point last_write_time_point_utc(const std::string& path)
 	{
 		const std::filesystem::file_time_type fileTime_utc = std::filesystem::last_write_time(path);					// UTC Time
@@ -1647,6 +1652,12 @@ namespace TheWorld_Utils
 		//assert(meshId == meshId1);
 
 		return meshId;
+	}
+
+	std::chrono::system_clock::time_point MeshCacheBuffer::getTimeFromMeshId(std::string meshId)
+	{
+		std::string meshIdWithoutBinaryTime;
+		return getTimeFromMeshId(meshId, meshIdWithoutBinaryTime);
 	}
 
 	std::chrono::system_clock::time_point MeshCacheBuffer::getTimeFromMeshId(std::string& meshId, std::string& meshIdWithoutBinaryTime)

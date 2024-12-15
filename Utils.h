@@ -72,6 +72,8 @@ namespace TheWorld_Utils
 	__declspec(dllexport) std::chrono::system_clock::time_point current_utc_time_point(void);
 	__declspec(dllexport) std::time_t current_utc_time_t(void);
 
+	__declspec(dllexport) bool is_time_point_null(std::chrono::system_clock::time_point tp);
+
 	__declspec(dllexport) std::chrono::system_clock::time_point last_write_time_point_utc(const std::string& path);
 	__declspec(dllexport) std::time_t last_write_time_t_utc(const std::string& path);
 	__declspec(dllexport) std::string last_write_time_str_utc(const std::string& path);								// es: 2023-09-04 19:33:24.7026392
@@ -1195,6 +1197,7 @@ namespace TheWorld_Utils
 		__declspec(dllexport) static bool isEmptyBuffer(std::string meshId);
 		__declspec(dllexport) static bool firstMeshIdMoreRecent(std::string& firstMeshId, std::string& secondMeshId);
 		__declspec(dllexport) static std::chrono::system_clock::time_point getTimeFromMeshId(std::string& meshId, std::string& meshIdWithoutBinaryTime);
+		__declspec(dllexport) static std::chrono::system_clock::time_point getTimeFromMeshId(std::string meshId);
 		__declspec(dllexport) static std::string meshIdToPrint(std::string& meshId);
 		__declspec(dllexport) static std::string meshIdToPrint1(std::string meshId);
 		__declspec(dllexport) std::string getMeshIdFromDisk(bool workDir = false, TerrainEdit* terrainEdit = nullptr, bool updateLastAccessTime = false);
