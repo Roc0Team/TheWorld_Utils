@@ -92,6 +92,8 @@ namespace TheWorld_Utils
 
 	__declspec(dllexport) bool time_point_zero(std::chrono::system_clock::time_point tp);
 
+	__declspec(dllexport) std::string milliseconds_to_hhhmmss(size_t milliseconds);
+
 	//std::vector<std::string> split(const std::string& s, char seperator)
 	//{
 	//	std::vector<std::string> output;

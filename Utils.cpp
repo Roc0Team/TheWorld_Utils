@@ -24,6 +24,7 @@
 #include <functional>
 #include <chrono>
 #include <sstream>
+#include <format>
 
 #include <plog/Initializers/RollingFileInitializer.h>
 //#include <Eigen/Dense>
@@ -242,7 +243,23 @@ namespace TheWorld_Utils
 
 	bool time_point_zero(std::chrono::system_clock::time_point tp)
 	{
-		return tp.time_since_epoch() == std::chrono::system_clock::duration::zero();
+		if (tp.time_since_epoch() == std::chrono::system_clock::duration::zero())
+			return true;
+		else
+			return false;
+	}
+
+	std::string milliseconds_to_hhhmmss(size_t ms)
+	{
+		size_t hours = ms / 3600000;					//3600000 milliseconds in an hour
+		ms = ms - 3600000 * hours;
+		size_t minutes = ms / 60000;					//60000 milliseconds in a minute
+		ms = ms - 60000 * minutes;
+		size_t seconds = ms / 1000;					//1000 milliseconds in a second
+		size_t milliseconds = ms - 1000 * seconds;
+		//std::stringstream buffer;	buffer << std::format("{:02d}", hours) << ":" << std::format("{:02d}", minutes) << ":" << std::format("{:02d}", seconds) << "." << std::format("{:03d}", milliseconds);
+		//return buffer.str();
+		return std::format("{:02d}:{:02d}:{:02d}.{:03d}", hours, minutes, seconds, milliseconds);
 	}
 
 	__declspec(dllexport) void padStrTo(std::string& str, const size_t num, const char paddingChar)
@@ -1547,6 +1564,8 @@ namespace TheWorld_Utils
 
 		std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
 		std::string str = std::format("{}", now);			// DEBUG
+		now = current_utc_time_point();
+		str = std::format("{}", now);			// DEBUG
 		BYTE shortBuffer[256 + 1];
 		size_t size = 0;
 		TheWorld_Utils::serializeToByteStream<std::chrono::system_clock::time_point>(now, shortBuffer, size);
