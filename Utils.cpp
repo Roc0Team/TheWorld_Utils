@@ -882,7 +882,7 @@ namespace TheWorld_Utils
 		//memset(extraValues.highElevationTexName_g, 0, sizeof(extraValues.highElevationTexName_g));
 		//memset(extraValues.dirtTexName_b, 0, sizeof(extraValues.dirtTexName_b));
 		//memset(extraValues.rocksTexName_a, 0, sizeof(extraValues.rocksTexName_a));
-		splatmapNeedRegen = true;
+		m_splatmapNeedRegen = true;
 		colormapNeedRegen = true;
 		globalmapNeedRegen = true;
 
@@ -929,7 +929,7 @@ namespace TheWorld_Utils
 			return false;
 		if (strcmp(extraValues.rocksTexName_a, o.extraValues.rocksTexName_a) != 0)
 			return false;
-		if (splatmapNeedRegen != o.splatmapNeedRegen)
+		if (m_splatmapNeedRegen != o.m_splatmapNeedRegen)
 			return false;
 		if (colormapNeedRegen != o.colormapNeedRegen)
 			return false;
@@ -1202,36 +1202,41 @@ namespace TheWorld_Utils
 		size = saveSize;
 	}
 
-	bool TerrainEdit::detectSeaInQuadrant(void)
+	//bool TerrainEdit::detectSeaInQuadrant(void)
+	//{
+	//	bool done = false;
+
+	//	//if ((extraValues.seaInfoSet != QUADRANT_SEA_INFO_SET_FALSE && extraValues.seaInfoSet != QUADRANT_SEA_INFO_SET_TRUE)
+	//	//	|| (!heightsNeedRegen && extraValues.seaInfoSet == QUADRANT_SEA_INFO_SET_FALSE))
+	//	//{
+	//	//	if (!heightsNeedRegen)
+	//	//	{
+	//	//		extraValues.canContainSea = QUADRANT_SEA_INFO_SET_FALSE;
+
+	//	//		//if (seaQuadrant())
+	//	//		//{
+	//	//		if (minHeight <= THEWORLD_SEA_LEVEL)
+	//	//		{
+	//	//			extraValues.canContainSea = QUADRANT_SEA_INFO_SET_TRUE;
+	//	//		}
+	//	//		//}
+	//	//	}
+
+	//	//	extraValues.seaInfoSet = QUADRANT_SEA_INFO_SET_TRUE;
+	//	//	done = true;
+	//	//}
+
+	//	return done;
+	//}
+
+	bool TerrainEdit::canContainSea(void) const
 	{
-		bool done = false;
+		//if (terrainType == TerrainType::empty || terrainType == TerrainType::coastal || terrainType == TerrainType::sea_abyss_1 || terrainType == TerrainType::sea_abyss_2 || terrainType == TerrainType::sea_abyss_3)
+		//	return true;
+		//else
+		//	return false;
 
-		//if ((extraValues.seaInfoSet != QUADRANT_SEA_INFO_SET_FALSE && extraValues.seaInfoSet != QUADRANT_SEA_INFO_SET_TRUE)
-		//	|| (!heightsNeedRegen && extraValues.seaInfoSet == QUADRANT_SEA_INFO_SET_FALSE))
-		//{
-		//	if (!heightsNeedRegen)
-		//	{
-		//		extraValues.canContainSea = QUADRANT_SEA_INFO_SET_FALSE;
-
-		//		//if (seaQuadrant())
-		//		//{
-		//		if (minHeight <= THEWORLD_SEA_LEVEL)
-		//		{
-		//			extraValues.canContainSea = QUADRANT_SEA_INFO_SET_TRUE;
-		//		}
-		//		//}
-		//	}
-
-		//	extraValues.seaInfoSet = QUADRANT_SEA_INFO_SET_TRUE;
-		//	done = true;
-		//}
-
-		return done;
-	}
-
-	bool TerrainEdit::seaQuadrant(void) const
-	{
-		if (terrainType == TerrainType::empty || terrainType == TerrainType::coastal || terrainType == TerrainType::sea_abyss_1 || terrainType == TerrainType::sea_abyss_2 || terrainType == TerrainType::sea_abyss_3)
+		if (minHeight <= (THEWORLD_SEA_LEVEL + THEWORLD_SEA_MAX_WAVE_HEIGHT))
 			return true;
 		else
 			return false;
@@ -2001,7 +2006,7 @@ namespace TheWorld_Utils
 		
 	std::string MeshCacheBuffer::getCacheIdStr(void)
 	{
-		return "MAP-" + m_mapName + "_ST-" + std::to_string(m_gridStepInWU) + "_SZ-" + std::to_string(m_numVerticesPerSize) + "_L-" + std::to_string(m_level) + "_X-" + std::to_string(m_lowerXGridVertex) + "_Z-" + std::to_string(m_lowerZGridVertex) + " Hash=" + meshIdToPrint(m_meshId);
+		return "WORLD QUADRANT-" + m_mapName + "_ST-" + std::to_string(m_gridStepInWU) + "_SZ-" + std::to_string(m_numVerticesPerSize) + "_L-" + std::to_string(m_level) + "_X-" + std::to_string(m_lowerXGridVertex) + "_Z-" + std::to_string(m_lowerZGridVertex) + " Hash=" + meshIdToPrint(m_meshId);
 	}
 
 	bool MeshCacheBuffer::refreshMapsFromDisk(size_t numVerticesPerSize, float gridStepInWU, std::string _meshId, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer)
@@ -2398,17 +2403,40 @@ namespace TheWorld_Utils
 		_buffer.append((char*)buffer.ptr(), size);
 	}
 		
-	void MeshCacheBuffer::writeBufferToDiskCache(std::string& buffer, std::string& meshId, bool renewMeshId, bool workDir, TerrainEdit* terrainEdit) const
+	std::string MeshCacheBuffer::writeBufferToDiskCache2(std::string& buffer, std::string& writtenMeshId, bool renewMeshId, bool workDir, TerrainEdit* terrainEdit)
 	{
-		writeBufferToDiskCache((BYTE*)buffer.c_str(), buffer.size(), meshId, renewMeshId, workDir, terrainEdit);
+		std::string bufferMeshId = writeBufferToDiskCache((BYTE*)buffer.c_str(), buffer.size(), writtenMeshId, renewMeshId, workDir, terrainEdit);
+		m_meshId = writtenMeshId;
+		return bufferMeshId;
 	}
 
-	void MeshCacheBuffer::writeBufferToDiskCache(TheWorld_Utils::MemoryBuffer& buffer, std::string& meshId, bool renewMeshId, bool workDir, TerrainEdit* terrainEdit) const
+	std::string MeshCacheBuffer::writeBufferToDiskCache(std::string& buffer, std::string& writtenMeshId, bool renewMeshId, bool workDir, TerrainEdit* terrainEdit) const
 	{
-		writeBufferToDiskCache(buffer.ptr(), buffer.size(), meshId, renewMeshId, workDir, terrainEdit);
+		std::string bufferMeshId = writeBufferToDiskCache((BYTE*)buffer.c_str(), buffer.size(), writtenMeshId, renewMeshId, workDir, terrainEdit);
+		return bufferMeshId;
 	}
 
-	void MeshCacheBuffer::writeBufferToDiskCache(const BYTE* buffer, const size_t bufferSize, std::string& meshId, bool renewMeshId, bool workDir, TerrainEdit* terrainEdit) const
+	std::string MeshCacheBuffer::writeBufferToDiskCache2(TheWorld_Utils::MemoryBuffer& buffer, std::string& writtenMeshId, bool renewMeshId, bool workDir, TerrainEdit* terrainEdit)
+	{
+		std::string bufferMeshId = writeBufferToDiskCache(buffer.ptr(), buffer.size(), writtenMeshId, renewMeshId, workDir, terrainEdit);
+		m_meshId = writtenMeshId;
+		return bufferMeshId;
+	}
+
+	std::string MeshCacheBuffer::writeBufferToDiskCache(TheWorld_Utils::MemoryBuffer& buffer, std::string& writtenMeshId, bool renewMeshId, bool workDir, TerrainEdit* terrainEdit) const
+	{
+		std::string bufferMeshId = writeBufferToDiskCache(buffer.ptr(), buffer.size(), writtenMeshId, renewMeshId, workDir, terrainEdit);
+		return bufferMeshId;
+	}
+
+	std::string MeshCacheBuffer::writeBufferToDiskCache2(const BYTE* buffer, const size_t bufferSize, std::string& writtenMeshId, bool renewMeshId, bool workDir, TerrainEdit* terrainEdit)
+	{
+		std::string bufferMeshId = writeBufferToDiskCache(buffer, bufferSize, writtenMeshId, renewMeshId, workDir, terrainEdit);
+		m_meshId = writtenMeshId;
+		return bufferMeshId;
+	}
+
+	std::string MeshCacheBuffer::writeBufferToDiskCache(const BYTE* buffer, const size_t bufferSize, std::string& writtenMeshId, bool renewMeshId, bool workDir, TerrainEdit* terrainEdit) const
 	{
 		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer writeBufferToCache 1 ") + __FUNCTION__, "ALL");
 
@@ -2424,22 +2452,26 @@ namespace TheWorld_Utils
 		char* movingStreamBuffer = (char*)buffer + 1;	// bypass "0"
 		size_t size = 0;
 
+		std::string bufferMeshId;
+		
 		if (renewMeshId)
 		{
-			std::string newMeshId = generateNewMeshId();
 			size_t meshIdSize = TheWorld_Utils::deserializeFromByteStream<size_t>((BYTE*)movingStreamBuffer, size);
 			movingStreamBuffer += size;			// bypass MeshId size
+			bufferMeshId = std::string(movingStreamBuffer, meshIdSize);
+			std::string newMeshId = generateNewMeshId();
 			my_assert(meshIdSize == newMeshId.size())
 			memcpy(movingStreamBuffer, newMeshId.c_str(), meshIdSize);	// replace MeshId
 			movingStreamBuffer += meshIdSize;	// bypass MeshId
-			meshId = newMeshId;
+			writtenMeshId = newMeshId;
 		}
 		else
 		{
 			size_t meshIdSize = TheWorld_Utils::deserializeFromByteStream<size_t>((BYTE*)movingStreamBuffer, size);
 			movingStreamBuffer += size;						// bypass MeshId size
-			meshId = std::string(movingStreamBuffer, meshIdSize);
+			bufferMeshId = std::string(movingStreamBuffer, meshIdSize);
 			movingStreamBuffer += meshIdSize;				// bypass MeshId
+			writtenMeshId = bufferMeshId;
 		}
 
 		if (terrainEdit != nullptr)
@@ -2491,6 +2523,8 @@ namespace TheWorld_Utils
 			strerror_s(errMsg, sizeof(errMsg), err);
 			throw(GDN_TheWorld_Exception(__FUNCTION__, (std::string("Rename error! errno=") + std::to_string(err) + " " + errMsg + " _doserrno=" + std::to_string(_doserrno)).c_str()));
 		}
+
+		return bufferMeshId;
 	}
 
 	void MeshCacheBuffer::generateHeightsWithNoise(size_t numVerticesPerSize, float gridStepInWU, float lowerXGridVertex, float lowerZGridVertex, TerrainEdit* terrainEdit, std::vector<float>& vectGridHeights)
@@ -3647,7 +3681,7 @@ namespace TheWorld_Utils
 		TheWorld_Utils::TerrainEdit terrainEdit;
 		terrainEdit.heightsNeedRegen = true;
 		terrainEdit.normalsNeedRegen = true;
-		terrainEdit.splatmapNeedRegen = true;
+		terrainEdit.splatmapNeedRegen(true);
 		terrainEdit.globalmapNeedRegen = true;
 		terrainEdit.colormapNeedRegen = true;
 		TheWorld_Utils::MemoryBuffer terrainEditValuesBuffer((BYTE*)&terrainEdit, terrainEdit.size);
@@ -4648,6 +4682,7 @@ namespace TheWorld_Utils
 		size_t maxIndex = numVerticesPerSize - 1;
 
 		for (size_t z = 0; z < numVerticesPerSize; z++)
+		{
 			for (size_t x = 0; x < numVerticesPerSize; x++)
 			{
 				float h = heights32Buffer.at<float>(x, z, numVerticesPerSize);
@@ -4688,6 +4723,7 @@ namespace TheWorld_Utils
 						terrainEdit->southSideZPlus.maxHeight = h;
 				}
 			}
+		}
 	}
 
 	bool MeshCacheBuffer::blendQuadrantOnNorthSide(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
