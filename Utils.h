@@ -94,6 +94,11 @@ namespace TheWorld_Utils
 
 	__declspec(dllexport) std::string milliseconds_to_hhhmmss(size_t milliseconds);
 
+	// does not support negative values
+	__declspec(dllexport) std::string quickAddThousandSeparators(std::string value, char thousandSep = '.');
+	// support negative values
+	__declspec(dllexport) std::string addThousandSeparators(std::string value, char thousandSep = '.', char decimalSep = ',', char sourceDecimalSep = '.');
+
 	//std::vector<std::string> split(const std::string& s, char seperator)
 	//{
 	//	std::vector<std::string> output;

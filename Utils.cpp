@@ -262,6 +262,39 @@ namespace TheWorld_Utils
 		return std::format("{:02d}:{:02d}:{:02d}.{:03d}", hours, minutes, seconds, milliseconds);
 	}
 
+	std::string quickAddThousandSeparators(std::string value, char thousandSep)
+	{
+		size_t len = value.length();
+		size_t dlen = 3;
+
+		while (len > dlen) {
+			value.insert(len - dlen, 1, thousandSep);
+			dlen += 4;
+			len += 1;
+		}
+		return value;
+	}
+
+	// support negative values
+	std::string addThousandSeparators(std::string value, char thousandSep, char decimalSep, char sourceDecimalSep)
+	{
+		size_t len = value.length();
+		int negative = ((len && value[0] == '-') ? 1 : 0);
+		size_t dpos = value.find_last_of(sourceDecimalSep);
+		size_t dlen = 3 + (dpos == std::string::npos ? 0 : (len - dpos));
+
+		if (dpos != std::string::npos && decimalSep != sourceDecimalSep) {
+			value[dpos] = decimalSep;
+		}
+
+		while ((len - negative) > dlen) {
+			value.insert(len - dlen, 1, thousandSep);
+			dlen += 4;
+			len += 1;
+		}
+		return value;
+	}
+
 	__declspec(dllexport) void padStrTo(std::string& str, const size_t num, const char paddingChar)
 	{
 		if (num > str.size())
