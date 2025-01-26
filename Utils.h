@@ -95,9 +95,9 @@ namespace TheWorld_Utils
 	__declspec(dllexport) std::string milliseconds_to_hhhmmss(size_t milliseconds);
 
 	// does not support negative values
-	__declspec(dllexport) std::string quickAddThousandSeparators(std::string value, char thousandSep = '.');
+	__declspec(dllexport) std::string quickAddThousandSeparators(std::string value, char thousandSep = ',');
 	// support negative values
-	__declspec(dllexport) std::string addThousandSeparators(std::string value, char thousandSep = '.', char decimalSep = ',', char sourceDecimalSep = '.');
+	__declspec(dllexport) std::string addThousandSeparators(std::string value, char thousandSep = ',', char decimalSep = '.', char sourceDecimalSep = '.');
 
 	//std::vector<std::string> split(const std::string& s, char seperator)
 	//{
@@ -926,10 +926,10 @@ namespace TheWorld_Utils
 		} extraValues;
 
 #pragma pack (1)
-		TerrainNeighbourQuadrantInfo eastNeighbourXPlus;		// X growing
-		TerrainNeighbourQuadrantInfo westNeighbourXMinus;		// X lowering
-		TerrainNeighbourQuadrantInfo southNeighbourZPlus;		// Z growing
-		TerrainNeighbourQuadrantInfo northNeighbourZMinus;		// Z lowering
+		TerrainNeighbourQuadrantInfo deprecated_eastNeighbourXPlus;		// X growing	W A R N I N G: NOT USED AND DEPRECATED
+		TerrainNeighbourQuadrantInfo deprecated_westNeighbourXMinus;		// X lowering	W A R N I N G: NOT USED AND DEPRECATED
+		TerrainNeighbourQuadrantInfo deprecated_southNeighbourZPlus;		// Z growing	W A R N I N G: NOT USED AND DEPRECATED
+		TerrainNeighbourQuadrantInfo deprecated_northNeighbourZMinus;		// Z lowering	W A R N I N G: NOT USED AND DEPRECATED
 
 		struct
 		{
@@ -1082,6 +1082,7 @@ namespace TheWorld_Utils
 
 #define TimerMs TheWorld_Utils::Timer<std::chrono::milliseconds, std::chrono::steady_clock>
 #define TimerMcs TheWorld_Utils::Timer<std::chrono::microseconds, std::chrono::steady_clock>
+#define TimerNans TheWorld_Utils::Timer<std::chrono::nanoseconds, std::chrono::steady_clock>
 
 	class GridVertex;
 
@@ -1175,7 +1176,7 @@ namespace TheWorld_Utils
 		private:
 			bool m_allocated = false;
 			//TheWorld_Utils::TerrainEdit m_terrainData;
-			TheWorld_Utils::TerrainEdit* m_terrainDataPtr;
+			TheWorld_Utils::TerrainEdit* m_terrainDataPtr = nullptr;
 		};
 
 	public:

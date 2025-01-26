@@ -892,9 +892,6 @@ namespace TheWorld_Utils
 		minHeight = 0;
 		maxHeight = 0;
 
-		TerrainEdit::terrainType = terrainType;
-		init(terrainType);
-
 		eastSideXPlus.needBlend = true;
 		eastSideXPlus.minHeight = 0.0f;
 		eastSideXPlus.maxHeight = 0.0f;
@@ -910,6 +907,9 @@ namespace TheWorld_Utils
 		northSideZMinus.needBlend = true;
 		northSideZMinus.minHeight = 0.0f;
 		northSideZMinus.maxHeight = 0.0f;
+
+		TerrainEdit::terrainType = terrainType;
+		init(terrainType);
 
 		//memset(extraValues.lowElevationTexName_r, 0, sizeof(extraValues.lowElevationTexName_r));
 		//memset(extraValues.highElevationTexName_g, 0, sizeof(extraValues.highElevationTexName_g));
@@ -998,13 +998,13 @@ namespace TheWorld_Utils
 			return false;
 		if (extraValues.canContainSea != o.extraValues.canContainSea)
 			return false;
-		if (eastNeighbourXPlus != o.eastNeighbourXPlus)
+		if (deprecated_eastNeighbourXPlus != o.deprecated_eastNeighbourXPlus)
 			return false;
-		if (westNeighbourXMinus != o.westNeighbourXMinus)
+		if (deprecated_westNeighbourXMinus != o.deprecated_westNeighbourXMinus)
 			return false;
-		if (southNeighbourZPlus != o.southNeighbourZPlus)
+		if (deprecated_southNeighbourZPlus != o.deprecated_southNeighbourZPlus)
 			return false;
-		if (northNeighbourZMinus != o.northNeighbourZMinus)
+		if (deprecated_northNeighbourZMinus != o.deprecated_northNeighbourZMinus)
 			return false;
 		return true;
 	}
@@ -1284,23 +1284,35 @@ namespace TheWorld_Utils
 
 			if (northSideZMinus != nullptr)
 			{
-				averageHeight += (northSideZMinus->southSideZPlus.maxHeight + northSideZMinus->southSideZPlus.minHeight) / 2;
-				num++;
+				if (not northSideZMinus->southSideZPlus.needBlend)
+				{
+					averageHeight += (northSideZMinus->southSideZPlus.maxHeight + northSideZMinus->southSideZPlus.minHeight) / 2;
+					num++;
+				}
 			}
 			if (southSideZPlus != nullptr)
 			{
-				averageHeight += (southSideZPlus->northSideZMinus.maxHeight + southSideZPlus->northSideZMinus.minHeight) / 2;
-				num++;
+				if (not southSideZPlus->northSideZMinus.needBlend)
+				{
+					averageHeight += (southSideZPlus->northSideZMinus.maxHeight + southSideZPlus->northSideZMinus.minHeight) / 2;
+					num++;
+				}
 			}
 			if (westSideXMinus != nullptr)
 			{
-				averageHeight += (westSideXMinus->eastSideXPlus.maxHeight + westSideXMinus->eastSideXPlus.minHeight) / 2;
-				num++;
+				if (not westSideXMinus->eastSideXPlus.needBlend)
+				{
+					averageHeight += (westSideXMinus->eastSideXPlus.maxHeight + westSideXMinus->eastSideXPlus.minHeight) / 2;
+					num++;
+				}
 			}
 			if (eastSideXPlus != nullptr)
 			{
-				averageHeight += (eastSideXPlus->westSideXMinus.maxHeight + eastSideXPlus->westSideXMinus.minHeight) / 2;
-				num++;
+				if (not eastSideXPlus->westSideXMinus.needBlend)
+				{
+					averageHeight += (eastSideXPlus->westSideXMinus.maxHeight + eastSideXPlus->westSideXMinus.minHeight) / 2;
+					num++;
+				}
 			}
 
 			if (num != 0)

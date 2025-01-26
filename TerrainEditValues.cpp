@@ -302,6 +302,22 @@ namespace TheWorld_Utils
 			{
 				minHeight = EMPTY_QUADRANTS_TERRAIN_HEIGHT;
 				maxHeight = EMPTY_QUADRANTS_TERRAIN_HEIGHT;
+
+				eastSideXPlus.needBlend = true;
+				eastSideXPlus.minHeight = EMPTY_QUADRANTS_TERRAIN_HEIGHT;
+				eastSideXPlus.maxHeight = EMPTY_QUADRANTS_TERRAIN_HEIGHT;
+
+				westSideXMinus.needBlend = true;
+				westSideXMinus.minHeight = EMPTY_QUADRANTS_TERRAIN_HEIGHT;
+				westSideXMinus.maxHeight = EMPTY_QUADRANTS_TERRAIN_HEIGHT;
+
+				southSideZPlus.needBlend = true;
+				southSideZPlus.minHeight = EMPTY_QUADRANTS_TERRAIN_HEIGHT;
+				southSideZPlus.maxHeight = EMPTY_QUADRANTS_TERRAIN_HEIGHT;
+
+				northSideZMinus.needBlend = true;
+				northSideZMinus.minHeight = EMPTY_QUADRANTS_TERRAIN_HEIGHT;
+				northSideZMinus.maxHeight = EMPTY_QUADRANTS_TERRAIN_HEIGHT;
 			}
 		}
 		break;
