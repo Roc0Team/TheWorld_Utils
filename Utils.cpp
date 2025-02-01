@@ -5288,7 +5288,7 @@ namespace TheWorld_Utils
 
 		if (eastData.heights32Buffer != nullptr && eastTerrainEdit != nullptr /*&& (terrainEdit->eastSideXPlus.needBlend || eastTerrainEdit->westSideXMinus.needBlend)*/)
 		{
-			// moving on south side: every x with z = 0 
+			// moving on east side: every z with x = 0 
 			for (size_t z = 0; z < numVerticesPerSize; z++)
 			{
 				float heightGapForEachQuandrantOnBorder = abs(data.heights32Buffer->at<float>(maxIndex, z, numVerticesPerSize) - eastData.heights32Buffer->at<float>(0, z, numVerticesPerSize)) / 2;
