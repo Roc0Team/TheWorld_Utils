@@ -780,6 +780,14 @@ namespace TheWorld_Utils
 				return false;
 			return true;
 		}
+		bool almostEqual(const TerrainSideInfo& o, float tolerance = 0.05) const
+		{
+			if (abs(minHeight - o.minHeight) > tolerance)
+				return false;
+			if (abs(maxHeight - o.maxHeight) > tolerance)
+				return false;
+			return true;
+		}
 	};
 
 	class TerrainEdit
