@@ -600,6 +600,7 @@ namespace TheWorld_Utils
 			return m_quadrantPosZ;
 		}
 		_declspec(dllexport) QuadrantPos getQuadrantPos(enum class DirectionSlot dir, int numSlot = 1) const;
+		_declspec(dllexport) void getNeighbours(std::vector<TheWorld_Utils::QuadrantPos>& neighbours, size_t maxDistance = 1) const;
 		void setTag(std::string tag)
 		{
 			m_tag = tag;

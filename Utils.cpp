@@ -633,6 +633,57 @@ namespace TheWorld_Utils
 		resetName();
 	}
 
+	void QuadrantPos::getNeighbours(std::vector<TheWorld_Utils::QuadrantPos>& neighbours, size_t maxDistance) const
+	{
+		if (maxDistance < 1)
+			maxDistance = 1;
+
+		std::map<TheWorld_Utils::QuadrantPos, bool> _neighbours;
+		_neighbours[getQuadrantPos(DirectionSlot::NorthZMinus)] = true;
+		_neighbours[getQuadrantPos(DirectionSlot::SouthZPlus)] = true;
+		_neighbours[getQuadrantPos(DirectionSlot::EastXPlus)] = true;
+		_neighbours[getQuadrantPos(DirectionSlot::WestXMinus)] = true;
+		_neighbours[getQuadrantPos(DirectionSlot::NortheastZMinusXPlus)] = true;
+		_neighbours[getQuadrantPos(DirectionSlot::NorthwestZMinusXMinus)] = true;
+		_neighbours[getQuadrantPos(DirectionSlot::SoutheastZPlusXPlus)] = true;
+		_neighbours[getQuadrantPos(DirectionSlot::SouthwestZPlusXMinus)] = true;
+
+		if (maxDistance > 1)
+		{
+			std::vector<TheWorld_Utils::QuadrantPos> externalRingNeighbours;
+			for (auto& item : _neighbours)
+				externalRingNeighbours.push_back(item.first);
+
+
+			for (int distance = 2; distance <= maxDistance; distance++)
+			{
+				// getting new neighbours: there are many duplicates
+				std::vector<TheWorld_Utils::QuadrantPos> newNeighbours;
+				for (auto& item : externalRingNeighbours)
+					item.getNeighbours(newNeighbours, 1);
+
+				// erasing duplicates and obtaining new external ring neighbours
+				externalRingNeighbours.clear();
+				for (auto& item : newNeighbours)
+				{
+					if (not _neighbours.contains(item))
+					{
+						_neighbours[item] = true;					// growing map of new pos
+						externalRingNeighbours.push_back(item);		// because current pos is a new pos it is in the new external ring
+					}
+				}
+			}
+
+			// removing self if contained in found neighbours
+			if (_neighbours.contains(*this))
+				_neighbours.erase(*this);
+		}
+
+		// reversing found neighbours in output vector
+		for (auto& item : _neighbours)
+			neighbours.push_back(item.first);
+	}
+
 	QuadrantPos QuadrantPos::getQuadrantPos(enum class DirectionSlot dir, int numSlot) const
 	{
 		QuadrantPos pos = *this;
