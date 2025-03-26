@@ -5673,6 +5673,14 @@ namespace TheWorld_Utils
 		}
 	}
 
+	bool Utils::StringContains(std::string s, std::string search)
+	{
+		if (s.find(search) != std::string::npos)
+			return true;
+		else
+			return false;
+	}
+
 	std::string ToString(GUID* guid)
 	{
 		char guid_string[37]; // 32 hex chars + 4 hyphens + null terminator

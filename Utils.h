@@ -1411,8 +1411,8 @@ namespace TheWorld_Utils
 		__declspec(dllexport) static void plogDenit(void);
 
 		static std::string ReplaceString(std::string subject, const std::string& search, const std::string& replace);
-
 		static void ReplaceStringInPlace(std::string& subject, const std::string& search, const std::string& replace);
+		__declspec(dllexport) static bool StringContains(std::string s, std::string search);
 
 		static bool isEqualWithLimitedPrecision(float num1, float num2, int precision)
 		{
