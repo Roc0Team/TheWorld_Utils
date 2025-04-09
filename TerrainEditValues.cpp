@@ -118,26 +118,26 @@ namespace TheWorld_Utils
 			break;
 		case TerrainType::flat:
 			if (textureType == TerrainEdit::TextureType::lowElevation)
-				ret = "grass";
+				ret = "grass_2";
 			//ret = "Rock028_1K";
 			else if (textureType == TerrainEdit::TextureType::highElevation)
-				ret = "grass";
+				ret = "grass_2";
 			else if (textureType == TerrainEdit::TextureType::dirt)
-				ret = "grass";
+				ret = "grass_2";
 			else if (textureType == TerrainEdit::TextureType::rocks)
-				ret = "grass";
+				ret = "grass_2";
 			break;
 		case TerrainType::campaign_1:
 		case TerrainType::plateau_1:
 			if (textureType == TerrainEdit::TextureType::lowElevation)
-				ret = "grass";
+				ret = "grass_2";
 				//ret = "Rock028_1K";
 			else if (textureType == TerrainEdit::TextureType::highElevation)
-				ret = "grass";
+				ret = "grass_2";
 			else if (textureType == TerrainEdit::TextureType::dirt)
-				ret = "leaves";
+				ret = "dirt_1";
 			else if (textureType == TerrainEdit::TextureType::rocks)
-				ret = "rocks07";
+				ret = "rocks_1";
 			break;
 		case TerrainType::high_mountains_1:
 		case TerrainType::high_mountains_1_grow:
@@ -148,87 +148,87 @@ namespace TheWorld_Utils
 		case TerrainType::high_mountains_4:
 		case TerrainType::high_mountains_4_grow:
 			if (textureType == TerrainEdit::TextureType::lowElevation)
-				ret = "Ground003_2K";
+				ret = "grass_1";
 			else if (textureType == TerrainEdit::TextureType::highElevation)
-				ret = "PaintedPlaster017_1K";
+				ret = "snow_1";
 			else if (textureType == TerrainEdit::TextureType::dirt)
-				ret = "Ground049C_1K";
+				ret = "rocks_2";
 			else if (textureType == TerrainEdit::TextureType::rocks)
-				ret = "rocks07";
+				ret = "rocks_1";
 			break;
 		case TerrainType::coastal:
 			if (textureType == TerrainEdit::TextureType::lowElevation)
-				ret = "sand";
+				ret = "beach_1";
 			else if (textureType == TerrainEdit::TextureType::highElevation)
-				ret = "grass";
+				ret = "grass_2";
 			else if (textureType == TerrainEdit::TextureType::dirt)
-				ret = "leaves";
+				ret = "dirt_1";
 			else if (textureType == TerrainEdit::TextureType::rocks)
-				ret = "rocks07";
+				ret = "rocks_1";
 			break;
 		case TerrainType::sea_abyss_1:
 		case TerrainType::sea_abyss_2:
 		case TerrainType::sea_abyss_3:
 			if (textureType == TerrainEdit::TextureType::lowElevation)
-				ret = "sand";
+				ret = "beach_1";
 			else if (textureType == TerrainEdit::TextureType::highElevation)
-				ret = "sand";
+				ret = "beach_1";
 			else if (textureType == TerrainEdit::TextureType::dirt)
-				ret = "sand";
+				ret = "beach_1";
 			else if (textureType == TerrainEdit::TextureType::rocks)
-				ret = "sand";
+				ret = "beach_1";
 			break;
 		case TerrainType::desert_flat_1:
 			if (textureType == TerrainEdit::TextureType::lowElevation)
-				ret = "Ground080_1K";
+				ret = "desert_1";
 			else if (textureType == TerrainEdit::TextureType::highElevation)
-				ret = "Ground080_1K";
+				ret = "desert_1";
 			else if (textureType == TerrainEdit::TextureType::dirt)
-				ret = "Ground080_1K";
+				ret = "desert_1";
 			else if (textureType == TerrainEdit::TextureType::rocks)
-				ret = "Ground080_1K";
+				ret = "desert_1";
 			break;
 		case TerrainType::desert_low_dunes:
 			if (textureType == TerrainEdit::TextureType::lowElevation)
-				ret = "Ground080_1K";
+				ret = "desert_1";
 			else if (textureType == TerrainEdit::TextureType::highElevation)
-				ret = "Ground080_1K";
+				ret = "desert_1";
 			else if (textureType == TerrainEdit::TextureType::dirt)
-				ret = "Ground080_1K";
+				ret = "desert_1";
 			else if (textureType == TerrainEdit::TextureType::rocks)
-				ret = "Ground080_1K";
+				ret = "desert_1";
 			break;
 		case TerrainType::desert_low_mountains:
 		case TerrainType::desert_low_mountains_grow:
 			if (textureType == TerrainEdit::TextureType::lowElevation)
-				ret = "Ground080_1K";
+				ret = "desert_1";
 			else if (textureType == TerrainEdit::TextureType::highElevation)
-				ret = "Rock029_1K";
+				ret = "desert_2";
 			else if (textureType == TerrainEdit::TextureType::dirt)
-				ret = "Rocks017_1K";
+				ret = "rocks_2";
 			else if (textureType == TerrainEdit::TextureType::rocks)
-				ret = "rocks07";
+				ret = "rocks_1";
 			break;
 		case TerrainType::desert_high_mountains_1:
 		case TerrainType::desert_high_mountains_1_grow:
 			if (textureType == TerrainEdit::TextureType::lowElevation)
-				ret = "Rock029_1K";
+				ret = "desert_2";
 			else if (textureType == TerrainEdit::TextureType::highElevation)
-				ret = "Rock029_1K";
+				ret = "desert_2";
 			else if (textureType == TerrainEdit::TextureType::dirt)
-				ret = "Ground080_1K";
+				ret = "desert_1";
 			else if (textureType == TerrainEdit::TextureType::rocks)
-				ret = "rocks07";
+				ret = "rocks_1";
 			break;
 		default:
 			if (textureType == TerrainEdit::TextureType::lowElevation)
-				ret = "Ground003_2K";
+				ret = "grass_1";
 			else if (textureType == TerrainEdit::TextureType::highElevation)
-				ret = "Ground003_2K";
+				ret = "grass_1";
 			else if (textureType == TerrainEdit::TextureType::dirt)
-				ret = "leaves";
+				ret = "dirt_1";
 			else if (textureType == TerrainEdit::TextureType::rocks)
-				ret = "rocks07";
+				ret = "rocks_1";
 			break;
 		}
 

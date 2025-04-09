@@ -1273,6 +1273,61 @@ namespace TheWorld_Utils
 		buffer.set((BYTE*)this, sizeof(TerrainEdit));
 	}
 
+	std::string TerrainEdit::getNewTextureName(std::string name)
+	{
+		if (name == "grass")
+			return "grass_2";
+		else if (name == "Ground003_2K")
+			return "grass_1";
+		else if (name == "Ground037_1K")
+			return "grass_3";
+		else if (name == "sand")
+			return "beach_1";
+		else if (name == "Ground049C_1K")
+			return "beach_2";
+		else if (name == "Ground080_1K")
+			return "desert_1";
+		else if (name == "leaves")
+			return "dirt_1";
+		else if (name == "PaintedPlaster017_1K")
+			return "snow_1";
+		else if (name == "Rock029_1K")
+			return "desert_2";
+		else if (name == "rocks07")
+			return "rocks_1";
+		else if (name == "Rocks017_1K")
+			return "rocks_2";
+		return "";
+	}
+
+	void TerrainEdit::changeOldTextureNames(void)
+	{
+		std::string s = getNewTextureName(extraValues.lowElevationTexName_r);
+		if (s.length() > 0)
+		{
+			memset(extraValues.lowElevationTexName_r, 0, sizeof(extraValues.lowElevationTexName_r));
+			strcpy_s(extraValues.lowElevationTexName_r, sizeof(extraValues.lowElevationTexName_r), s.c_str());
+		}
+		s = getNewTextureName(extraValues.highElevationTexName_g);
+		if (s.length() > 0)
+		{
+			memset(extraValues.highElevationTexName_g, 0, sizeof(extraValues.highElevationTexName_g));
+			strcpy_s(extraValues.highElevationTexName_g, sizeof(extraValues.highElevationTexName_g), s.c_str());
+		}
+		s = getNewTextureName(extraValues.dirtTexName_b);
+		if (s.length() > 0)
+		{
+			memset(extraValues.dirtTexName_b, 0, sizeof(extraValues.dirtTexName_b));
+			strcpy_s(extraValues.dirtTexName_b, sizeof(extraValues.dirtTexName_b), s.c_str());
+		}
+		s = getNewTextureName(extraValues.rocksTexName_a);
+		if (s.length() > 0)
+		{
+			memset(extraValues.rocksTexName_a, 0, sizeof(extraValues.rocksTexName_a));
+			strcpy_s(extraValues.rocksTexName_a, sizeof(extraValues.rocksTexName_a), s.c_str());
+		}
+	}
+
 	void TerrainEdit::deserialize(TheWorld_Utils::MemoryBuffer& buffer)
 	{
 		size_t minLen = (buffer.size() <= size ? buffer.size() : size);
@@ -1284,6 +1339,8 @@ namespace TheWorld_Utils
 		init(p->terrainType);
 		memcpy(this, buffer.ptr(), minLen);
 		size = saveSize;
+
+		changeOldTextureNames();
 	}
 
 	//bool TerrainEdit::detectSeaInQuadrant(void)

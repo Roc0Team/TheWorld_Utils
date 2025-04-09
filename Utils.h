@@ -37,7 +37,7 @@
 #define THEWORLD_SEA_LEVEL				0.0f
 #define THEWORLD_SEA_MAX_WAVE_HEIGHT	30.0f
 #define EMPTY_QUADRANTS_TERRAIN_HEIGHT	-500.0f
-#define EMPTY_QUADRANT_TERRAIN_TEXTURE	"sand"
+#define EMPTY_QUADRANT_TERRAIN_TEXTURE	"beach_1"
 //#define EMPTY_QUADRANT_TERRAIN_TEXTURE	"Marble021_1K"
 #define FLAT_QUADRANTS_TERRAIN_HEIGHT	(THEWORLD_SEA_LEVEL + THEWORLD_SEA_MAX_WAVE_HEIGHT + 1.0f)
 
@@ -953,6 +953,8 @@ namespace TheWorld_Utils
 		__declspec(dllexport) void init(enum class TerrainEdit::TerrainType terrainType);
 		__declspec(dllexport) void serialize(TheWorld_Utils::MemoryBuffer& buffer);
 		__declspec(dllexport) void deserialize(TheWorld_Utils::MemoryBuffer& buffer);
+		void changeOldTextureNames(void);
+		static std::string getNewTextureName(std::string name);
 		__declspec(dllexport) static std::string terrainTypeString(enum class TerrainEdit::TerrainType terrainType);
 		__declspec(dllexport) static enum class TerrainEdit::TerrainType terrainTypeEnum(std::string& terrainType);
 		__declspec(dllexport) void adjustValues(TerrainEdit* northSideZMinus, TerrainEdit* southSideZPlus, TerrainEdit* westSideXMinus, TerrainEdit* eastSideXPlus);
