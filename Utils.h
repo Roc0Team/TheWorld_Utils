@@ -936,16 +936,18 @@ namespace TheWorld_Utils
 
 #pragma pack (1)
 		TerrainNeighbourQuadrantInfo deprecated_eastNeighbourXPlus;		// X growing	W A R N I N G: NOT USED AND DEPRECATED
-		TerrainNeighbourQuadrantInfo deprecated_westNeighbourXMinus;		// X lowering	W A R N I N G: NOT USED AND DEPRECATED
-		TerrainNeighbourQuadrantInfo deprecated_southNeighbourZPlus;		// Z growing	W A R N I N G: NOT USED AND DEPRECATED
-		TerrainNeighbourQuadrantInfo deprecated_northNeighbourZMinus;		// Z lowering	W A R N I N G: NOT USED AND DEPRECATED
+		TerrainNeighbourQuadrantInfo deprecated_westNeighbourXMinus;	// X lowering	W A R N I N G: NOT USED AND DEPRECATED
+		TerrainNeighbourQuadrantInfo deprecated_southNeighbourZPlus;	// Z growing	W A R N I N G: NOT USED AND DEPRECATED
+		TerrainNeighbourQuadrantInfo deprecated_northNeighbourZMinus;	// Z lowering	W A R N I N G: NOT USED AND DEPRECATED
 
 		struct
 		{
-			char m_filler[100];
+			char filler1[100];
+			char filler2[4];
+			int32_t continentId = 0;
 		} extraValues1;
 #pragma pack ()
-		// WARNING: this struct can safely grow appending new data at the end (may be need an alignment filler to modify sizeof(extraValues))
+		// WARNING: this struct can safely grow appending new data at the end (may be need an alignment filler to modify sizeof(extraValues1))
 		// remember to update operator== and DBJson (breakpoint in TerrainEdit::deserialize to verify in debug correct behavior)
 
 		__declspec(dllexport) TerrainEdit(enum class TerrainEdit::TerrainType terrainType = TerrainEdit::TerrainType::empty);

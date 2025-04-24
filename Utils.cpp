@@ -970,7 +970,8 @@ namespace TheWorld_Utils
 		colormapNeedRegen = true;
 		globalmapNeedRegen = true;
 
-		memset(extraValues1.m_filler, -1, sizeof(extraValues1.m_filler));
+		memset(extraValues1.filler1, -1, sizeof(extraValues1.filler1));
+		memset(extraValues1.filler2, '-', sizeof(extraValues1.filler2));
 	}
 
 	bool TerrainEdit::operator==(const TerrainEdit& o) const
@@ -1056,6 +1057,8 @@ namespace TheWorld_Utils
 		if (deprecated_southNeighbourZPlus != o.deprecated_southNeighbourZPlus)
 			return false;
 		if (deprecated_northNeighbourZMinus != o.deprecated_northNeighbourZMinus)
+			return false;
+		if (extraValues1.continentId != o.extraValues1.continentId)
 			return false;
 		return true;
 	}
@@ -1330,10 +1333,11 @@ namespace TheWorld_Utils
 
 	void TerrainEdit::deserialize(TheWorld_Utils::MemoryBuffer& buffer)
 	{
+		//size_t i1 = sizeof(TerrainEdit);				// DEBUG
+		//size_t i2 = buffer.size();					// DEBUG
+		//if (buffer.size() != size)					// DEBUG
+		//	assert(buffer.size() != size);				// DEBUG
 		size_t minLen = (buffer.size() <= size ? buffer.size() : size);
-		//if (buffer.size() != size)	// DEBUG
-		//	bool b = true;			// DEBUG
-		//assert(buffer.len() == sizeof(TerrainEdit));
 		size_t saveSize = size;
 		TerrainEdit* p = (TerrainEdit*)buffer.ptr();
 		init(p->terrainType);
