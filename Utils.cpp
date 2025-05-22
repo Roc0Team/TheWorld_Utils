@@ -972,6 +972,7 @@ namespace TheWorld_Utils
 
 		memset(extraValues1.filler1, -1, sizeof(extraValues1.filler1));
 		memset(extraValues1.filler2, '-', sizeof(extraValues1.filler2));
+		memset(extraValues1.filler3, '/', sizeof(extraValues1.filler3));
 	}
 
 	bool TerrainEdit::operator==(const TerrainEdit& o) const
@@ -1059,6 +1060,12 @@ namespace TheWorld_Utils
 		if (deprecated_northNeighbourZMinus != o.deprecated_northNeighbourZMinus)
 			return false;
 		if (extraValues1.continentId != o.extraValues1.continentId)
+			return false;
+		if (memcmp((void*)&extraValues1.northGroundTextureLayers, (void*)&o.extraValues1.northGroundTextureLayers, sizeof(extraValues1.northGroundTextureLayers)) != 0)
+			return false;
+		if (memcmp((void*)&extraValues1.westGroundTextureLayers, (void*)&o.extraValues1.westGroundTextureLayers, sizeof(extraValues1.westGroundTextureLayers)) != 0)
+			return false;
+		if (memcmp((void*)&extraValues1.northwestGroundTextureLayers, (void*)&o.extraValues1.northwestGroundTextureLayers, sizeof(extraValues1.northwestGroundTextureLayers)) != 0)
 			return false;
 		return true;
 	}
@@ -1385,6 +1392,54 @@ namespace TheWorld_Utils
 			return true;
 		else
 			return false;
+	}
+
+	void TerrainEdit::getNorthGroundTextureLayers(int32_t& layer1, int32_t& layer2, int32_t& layer3, int32_t& layer4) const
+	{
+		layer1 = extraValues1.northGroundTextureLayers.layer1;
+		layer2 = extraValues1.northGroundTextureLayers.layer2;
+		layer3 = extraValues1.northGroundTextureLayers.layer3;
+		layer4 = extraValues1.northGroundTextureLayers.layer4;
+	}
+
+	void TerrainEdit::setNorthGroundTextureLayers(int32_t layer1, int32_t layer2, int32_t layer3, int32_t layer4)
+	{
+		extraValues1.northGroundTextureLayers.layer1 = layer1;
+		extraValues1.northGroundTextureLayers.layer2 = layer2;
+		extraValues1.northGroundTextureLayers.layer3 = layer3;
+		extraValues1.northGroundTextureLayers.layer4 = layer4;
+	}
+
+	void TerrainEdit::getWestGroundTextureLayers(int32_t& layer1, int32_t& layer2, int32_t& layer3, int32_t& layer4) const
+	{
+		layer1 = extraValues1.westGroundTextureLayers.layer1;
+		layer2 = extraValues1.westGroundTextureLayers.layer2;
+		layer3 = extraValues1.westGroundTextureLayers.layer3;
+		layer4 = extraValues1.westGroundTextureLayers.layer4;
+	}
+
+	void TerrainEdit::setWestGroundTextureLayers(int32_t layer1, int32_t layer2, int32_t layer3, int32_t layer4)
+	{
+		extraValues1.westGroundTextureLayers.layer1 = layer1;
+		extraValues1.westGroundTextureLayers.layer2 = layer2;
+		extraValues1.westGroundTextureLayers.layer3 = layer3;
+		extraValues1.westGroundTextureLayers.layer4 = layer4;
+	}
+
+	void TerrainEdit::getNorthwestGroundTextureLayers(int32_t& layer1, int32_t& layer2, int32_t& layer3, int32_t& layer4) const
+	{
+		layer1 = extraValues1.northwestGroundTextureLayers.layer1;
+		layer2 = extraValues1.northwestGroundTextureLayers.layer2;
+		layer3 = extraValues1.northwestGroundTextureLayers.layer3;
+		layer4 = extraValues1.northwestGroundTextureLayers.layer4;
+	}
+
+	void TerrainEdit::setNorthwestGroundTextureLayers(int32_t layer1, int32_t layer2, int32_t layer3, int32_t layer4)
+	{
+		extraValues1.northwestGroundTextureLayers.layer1 = layer1;
+		extraValues1.northwestGroundTextureLayers.layer2 = layer2;
+		extraValues1.northwestGroundTextureLayers.layer3 = layer3;
+		extraValues1.northwestGroundTextureLayers.layer4 = layer4;
 	}
 
 	void TerrainEdit::adjustValues(TerrainEdit* northSideZMinus, TerrainEdit* southSideZPlus, TerrainEdit* westSideXMinus, TerrainEdit* eastSideXPlus)
