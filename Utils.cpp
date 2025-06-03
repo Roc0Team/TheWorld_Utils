@@ -1061,11 +1061,29 @@ namespace TheWorld_Utils
 			return false;
 		if (extraValues1.continentId != o.extraValues1.continentId)
 			return false;
-		if (memcmp((void*)&extraValues1.northGroundTextureLayers, (void*)&o.extraValues1.northGroundTextureLayers, sizeof(extraValues1.northGroundTextureLayers)) != 0)
+		if (strcmp(extraValues1.northGroundTextures.lowElevationTexName_r, o.extraValues1.northGroundTextures.lowElevationTexName_r) != 0)
 			return false;
-		if (memcmp((void*)&extraValues1.westGroundTextureLayers, (void*)&o.extraValues1.westGroundTextureLayers, sizeof(extraValues1.westGroundTextureLayers)) != 0)
+		if (strcmp(extraValues1.northGroundTextures.highElevationTexName_g, o.extraValues1.northGroundTextures.highElevationTexName_g) != 0)
 			return false;
-		if (memcmp((void*)&extraValues1.northwestGroundTextureLayers, (void*)&o.extraValues1.northwestGroundTextureLayers, sizeof(extraValues1.northwestGroundTextureLayers)) != 0)
+		if (strcmp(extraValues1.northGroundTextures.dirtTexName_b, o.extraValues1.northGroundTextures.dirtTexName_b) != 0)
+			return false;
+		if (strcmp(extraValues1.northGroundTextures.rocksTexName_a, o.extraValues1.northGroundTextures.rocksTexName_a) != 0)
+			return false;
+		if (strcmp(extraValues1.westGroundTextures.lowElevationTexName_r, o.extraValues1.westGroundTextures.lowElevationTexName_r) != 0)
+			return false;
+		if (strcmp(extraValues1.westGroundTextures.highElevationTexName_g, o.extraValues1.westGroundTextures.highElevationTexName_g) != 0)
+			return false;
+		if (strcmp(extraValues1.westGroundTextures.dirtTexName_b, o.extraValues1.westGroundTextures.dirtTexName_b) != 0)
+			return false;
+		if (strcmp(extraValues1.westGroundTextures.rocksTexName_a, o.extraValues1.westGroundTextures.rocksTexName_a) != 0)
+			return false;
+		if (strcmp(extraValues1.northwestGroundTextures.lowElevationTexName_r, o.extraValues1.northwestGroundTextures.lowElevationTexName_r) != 0)
+			return false;
+		if (strcmp(extraValues1.northwestGroundTextures.highElevationTexName_g, o.extraValues1.northwestGroundTextures.highElevationTexName_g) != 0)
+			return false;
+		if (strcmp(extraValues1.northwestGroundTextures.dirtTexName_b, o.extraValues1.northwestGroundTextures.dirtTexName_b) != 0)
+			return false;
+		if (strcmp(extraValues1.northwestGroundTextures.rocksTexName_a, o.extraValues1.northwestGroundTextures.rocksTexName_a) != 0)
 			return false;
 		return true;
 	}
@@ -1340,7 +1358,7 @@ namespace TheWorld_Utils
 
 	void TerrainEdit::deserialize(TheWorld_Utils::MemoryBuffer& buffer)
 	{
-		//size_t i1 = sizeof(TerrainEdit);				// DEBUG
+		size_t i1 = sizeof(TerrainEdit);				// DEBUG
 		//size_t i2 = buffer.size();					// DEBUG
 		//if (buffer.size() != size)					// DEBUG
 		//	assert(buffer.size() != size);				// DEBUG
@@ -1394,52 +1412,60 @@ namespace TheWorld_Utils
 			return false;
 	}
 
-	void TerrainEdit::getNorthGroundTextureLayers(int32_t& layer1, int32_t& layer2, int32_t& layer3, int32_t& layer4) const
+	void TerrainEdit::getGroundTextures(std::string& lowElevationTexName, std::string& highElevationTexName, std::string& dirtTexName, std::string& rocksTexName) const
 	{
-		layer1 = extraValues1.northGroundTextureLayers.layer1;
-		layer2 = extraValues1.northGroundTextureLayers.layer2;
-		layer3 = extraValues1.northGroundTextureLayers.layer3;
-		layer4 = extraValues1.northGroundTextureLayers.layer4;
+		lowElevationTexName = extraValues.lowElevationTexName_r;
+		highElevationTexName = extraValues.highElevationTexName_g;
+		dirtTexName = extraValues.dirtTexName_b;
+		rocksTexName = extraValues.rocksTexName_a;
 	}
 
-	void TerrainEdit::setNorthGroundTextureLayers(int32_t layer1, int32_t layer2, int32_t layer3, int32_t layer4)
+	void TerrainEdit::getNorthGroundTextures(std::string& lowElevationTexName, std::string& highElevationTexName, std::string& dirtTexName, std::string& rocksTexName) const
 	{
-		extraValues1.northGroundTextureLayers.layer1 = layer1;
-		extraValues1.northGroundTextureLayers.layer2 = layer2;
-		extraValues1.northGroundTextureLayers.layer3 = layer3;
-		extraValues1.northGroundTextureLayers.layer4 = layer4;
+		lowElevationTexName = extraValues1.northGroundTextures.lowElevationTexName_r;
+		highElevationTexName = extraValues1.northGroundTextures.highElevationTexName_g;
+		dirtTexName = extraValues1.northGroundTextures.dirtTexName_b;
+		rocksTexName = extraValues1.northGroundTextures.rocksTexName_a;
 	}
 
-	void TerrainEdit::getWestGroundTextureLayers(int32_t& layer1, int32_t& layer2, int32_t& layer3, int32_t& layer4) const
+	void TerrainEdit::setNorthGroundTextures(std::string lowElevationTexName, std::string highElevationTexName, std::string dirtTexName, std::string rocksTexName)
 	{
-		layer1 = extraValues1.westGroundTextureLayers.layer1;
-		layer2 = extraValues1.westGroundTextureLayers.layer2;
-		layer3 = extraValues1.westGroundTextureLayers.layer3;
-		layer4 = extraValues1.westGroundTextureLayers.layer4;
+		strcpy_s(extraValues1.northGroundTextures.lowElevationTexName_r, sizeof(extraValues1.northGroundTextures.lowElevationTexName_r), lowElevationTexName.c_str());
+		strcpy_s(extraValues1.northGroundTextures.highElevationTexName_g, sizeof(extraValues1.northGroundTextures.highElevationTexName_g), highElevationTexName.c_str());
+		strcpy_s(extraValues1.northGroundTextures.dirtTexName_b, sizeof(extraValues1.northGroundTextures.dirtTexName_b), dirtTexName.c_str());
+		strcpy_s(extraValues1.northGroundTextures.rocksTexName_a, sizeof(extraValues1.northGroundTextures.rocksTexName_a), rocksTexName.c_str());
 	}
 
-	void TerrainEdit::setWestGroundTextureLayers(int32_t layer1, int32_t layer2, int32_t layer3, int32_t layer4)
+	void TerrainEdit::getWestGroundTextures(std::string& lowElevationTexName, std::string& highElevationTexName, std::string& dirtTexName, std::string& rocksTexName) const
 	{
-		extraValues1.westGroundTextureLayers.layer1 = layer1;
-		extraValues1.westGroundTextureLayers.layer2 = layer2;
-		extraValues1.westGroundTextureLayers.layer3 = layer3;
-		extraValues1.westGroundTextureLayers.layer4 = layer4;
+		lowElevationTexName = extraValues1.westGroundTextures.lowElevationTexName_r;
+		highElevationTexName = extraValues1.westGroundTextures.highElevationTexName_g;
+		dirtTexName = extraValues1.westGroundTextures.dirtTexName_b;
+		rocksTexName = extraValues1.westGroundTextures.rocksTexName_a;
 	}
 
-	void TerrainEdit::getNorthwestGroundTextureLayers(int32_t& layer1, int32_t& layer2, int32_t& layer3, int32_t& layer4) const
+	void TerrainEdit::setWestGroundTextures(std::string lowElevationTexName, std::string highElevationTexName, std::string dirtTexName, std::string rocksTexName)
 	{
-		layer1 = extraValues1.northwestGroundTextureLayers.layer1;
-		layer2 = extraValues1.northwestGroundTextureLayers.layer2;
-		layer3 = extraValues1.northwestGroundTextureLayers.layer3;
-		layer4 = extraValues1.northwestGroundTextureLayers.layer4;
+		strcpy_s(extraValues1.westGroundTextures.lowElevationTexName_r, sizeof(extraValues1.westGroundTextures.lowElevationTexName_r), lowElevationTexName.c_str());
+		strcpy_s(extraValues1.westGroundTextures.highElevationTexName_g, sizeof(extraValues1.westGroundTextures.highElevationTexName_g), highElevationTexName.c_str());
+		strcpy_s(extraValues1.westGroundTextures.dirtTexName_b, sizeof(extraValues1.westGroundTextures.dirtTexName_b), dirtTexName.c_str());
+		strcpy_s(extraValues1.westGroundTextures.rocksTexName_a, sizeof(extraValues1.westGroundTextures.rocksTexName_a), rocksTexName.c_str());
 	}
 
-	void TerrainEdit::setNorthwestGroundTextureLayers(int32_t layer1, int32_t layer2, int32_t layer3, int32_t layer4)
+	void TerrainEdit::getNorthwestGroundTextures(std::string& lowElevationTexName, std::string& highElevationTexName, std::string& dirtTexName, std::string& rocksTexName) const
 	{
-		extraValues1.northwestGroundTextureLayers.layer1 = layer1;
-		extraValues1.northwestGroundTextureLayers.layer2 = layer2;
-		extraValues1.northwestGroundTextureLayers.layer3 = layer3;
-		extraValues1.northwestGroundTextureLayers.layer4 = layer4;
+		lowElevationTexName = extraValues1.northwestGroundTextures.lowElevationTexName_r;
+		highElevationTexName = extraValues1.northwestGroundTextures.highElevationTexName_g;
+		dirtTexName = extraValues1.northwestGroundTextures.dirtTexName_b;
+		rocksTexName = extraValues1.northwestGroundTextures.rocksTexName_a;
+	}
+
+	void TerrainEdit::setNorthwestGroundTextures(std::string lowElevationTexName, std::string highElevationTexName, std::string dirtTexName, std::string rocksTexName)
+	{
+		strcpy_s(extraValues1.northwestGroundTextures.lowElevationTexName_r, sizeof(extraValues1.northwestGroundTextures.lowElevationTexName_r), lowElevationTexName.c_str());
+		strcpy_s(extraValues1.northwestGroundTextures.highElevationTexName_g, sizeof(extraValues1.northwestGroundTextures.highElevationTexName_g), highElevationTexName.c_str());
+		strcpy_s(extraValues1.northwestGroundTextures.dirtTexName_b, sizeof(extraValues1.northwestGroundTextures.dirtTexName_b), dirtTexName.c_str());
+		strcpy_s(extraValues1.northwestGroundTextures.rocksTexName_a, sizeof(extraValues1.northwestGroundTextures.rocksTexName_a), rocksTexName.c_str());
 	}
 
 	void TerrainEdit::adjustValues(TerrainEdit* northSideZMinus, TerrainEdit* southSideZPlus, TerrainEdit* westSideXMinus, TerrainEdit* eastSideXPlus)
@@ -3776,15 +3802,15 @@ namespace TheWorld_Utils
 
 			if (terrainEditValueSize > 0)
 			{
-				TerrainEdit terrainEdit;
-				terrainEdit.deserialize(*cacheQuadrantData.terrainEditValues);
-				if (numHeights16 > 0 && terrainEdit.terrainType == TerrainEdit::TerrainType::empty)
-					terrainEdit.heightsNeedRegen = false;
+				TerrainEdit terrainData;
+				terrainData.deserialize(*cacheQuadrantData.terrainEditValues);
+				if (numHeights16 > 0 && terrainData.terrainType == TerrainEdit::TerrainType::empty)
+					terrainData.heightsNeedRegen = false;
 				//memcpy(_streamBuffer, cacheQuadrantData.terrainEditValues->ptr(), terrainEditValueSize);
-				memcpy(_streamBuffer, &terrainEdit, terrainEditValueSize);
+				memcpy(_streamBuffer, &terrainData, terrainEditValueSize);
 				_streamBuffer += terrainEditValueSize;
-				cacheQuadrantData.minHeight = terrainEdit.minHeight;
-				cacheQuadrantData.maxHeight = terrainEdit.maxHeight;
+				cacheQuadrantData.minHeight = terrainData.minHeight;
+				cacheQuadrantData.maxHeight = terrainData.maxHeight;
 			}
 		}
 

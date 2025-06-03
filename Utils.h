@@ -934,7 +934,7 @@ namespace TheWorld_Utils
 			int32_t canContainSea = QUADRANT_SEA_INFO_FALSE;	// used as bool
 		} extraValues;
 
-#pragma pack (push, 1)
+//#pragma pack (push, 1)
 		TerrainNeighbourQuadrantInfo deprecated_eastNeighbourXPlus;		// X growing	W A R N I N G: NOT USED AND DEPRECATED
 		TerrainNeighbourQuadrantInfo deprecated_westNeighbourXMinus;	// X lowering	W A R N I N G: NOT USED AND DEPRECATED
 		TerrainNeighbourQuadrantInfo deprecated_southNeighbourZPlus;	// Z growing	W A R N I N G: NOT USED AND DEPRECATED
@@ -949,27 +949,27 @@ namespace TheWorld_Utils
 			// If globalmapNeedRegen is true following layers are the ones which will be used to cook the global map else are the ones used to cook actual global map
 			struct
 			{
-				int32_t layer1 = -1;
-				int32_t layer2 = -1;
-				int32_t layer3 = -1;
-				int32_t layer4 = -1;
-			} northGroundTextureLayers;
+				char lowElevationTexName_r[51] = "";
+				char highElevationTexName_g[51] = "";
+				char dirtTexName_b[51] = "";
+				char rocksTexName_a[51] = "";
+			} northGroundTextures;
 			struct
 			{
-				int32_t layer1 = -1;
-				int32_t layer2 = -1;
-				int32_t layer3 = -1;
-				int32_t layer4 = -1;
-			} westGroundTextureLayers;
+				char lowElevationTexName_r[51] = "";
+				char highElevationTexName_g[51] = "";
+				char dirtTexName_b[51] = "";
+				char rocksTexName_a[51] = "";
+			} westGroundTextures;
 			struct
 			{
-				int32_t layer1 = -1;
-				int32_t layer2 = -1;
-				int32_t layer3 = -1;
-				int32_t layer4 = -1;
-			} northwestGroundTextureLayers;
+				char lowElevationTexName_r[51] = "";
+				char highElevationTexName_g[51] = "";
+				char dirtTexName_b[51] = "";
+				char rocksTexName_a[51] = "";
+			} northwestGroundTextures;
 		} extraValues1;
-#pragma pack (pop)
+//#pragma pack (pop)
 		// WARNING: this struct can safely grow appending new data at the end (may be need an alignment filler to modify sizeof(extraValues1))
 		// remember to update operator== and DBJson (breakpoint in TerrainEdit::deserialize to verify in debug correct behavior)
 
@@ -986,12 +986,13 @@ namespace TheWorld_Utils
 		__declspec(dllexport) bool operator==(const TerrainEdit& terrainEdit) const;
 		//__declspec(dllexport) bool detectSeaInQuadrant(void);
 		__declspec(dllexport) bool canContainSea(void) const;
-		__declspec(dllexport) void getNorthGroundTextureLayers(int32_t& layer1, int32_t& layer2, int32_t& layer3, int32_t& layer4) const;
-		__declspec(dllexport) void setNorthGroundTextureLayers(int32_t layer1, int32_t layer2, int32_t layer3, int32_t layer4);
-		__declspec(dllexport) void getWestGroundTextureLayers(int32_t& layer1, int32_t& layer2, int32_t& layer3, int32_t& layer4) const;
-		__declspec(dllexport) void setWestGroundTextureLayers(int32_t layer1, int32_t layer2, int32_t layer3, int32_t layer4);
-		__declspec(dllexport) void getNorthwestGroundTextureLayers(int32_t& layer1, int32_t& layer2, int32_t& layer3, int32_t& layer4) const;
-		__declspec(dllexport) void setNorthwestGroundTextureLayers(int32_t layer1, int32_t layer2, int32_t layer3, int32_t layer4);
+		__declspec(dllexport) void getGroundTextures(std::string& lowElevationTexName, std::string& highElevationTexName, std::string& dirtTexName, std::string& rocksTexName) const;
+		__declspec(dllexport) void getNorthGroundTextures(std::string& lowElevationTexName, std::string& highElevationTexName, std::string& dirtTexName, std::string& rocksTexName) const;
+		__declspec(dllexport) void setNorthGroundTextures(std::string lowElevationTexName, std::string highElevationTexName, std::string dirtTexName, std::string rocksTexName);
+		__declspec(dllexport) void getWestGroundTextures(std::string& lowElevationTexName, std::string& highElevationTexName, std::string& dirtTexName, std::string& rocksTexName) const;
+		__declspec(dllexport) void setWestGroundTextures(std::string lowElevationTexName, std::string highElevationTexName, std::string dirtTexName, std::string rocksTexName);
+		__declspec(dllexport) void getNorthwestGroundTextures(std::string& lowElevationTexName, std::string& highElevationTexName, std::string& dirtTexName, std::string& rocksTexName) const;
+		__declspec(dllexport) void setNorthwestGroundTextures(std::string lowElevationTexName, std::string highElevationTexName, std::string dirtTexName, std::string rocksTexName);
 		void splatmapNeedRegen(bool b)
 		{
 			if (b)
