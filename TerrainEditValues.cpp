@@ -7,11 +7,12 @@ namespace TheWorld_Utils
 {
 	std::string TerrainEdit::getIconNameForTerrainType(enum class TerrainType terrainType)
 	{
-		std::string iconName = "";
+		std::string iconName = "Empty.png";
 
 		switch (terrainType)
 		{
-		case TerrainType::notset:
+		case TerrainType::unknown:
+			iconName = "Unknown.png";
 			break;
 		case TerrainType::jagged_1:
 			break;
@@ -105,10 +106,20 @@ namespace TheWorld_Utils
 
 		switch (terrainType)
 		{
+		case TerrainType::unknown:
+		case TerrainType::notset:
+			if (textureType == TerrainEdit::TextureType::lowElevation)
+				ret = UNKNOWN_QUADRANT_TERRAIN_TEXTURE;
+			else if (textureType == TerrainEdit::TextureType::highElevation)
+				ret = UNKNOWN_QUADRANT_TERRAIN_TEXTURE;
+			else if (textureType == TerrainEdit::TextureType::dirt)
+				ret = UNKNOWN_QUADRANT_TERRAIN_TEXTURE;
+			else if (textureType == TerrainEdit::TextureType::rocks)
+				ret = UNKNOWN_QUADRANT_TERRAIN_TEXTURE;
+			break;
 		case TerrainType::empty:
 			if (textureType == TerrainEdit::TextureType::lowElevation)
 				ret = EMPTY_QUADRANT_TERRAIN_TEXTURE;
-				//ret = "Ground037_1K";
 			else if (textureType == TerrainEdit::TextureType::highElevation)
 				ret = EMPTY_QUADRANT_TERRAIN_TEXTURE;
 			else if (textureType == TerrainEdit::TextureType::dirt)

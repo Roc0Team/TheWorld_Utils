@@ -38,6 +38,7 @@
 #define THEWORLD_SEA_MAX_WAVE_HEIGHT	30.0f
 #define EMPTY_QUADRANTS_TERRAIN_HEIGHT	-500.0f
 #define EMPTY_QUADRANT_TERRAIN_TEXTURE	"beach_1"
+#define UNKNOWN_QUADRANT_TERRAIN_TEXTURE	"beach_1"
 //#define EMPTY_QUADRANT_TERRAIN_TEXTURE	"Marble021_1K"
 #define FLAT_QUADRANTS_TERRAIN_HEIGHT	(THEWORLD_SEA_LEVEL + THEWORLD_SEA_MAX_WAVE_HEIGHT + 1.0f)
 
@@ -852,7 +853,8 @@ namespace TheWorld_Utils
 		 
 		enum class TerrainType
 		{
-			notset = 0
+			unknown = -1
+			, notset = 0
 			, jagged_1 = 1
 			, campaign_1 = 2
 			, plateau_1 = 3
@@ -883,7 +885,7 @@ namespace TheWorld_Utils
 			, desert_high_mountains_1_grow = 28
 			// Warning: update maxTerrainTypeValue
 		};
-#define minTerrainTypeValue 0
+#define minTerrainTypeValue -1
 #define maxTerrainTypeValue 28
 
 		__declspec(dllexport) static std::string getDefaultTextureNameForTerrainType(enum class TerrainType terrainType, enum class TextureType textureType);
