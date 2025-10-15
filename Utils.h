@@ -74,6 +74,8 @@ namespace TheWorld_Utils
 	__declspec(dllexport) std::time_t current_utc_time_t(void);
 
 	__declspec(dllexport) bool is_time_point_null(std::chrono::system_clock::time_point tp);
+	__declspec(dllexport) bool null_time_point(std::chrono::system_clock::time_point tp);
+	__declspec(dllexport) std::chrono::system_clock::time_point null_time_point(void);
 
 	__declspec(dllexport) std::chrono::system_clock::time_point last_write_time_point_utc(const std::string& path);
 	__declspec(dllexport) std::time_t last_write_time_t_utc(const std::string& path);
@@ -255,20 +257,24 @@ namespace TheWorld_Utils
 		__declspec(dllexport) void populateUint16Vector(std::vector<uint16_t>& v) const;
 		__declspec(dllexport) void toString(std::string& buffer);
 		__declspec(dllexport) void allocationSlotSize(size_t _allocationSlotSize);
+		__declspec(dllexport) void operator=(const MemoryBuffer& o);
 		template <typename T> __declspec(dllexport) T& at(size_t idx)
 		{
+			// z-based idx
 			T* ptr = (T*)m_ptr;
 			ptr += idx;
 			return *ptr;
 		}
 		template <typename T> __declspec(dllexport) T& at(size_t x, size_t y, size_t size)
 		{
+			// z-based col/row
 			T* ptr = (T*)m_ptr;
 			ptr += ((y * size) + x);
 			return *ptr;
 		}
 		template <typename T> __declspec(dllexport) T* at_ptr(size_t x, size_t y, size_t size)
 		{
+			// z-based col/row
 			T* ptr = (T*)m_ptr;
 			ptr += ((y * size) + x);
 			return ptr;
@@ -278,6 +284,14 @@ namespace TheWorld_Utils
 			size_t numElements = size() / sizeof(T);
 			my_assert(size() == numElements * sizeof(T));
 			v.assign((T*)m_ptr, (T*)m_ptr + numElements);
+		}
+		template <typename T> __declspec(dllexport) void set_at(T& element, size_t x, size_t y, size_t size)
+		{
+			// z-based col/row
+			T* ptr = (T*)m_ptr;
+			ptr += ((y * size) + x);
+			*ptr = element;
+			return;
 		}
 
 	private:
@@ -392,50 +406,50 @@ namespace TheWorld_Utils
 			//
 			// - o
 			//
-			, XMinus = 0
 			, WestXMinus = 0
+			, XMinus = 0
 
 			//
 			//   o -
 			//
-			, XPlus = 1
 			, EastXPlus = 1
+			, XPlus = 1
 
 			//   -
 			//   o
 			//
-			, ZMinus = 2
 			, NorthZMinus = 2
+			, ZMinus = 2
 
 			//
 			//   o
 			//   -
-			, ZPlus = 3
 			, SouthZPlus = 3
+			, ZPlus = 3
 
 			// - 
 			//   o
 			//   
-			, ZMinusXMinus = 4
 			, NorthwestZMinusXMinus = 4
+			, ZMinusXMinus = 4
 
 			//     - 
 			//   o
 			//   
-			, ZMinusXPlus = 5
 			, NortheastZMinusXPlus = 5
+			, ZMinusXPlus = 5
 
 			//     
 			//   o
 			// -    
-			, ZPlusXMinus = 6
 			, SouthwestZPlusXMinus = 6
+			, ZPlusXMinus = 6
 
 			//      
 			//   o
 			//     -
-			, ZPlusXPlus = 7
 			, SoutheastZPlusXPlus = 7
+			, ZPlusXPlus = 7
 		};
 
 		QuadrantPos()
@@ -944,10 +958,10 @@ namespace TheWorld_Utils
 
 		struct
 		{
-			char filler1[100];
-			char filler2[4];
+			char filler1[100] = "";
+			char filler2[4] = "";
 			int32_t continentId = 0;
-			char filler3[4];
+			char filler3[4] = "";
 			// If globalmapNeedRegen is true following layers are the ones which will be used to cook the global map else are the ones used to cook actual global map
 			struct
 			{

@@ -118,6 +118,11 @@ namespace TheWorld_Utils
 		return now_tp_utc;
 	}
 
+	std::chrono::system_clock::time_point null_time_point(void)
+	{
+		return std::chrono::system_clock::time_point();
+	}
+
 	std::time_t current_utc_time_t(void)
 	{
 		std::chrono::system_clock::time_point now_tp_utc = current_utc_time_point();		// UTC Time
@@ -129,6 +134,11 @@ namespace TheWorld_Utils
 	bool is_time_point_null(std::chrono::system_clock::time_point tp)
 	{
 		return (tp == std::chrono::system_clock::time_point());
+	}
+
+	bool null_time_point(std::chrono::system_clock::time_point tp)
+	{
+		return is_time_point_null(tp);
 	}
 
 	std::chrono::system_clock::time_point last_write_time_point_utc(const std::string& path)
@@ -1535,6 +1545,11 @@ namespace TheWorld_Utils
 		clear("destructor");
 	}
 
+	void MemoryBuffer::operator=(const MemoryBuffer& o)
+	{
+		set(o.m_ptr, o.m_size);
+	}
+	
 	void MemoryBuffer::allocationSlotSize(size_t _allocationSlotSize)
 	{
 		m_allocationSlotSize = _allocationSlotSize;
