@@ -214,6 +214,13 @@ namespace TheWorld_Utils
 		uint32_t u32;
 	};
 
+	struct __RGB
+	{
+		BYTE r = 0;
+		BYTE g = 0;
+		BYTE b = 0;
+	};
+
 	struct _RGB
 	{
 		BYTE r = 0;
@@ -811,9 +818,6 @@ namespace TheWorld_Utils
 		class MeshCacheBuffer;
 
 	public:
-		__declspec(dllexport) static void generateGroundImage(std::string outdir, std::string groundTypeName, size_t imageSize, bool flipY, MemoryBuffer& colorImage, MemoryBuffer& bumpImage, MemoryBuffer& normalImage, MemoryBuffer& roughImage);
-		__declspec(dllexport) static void generateGroundImage(MemoryBuffer& albedoBumpImage, MemoryBuffer& normalRoughnessImage, std::string groundTypeName, size_t imageSize, bool flipY, MemoryBuffer& colorImage, MemoryBuffer& bumpImage, MemoryBuffer& normalImage, MemoryBuffer& roughImage);
-
 		class TerrainNeighbourQuadrantInfo
 		{
 		public:
