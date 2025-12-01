@@ -214,13 +214,6 @@ namespace TheWorld_Utils
 		uint32_t u32;
 	};
 
-	struct __RGB
-	{
-		BYTE r = 0;
-		BYTE g = 0;
-		BYTE b = 0;
-	};
-
 	struct _RGB
 	{
 		BYTE r = 0;
