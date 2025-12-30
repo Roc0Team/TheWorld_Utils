@@ -3071,153 +3071,153 @@ namespace TheWorld_Utils
 			}
 	}
 		
-	void MeshCacheBuffer::generateNormalsForBlendedQuadrants(size_t numVerticesPerSize, float gridStepInWU, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& east_float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& south_float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, bool& requestedExit)
-	{
-		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer generateNormals 1 ") + __FUNCTION__, "ALL");
+	//void MeshCacheBuffer::generateNormalsForBlendedQuadrants(size_t numVerticesPerSize, float gridStepInWU, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& east_float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& south_float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, bool& requestedExit)
+	//{
+	//	TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer generateNormals 1 ") + __FUNCTION__, "ALL");
 
-		size_t numVertices = float32HeigthsBuffer.size() / sizeof(float);
-		my_assert(float32HeigthsBuffer.size() == numVertices * sizeof(float));
-		my_assert(numVertices == 0 || numVertices == numVerticesPerSize * numVerticesPerSize);
+	//	size_t numVertices = float32HeigthsBuffer.size() / sizeof(float);
+	//	my_assert(float32HeigthsBuffer.size() == numVertices * sizeof(float));
+	//	my_assert(numVertices == 0 || numVertices == numVerticesPerSize * numVerticesPerSize);
 
-		size_t requiredBufferSize = numVertices == 0 ? sizeof(struct TheWorld_Utils::_RGB) : numVertices * sizeof(struct TheWorld_Utils::_RGB);
-		normalsBuffer.clear(__FUNCTION__);
-		normalsBuffer.reserve(requiredBufferSize);
-		normalsBuffer.adjustSize(requiredBufferSize);
+	//	size_t requiredBufferSize = numVertices == 0 ? sizeof(struct TheWorld_Utils::_RGB) : numVertices * sizeof(struct TheWorld_Utils::_RGB);
+	//	normalsBuffer.clear(__FUNCTION__);
+	//	normalsBuffer.reserve(requiredBufferSize);
+	//	normalsBuffer.adjustSize(requiredBufferSize);
 
-		struct TheWorld_Utils::_RGB* _tempNormalmapBuffer = (struct TheWorld_Utils::_RGB*)normalsBuffer.ptr();
+	//	struct TheWorld_Utils::_RGB* _tempNormalmapBuffer = (struct TheWorld_Utils::_RGB*)normalsBuffer.ptr();
 
-		size_t maxIndex = numVerticesPerSize - 1;
+	//	size_t maxIndex = numVerticesPerSize - 1;
 
-		if (numVertices > 0)
-		{
-			//TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer generateNormals 1.2 ") + __FUNCTION__, "generation");
+	//	if (numVertices > 0)
+	//	{
+	//		//TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer generateNormals 1.2 ") + __FUNCTION__, "generation");
 
-			for (int z = 0; z < numVerticesPerSize; z++)			// m_heightMapImage->get_height()
-			{
-				for (int x = 0; x < numVerticesPerSize; x++)		// m_heightMapImage->get_width()
-				{
-					if (requestedExit)
-						return;
-					
-					float h = float32HeigthsBuffer.at<float>(x, z, numVerticesPerSize);
+	//		for (int z = 0; z < numVerticesPerSize; z++)			// m_heightMapImage->get_height()
+	//		{
+	//			for (int x = 0; x < numVerticesPerSize; x++)		// m_heightMapImage->get_width()
+	//			{
+	//				if (requestedExit)
+	//					return;
+	//				
+	//				float h = float32HeigthsBuffer.at<float>(x, z, numVerticesPerSize);
 
-					Eigen::Vector3d normal;
+	//				Eigen::Vector3d normal;
 
-					{
-						//TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer generateNormals 1.2.1 ") + __FUNCTION__, "calc vector");
+	//				{
+	//					//TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer generateNormals 1.2.1 ") + __FUNCTION__, "calc vector");
 
-						// h = height of the point for which we are computing the normal
-						// hr = height of the point on the rigth (x growing)
-						// hl = height of the point on the left (x lessening)
-						// hf = height of the forward point (z growing)
-						// hb = height of the backward point (z lessening)
-						// step = step in WUs between points
-						// we compute normal normalizing the vector (h - hr, step, h - hf) or (hl - h, step, hb - h)
-						// according to https://hterrain-plugin.readthedocs.io/en/latest/ section "Procedural generation" it should be (h - hr, step, hf - h)
-						
-						//Eigen::Vector3d P(float(x) * gridStepInWU, h, float(z) * gridStepInWU);	// Verify
-						
-						if (x < maxIndex && z < maxIndex)
-						{
-							float hr = float32HeigthsBuffer.at<float>((size_t)(x + 1), (size_t)z, numVerticesPerSize);
-							float hf = float32HeigthsBuffer.at<float>((size_t)x, (size_t)(z + 1), numVerticesPerSize);
-							normal = Eigen::Vector3d(h - hr, gridStepInWU, h - hf).normalized();
-																																							//normal = Eigen::Vector3d(h - hr, gridStepInWU, hf - h).normalized();
-							//{	// Verify
-							//	float nx = float(normal.x());
-							//	float ny = float(normal.y());
-							//	float nz = float(normal.z());
-							//	Eigen::Vector3d PR(float(x) * gridStepInWU + gridStepInWU, hr, float(z) * gridStepInWU);
-							//	Eigen::Vector3d PF(float(x) * gridStepInWU, hf, float(z) * gridStepInWU + gridStepInWU);
-							//	Eigen::Vector3d normal1 = (PF - P).cross(PR - P).normalized();
-							//	float n1x = float(normal1.x());
-							//	float n1y = float(normal1.y());
-							//	float n1z = float(normal1.z());
-							//	if (!TheWorld_Utils::Utils::isEqualVectorWithLimitedPrecision(normal1, normal, 7))	// DEBUGRIC
-							//		normal1 = normal;
-							//}	// Verify
-						}
-						else if (x == maxIndex && z == maxIndex)
-						{
-							if (east_float32HeigthsBuffer.size() > 0 && south_float32HeigthsBuffer.size() > 0)
-							{
-								float hr = east_float32HeigthsBuffer.at<float>(1, z, numVerticesPerSize);
-								float hf = south_float32HeigthsBuffer.at<float>(x, 1, numVerticesPerSize);
-								normal = Eigen::Vector3d(h - hr, gridStepInWU, h - hf).normalized();
-							}
-							else
-							{
-								float hl = float32HeigthsBuffer.at<float>((size_t)(x - 1), (size_t)z, numVerticesPerSize);
-								float hb = float32HeigthsBuffer.at<float>((size_t)x, (size_t)(z - 1), numVerticesPerSize);
-								normal = Eigen::Vector3d(hl - h, gridStepInWU, hb - h).normalized();
-							}
-						}
-						else if (x == maxIndex)	// && z < maxIndex
-						{
-							if (east_float32HeigthsBuffer.size() > 0)
-							{
-								float hr = east_float32HeigthsBuffer.at<float>(1, z, numVerticesPerSize);
-								float hf = float32HeigthsBuffer.at<float>((size_t)x, (size_t)z + 1, numVerticesPerSize);
-								normal = Eigen::Vector3d(h - hr, gridStepInWU, h - hf).normalized();
-							}
-							else
-							{
-								float hl = float32HeigthsBuffer.at<float>((size_t)x - 1, (size_t)z, numVerticesPerSize);
-								float hf = float32HeigthsBuffer.at<float>((size_t)x, (size_t)z + 1, numVerticesPerSize);
-								normal = Eigen::Vector3d(hl - h, gridStepInWU, h - hf).normalized();
-							}
-						}
-						else	// x < maxIndex && z == maxIndex
-						{
-							if (south_float32HeigthsBuffer.size() > 0)
-							{
-								float hr = float32HeigthsBuffer.at<float>((size_t)x + 1, (size_t)z, numVerticesPerSize);
-								float hf = south_float32HeigthsBuffer.at<float>((size_t)x, 1, numVerticesPerSize);
-								normal = Eigen::Vector3d(h - hr, gridStepInWU, h - hf).normalized();
-							}
-							else
-							{
-								float hr = float32HeigthsBuffer.at<float>((size_t)x + 1, (size_t)z, numVerticesPerSize);
-								float hb = float32HeigthsBuffer.at<float>((size_t)x, (size_t)z - 1, numVerticesPerSize);
-								normal = Eigen::Vector3d(h - hr, gridStepInWU, hb - h).normalized();
-							}
-						}
-					}
+	//					// h = height of the point for which we are computing the normal
+	//					// hr = height of the point on the rigth (x growing)
+	//					// hl = height of the point on the left (x lessening)
+	//					// hf = height of the forward point (z growing)
+	//					// hb = height of the backward point (z lessening)
+	//					// step = step in WUs between points
+	//					// we compute normal normalizing the vector (h - hr, step, h - hf) or (hl - h, step, hb - h)
+	//					// according to https://hterrain-plugin.readthedocs.io/en/latest/ section "Procedural generation" it should be (h - hr, step, hf - h)
+	//					
+	//					//Eigen::Vector3d P(float(x) * gridStepInWU, h, float(z) * gridStepInWU);	// Verify
+	//					
+	//					if (x < maxIndex && z < maxIndex)
+	//					{
+	//						float hr = float32HeigthsBuffer.at<float>((size_t)(x + 1), (size_t)z, numVerticesPerSize);
+	//						float hf = float32HeigthsBuffer.at<float>((size_t)x, (size_t)(z + 1), numVerticesPerSize);
+	//						normal = Eigen::Vector3d(h - hr, gridStepInWU, h - hf).normalized();
+	//																																						//normal = Eigen::Vector3d(h - hr, gridStepInWU, hf - h).normalized();
+	//						//{	// Verify
+	//						//	float nx = float(normal.x());
+	//						//	float ny = float(normal.y());
+	//						//	float nz = float(normal.z());
+	//						//	Eigen::Vector3d PR(float(x) * gridStepInWU + gridStepInWU, hr, float(z) * gridStepInWU);
+	//						//	Eigen::Vector3d PF(float(x) * gridStepInWU, hf, float(z) * gridStepInWU + gridStepInWU);
+	//						//	Eigen::Vector3d normal1 = (PF - P).cross(PR - P).normalized();
+	//						//	float n1x = float(normal1.x());
+	//						//	float n1y = float(normal1.y());
+	//						//	float n1z = float(normal1.z());
+	//						//	if (!TheWorld_Utils::Utils::isEqualVectorWithLimitedPrecision(normal1, normal, 7))	// DEBUGRIC
+	//						//		normal1 = normal;
+	//						//}	// Verify
+	//					}
+	//					else if (x == maxIndex && z == maxIndex)
+	//					{
+	//						if (east_float32HeigthsBuffer.size() > 0 && south_float32HeigthsBuffer.size() > 0)
+	//						{
+	//							float hr = east_float32HeigthsBuffer.at<float>(1, z, numVerticesPerSize);
+	//							float hf = south_float32HeigthsBuffer.at<float>(x, 1, numVerticesPerSize);
+	//							normal = Eigen::Vector3d(h - hr, gridStepInWU, h - hf).normalized();
+	//						}
+	//						else
+	//						{
+	//							float hl = float32HeigthsBuffer.at<float>((size_t)(x - 1), (size_t)z, numVerticesPerSize);
+	//							float hb = float32HeigthsBuffer.at<float>((size_t)x, (size_t)(z - 1), numVerticesPerSize);
+	//							normal = Eigen::Vector3d(hl - h, gridStepInWU, hb - h).normalized();
+	//						}
+	//					}
+	//					else if (x == maxIndex)	// && z < maxIndex
+	//					{
+	//						if (east_float32HeigthsBuffer.size() > 0)
+	//						{
+	//							float hr = east_float32HeigthsBuffer.at<float>(1, z, numVerticesPerSize);
+	//							float hf = float32HeigthsBuffer.at<float>((size_t)x, (size_t)z + 1, numVerticesPerSize);
+	//							normal = Eigen::Vector3d(h - hr, gridStepInWU, h - hf).normalized();
+	//						}
+	//						else
+	//						{
+	//							float hl = float32HeigthsBuffer.at<float>((size_t)x - 1, (size_t)z, numVerticesPerSize);
+	//							float hf = float32HeigthsBuffer.at<float>((size_t)x, (size_t)z + 1, numVerticesPerSize);
+	//							normal = Eigen::Vector3d(hl - h, gridStepInWU, h - hf).normalized();
+	//						}
+	//					}
+	//					else	// x < maxIndex && z == maxIndex
+	//					{
+	//						if (south_float32HeigthsBuffer.size() > 0)
+	//						{
+	//							float hr = float32HeigthsBuffer.at<float>((size_t)x + 1, (size_t)z, numVerticesPerSize);
+	//							float hf = south_float32HeigthsBuffer.at<float>((size_t)x, 1, numVerticesPerSize);
+	//							normal = Eigen::Vector3d(h - hr, gridStepInWU, h - hf).normalized();
+	//						}
+	//						else
+	//						{
+	//							float hr = float32HeigthsBuffer.at<float>((size_t)x + 1, (size_t)z, numVerticesPerSize);
+	//							float hb = float32HeigthsBuffer.at<float>((size_t)x, (size_t)z - 1, numVerticesPerSize);
+	//							normal = Eigen::Vector3d(h - hr, gridStepInWU, hb - h).normalized();
+	//						}
+	//					}
+	//				}
 
-					{
-						//TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer generateNormals 1.2.3 ") + __FUNCTION__, "RGB");
+	//				{
+	//					//TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer generateNormals 1.2.3 ") + __FUNCTION__, "RGB");
 
-								//float nx2 = float(normal.x());		// DEBUG ONLY
-								//float ny2 = float(normal.y());		// DEBUG ONLY
-								//float nz2 = float(normal.z());		// DEBUG ONLY
-						Eigen::Vector3d packedNormal = packNormal(normal);
-								//float nx = float(packedNormal.x());	// DEBUG ONLY
-								//float ny = float(packedNormal.y());	// DEBUG ONLY
-								//float nz = float(packedNormal.z());	// DEBUG ONLY
-						//Eigen::Vector3d unpackedNormal = unpackNormal(packedNormal);	// DEBUG ONLY
-						//		float nx1 = float(unpackedNormal.x());	// DEBUG ONLY
-						//		float ny1 = float(unpackedNormal.y());	// DEBUG ONLY
-						//		float nz1 = float(unpackedNormal.z());	// DEBUG ONLY
-						struct _RGB rgb(0, 0, 0);
-						rgb.r = (BYTE)(packedNormal.x() * 255);	// normals coords range from 0 to 1 but if expressed as color in a normalmap range from 0 to 255
-						rgb.g = (BYTE)(packedNormal.y() * 255);
-						rgb.b = (BYTE)(packedNormal.z() * 255);
-						*_tempNormalmapBuffer = rgb;
-						_tempNormalmapBuffer++;
-					}
-				}
-			}
-		}
-		else
-		{
-			struct _RGB rgb(0, 0, 0);
-			rgb.r = rgb.g = rgb.b = 0;
-			*_tempNormalmapBuffer = rgb;
-			_tempNormalmapBuffer++;
-		}
+	//							//float nx2 = float(normal.x());		// DEBUG ONLY
+	//							//float ny2 = float(normal.y());		// DEBUG ONLY
+	//							//float nz2 = float(normal.z());		// DEBUG ONLY
+	//					Eigen::Vector3d packedNormal = packNormal(normal);
+	//							//float nx = float(packedNormal.x());	// DEBUG ONLY
+	//							//float ny = float(packedNormal.y());	// DEBUG ONLY
+	//							//float nz = float(packedNormal.z());	// DEBUG ONLY
+	//					//Eigen::Vector3d unpackedNormal = unpackNormal(packedNormal);	// DEBUG ONLY
+	//					//		float nx1 = float(unpackedNormal.x());	// DEBUG ONLY
+	//					//		float ny1 = float(unpackedNormal.y());	// DEBUG ONLY
+	//					//		float nz1 = float(unpackedNormal.z());	// DEBUG ONLY
+	//					struct _RGB rgb(0, 0, 0);
+	//					rgb.r = (BYTE)(packedNormal.x() * 255);	// normals coords range from 0 to 1 but if expressed as color in a normalmap range from 0 to 255
+	//					rgb.g = (BYTE)(packedNormal.y() * 255);
+	//					rgb.b = (BYTE)(packedNormal.z() * 255);
+	//					*_tempNormalmapBuffer = rgb;
+	//					_tempNormalmapBuffer++;
+	//				}
+	//			}
+	//		}
+	//	}
+	//	else
+	//	{
+	//		struct _RGB rgb(0, 0, 0);
+	//		rgb.r = rgb.g = rgb.b = 0;
+	//		*_tempNormalmapBuffer = rgb;
+	//		_tempNormalmapBuffer++;
+	//	}
 
-		my_assert((BYTE*)_tempNormalmapBuffer - normalsBuffer.ptr() == normalsBuffer.size());
-	}
+	//	my_assert((BYTE*)_tempNormalmapBuffer - normalsBuffer.ptr() == normalsBuffer.size());
+	//}
 
 	void MeshCacheBuffer::generateSplatmap(size_t numVerticesPerSize, float gridStepInWU, TheWorld_Utils::TerrainEdit* terrainEdit, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer,
 											float slopeVerticalFactor,	// raising it slope will have higher maximum and so rocks will be more diffuse on slopes
