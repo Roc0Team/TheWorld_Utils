@@ -1297,29 +1297,14 @@ namespace TheWorld_Utils
 		__declspec(dllexport) std::string writeBufferToDiskCache2(TheWorld_Utils::MemoryBuffer& buffer, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* terrainEdit = nullptr);
 		__declspec(dllexport) std::string writeBufferToDiskCache(const BYTE* buffer, const size_t bufferSize, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* terrainEdit = nullptr) const;
 		__declspec(dllexport) std::string writeBufferToDiskCache2(const BYTE* buffer, const size_t bufferSize, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* terrainEdit = nullptr);
-		__declspec(dllexport) void setBufferFromHeights(std::string meshId, size_t numVerticesPerSize, float gridStepInWU, TheWorld_Utils::MemoryBuffer& terrainEditValuesBuffer, std::vector<float>& vectGridHeights, std::string& buffer, float& minAltitude, float& maxAltitude, bool generateNormals);
+		__declspec(dllexport) void setDummyBuffer(std::string meshId, std::string& buffer);
 		__declspec(dllexport) void setBufferFromCacheQuadrantData(size_t numVerticesPerSize, CacheQuadrantData& cacheQuadrantData, TheWorld_Utils::MemoryBuffer& buffer);
 		__declspec(dllexport) void setBufferFromCacheQuadrantData(size_t numVerticesPerSize, CacheQuadrantData& cacheQuadrantData, std::string& buffer);
 		__declspec(dllexport) void setEmptyBuffer(size_t numVerticesPerSize, std::string& meshId, TheWorld_Utils::MemoryBuffer& buffer);
 		__declspec(dllexport) void setEmptyBuffer(size_t numVerticesPerSize, std::string& meshId, std::string& buffer);
 		__declspec(dllexport) void generateHeightsWithNoise(size_t numVerticesPerSize, float gridStepInWU, float lowerXGridVertex, float lowerZGridVertex, TerrainEdit* terrainEdit, std::vector<float>& vectGridHeights);
 		__declspec(dllexport) void applyWorldModifier(int level, size_t numVerticesPerSize, float gridStepInWU, float lowerXGridVertex, float lowerZGridVertex, TerrainEdit* terrainEdit, std::vector<float>& vectGridHeights, WorldModifier& wm);
-		//__declspec(dllexport) void generateNormalsForBlendedQuadrants(size_t numVerticesPerSize, float gridStepInWU, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& east_float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& south_float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, bool& requestedExit);
-		__declspec(dllexport) void generateSplatmap(size_t numVerticesPerSize, float gridStepInWU, TheWorld_Utils::TerrainEdit* terrainEdit, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer,
-													float slopeVerticalFactor = 4.0f, float slopeFlatFactor = 1.0f, float dirtOnRocksFactor = 2.0f, float highElevationFactor = 4.0f, float lowElevationFactor = 2.0f, size_t splatMapMode = 1);
-		__declspec(dllexport) void deprecated_generateNormals(size_t numVerticesPerSize, float gridStepInWU, std::vector<float>& vectGridHeights, TheWorld_Utils::MemoryBuffer& normalsBuffer);
-		__declspec(dllexport) void deprecated_generateNormals(size_t numVerticesPerSize, float gridStepInWU, std::vector<float>& vectGridHeights, BYTE* normalsBuffer, const size_t normalsBufferSize, size_t& usedBufferSize);
 		__declspec(dllexport) void calcMinMaxHeight(size_t numVerticesPerSize, TheWorld_Utils::TerrainEdit* terrainEdit, TheWorld_Utils::MemoryBuffer& heights32Buffer);
-		//__declspec(dllexport) bool checkBlendingQuadrantNeeded(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
-		//	CacheQuadrantData& data,
-		//	CacheQuadrantData& northData,
-		//	CacheQuadrantData& southData,
-		//	CacheQuadrantData& westData,
-		//	CacheQuadrantData& eastData,
-		//	CacheQuadrantData& northwestData,
-		//	CacheQuadrantData& northeastData,
-		//	CacheQuadrantData& southwestData,
-		//	CacheQuadrantData& southeastData);
 		__declspec(dllexport) bool blendQuadrant(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
 			CacheQuadrantData& data,
 			CacheQuadrantData& northData,
