@@ -1424,6 +1424,14 @@ namespace TheWorld_Utils
 		m_size = size;
 	}
 
+	void MemoryBuffer::setPart(BYTE* in, size_t size, size_t offset)
+	{
+		reserve(offset + size);
+		memcpy(m_ptr + offset, in, size);
+		if (m_size < offset + size)
+			m_size = offset + size;
+	}
+
 	void MemoryBuffer::append(BYTE* in, size_t size)
 	{
 		size_t newLen = m_size + size;
@@ -3412,10 +3420,12 @@ namespace TheWorld_Utils
 
 	uint16_t MeshCacheBuffer::halfFromFloat(uint32_t f)
 	{
+		// https://github.com/macton/ps3-archive.git thanks to Mike Acton
 		return half_from_float(f);
 	}
 	uint32_t MeshCacheBuffer::halfToFloat(uint16_t f)
 	{
+		// https://github.com/macton/ps3-archive.git thanks to Mike Acton
 		return half_to_float(f);
 	}
 

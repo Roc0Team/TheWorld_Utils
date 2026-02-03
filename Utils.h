@@ -241,7 +241,26 @@ namespace TheWorld_Utils
 		__declspec(dllexport) MemoryBuffer(void);
 		__declspec(dllexport) MemoryBuffer(BYTE* in, size_t size);
 		__declspec(dllexport) ~MemoryBuffer(void);
+		template <typename T> __declspec(dllexport) void init(size_t numElements)
+		{
+			size_t size = numElements * sizeof(T);
+			reserve(size);
+			m_size = size;
+			memset(m_ptr, 0, size);
+		}
+		template <typename T> __declspec(dllexport) void init(size_t numElements, T& element)
+		{
+			size_t size = numElements * sizeof(T);
+			reserve(size);
+			m_size = size;
+			T* ptr = (T*)m_ptr;
+			for (size_t i = 0; i < numElements; i++)
+			{
+				ptr[i] = element;
+			}
+		}
 		__declspec(dllexport) void set(BYTE* in, size_t size);
+		__declspec(dllexport) void setPart(BYTE* in, size_t size, size_t offset);
 		__declspec(dllexport) void append(BYTE* in, size_t size);
 		__declspec(dllexport) void reserve(size_t size);
 		__declspec(dllexport) size_t reserved(void) const;
