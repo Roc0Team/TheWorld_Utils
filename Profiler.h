@@ -132,8 +132,10 @@ namespace TheWorld_Utils
 		}
 
 	private:
+#ifndef NO_PROFILING
 		std::string m_function;
 		std::string m_name;
 		TimerMcs m_clock;
+#endif
 	};
 }
