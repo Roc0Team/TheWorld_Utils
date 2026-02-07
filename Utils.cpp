@@ -3710,18 +3710,18 @@ namespace TheWorld_Utils
 				size_t border2X = idx;				size_t border2Z = 0;
 				size_t nearBorder2X = idx;			size_t nearBorder2Z = 1;
 
-				float nearBorderH1 = data1heights32Buffer->at<float>(nearBorder1X, nearBorder1Z, numVerticesPerSize);
-				float nearBorderH2 = data2heights32Buffer->at<float>(nearBorder2X, nearBorder2Z, numVerticesPerSize);
-				float borderH1 = data1heights32Buffer->at<float>(border1X, border1Z, numVerticesPerSize);
-				float borderH2 = data2heights32Buffer->at<float>(border2X, border2Z, numVerticesPerSize);
+				float nearBorderH1 = data1heights32Buffer->get_at_ref<float>(nearBorder1X, nearBorder1Z, numVerticesPerSize);
+				float nearBorderH2 = data2heights32Buffer->get_at_ref<float>(nearBorder2X, nearBorder2Z, numVerticesPerSize);
+				float borderH1 = data1heights32Buffer->get_at_ref<float>(border1X, border1Z, numVerticesPerSize);
+				float borderH2 = data2heights32Buffer->get_at_ref<float>(border2X, border2Z, numVerticesPerSize);
 				if (borderH1 != borderH2)
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
 					TheWorld_Utils::FLOAT_32 f(h);
 					uint16_t half = half_from_float(f.u32);
-					data1heights32Buffer->at<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->at<float>(border2X, border2Z, numVerticesPerSize) = h;
-					data1heights16Buffer->at<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->at<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
+					data1heights32Buffer->get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
+					data1heights16Buffer->get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
 
@@ -3745,18 +3745,18 @@ namespace TheWorld_Utils
 				size_t border2X = idx;				size_t border2Z = 0;
 				size_t nearBorder2X = idx;			size_t nearBorder2Z = 1;
 
-				float nearBorderH1 = data1heights32Buffer->at<float>(nearBorder1X, nearBorder1Z, numVerticesPerSize);
-				float nearBorderH2 = data2heights32Buffer->at<float>(nearBorder2X, nearBorder2Z, numVerticesPerSize);
-				float borderH1 = data1heights32Buffer->at<float>(border1X, border1Z, numVerticesPerSize);
-				float borderH2 = data2heights32Buffer->at<float>(border2X, border2Z, numVerticesPerSize);
+				float nearBorderH1 = data1heights32Buffer->get_at_ref<float>(nearBorder1X, nearBorder1Z, numVerticesPerSize);
+				float nearBorderH2 = data2heights32Buffer->get_at_ref<float>(nearBorder2X, nearBorder2Z, numVerticesPerSize);
+				float borderH1 = data1heights32Buffer->get_at_ref<float>(border1X, border1Z, numVerticesPerSize);
+				float borderH2 = data2heights32Buffer->get_at_ref<float>(border2X, border2Z, numVerticesPerSize);
 				if (borderH1 != borderH2)
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
 					TheWorld_Utils::FLOAT_32 f(h);
 					uint16_t half = half_from_float(f.u32);
-					data1heights32Buffer->at<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->at<float>(border2X, border2Z, numVerticesPerSize) = h;
-					data1heights16Buffer->at<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->at<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
+					data1heights32Buffer->get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
+					data1heights16Buffer->get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
 
@@ -3780,18 +3780,18 @@ namespace TheWorld_Utils
 				size_t border2X = 0;					size_t border2Z = idx;
 				size_t nearBorder2X = 1;				size_t nearBorder2Z = idx;
 
-				float nearBorderH1 = data1heights32Buffer->at<float>(nearBorder1X, nearBorder1Z, numVerticesPerSize);
-				float nearBorderH2 = data2heights32Buffer->at<float>(nearBorder2X, nearBorder2Z, numVerticesPerSize);
-				float borderH1 = data1heights32Buffer->at<float>(border1X, border1Z, numVerticesPerSize);
-				float borderH2 = data2heights32Buffer->at<float>(border2X, border2Z, numVerticesPerSize);
+				float nearBorderH1 = data1heights32Buffer->get_at_ref<float>(nearBorder1X, nearBorder1Z, numVerticesPerSize);
+				float nearBorderH2 = data2heights32Buffer->get_at_ref<float>(nearBorder2X, nearBorder2Z, numVerticesPerSize);
+				float borderH1 = data1heights32Buffer->get_at_ref<float>(border1X, border1Z, numVerticesPerSize);
+				float borderH2 = data2heights32Buffer->get_at_ref<float>(border2X, border2Z, numVerticesPerSize);
 				if (borderH1 != borderH2)
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
 					TheWorld_Utils::FLOAT_32 f(h);
 					uint16_t half = half_from_float(f.u32);
-					data1heights32Buffer->at<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->at<float>(border2X, border2Z, numVerticesPerSize) = h;
-					data1heights16Buffer->at<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->at<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
+					data1heights32Buffer->get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
+					data1heights16Buffer->get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
 
@@ -3815,18 +3815,18 @@ namespace TheWorld_Utils
 				size_t border2X = 0;					size_t border2Z = idx;
 				size_t nearBorder2X = 1;				size_t nearBorder2Z = idx;
 
-				float nearBorderH1 = data1heights32Buffer->at<float>(nearBorder1X, nearBorder1Z, numVerticesPerSize);
-				float nearBorderH2 = data2heights32Buffer->at<float>(nearBorder2X, nearBorder2Z, numVerticesPerSize);
-				float borderH1 = data1heights32Buffer->at<float>(border1X, border1Z, numVerticesPerSize);
-				float borderH2 = data2heights32Buffer->at<float>(border2X, border2Z, numVerticesPerSize);
+				float nearBorderH1 = data1heights32Buffer->get_at_ref<float>(nearBorder1X, nearBorder1Z, numVerticesPerSize);
+				float nearBorderH2 = data2heights32Buffer->get_at_ref<float>(nearBorder2X, nearBorder2Z, numVerticesPerSize);
+				float borderH1 = data1heights32Buffer->get_at_ref<float>(border1X, border1Z, numVerticesPerSize);
+				float borderH2 = data2heights32Buffer->get_at_ref<float>(border2X, border2Z, numVerticesPerSize);
 				if (borderH1 != borderH2)
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
 					TheWorld_Utils::FLOAT_32 f(h);
 					uint16_t half = half_from_float(f.u32);
-					data1heights32Buffer->at<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->at<float>(border2X, border2Z, numVerticesPerSize) = h;
-					data1heights16Buffer->at<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->at<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
+					data1heights32Buffer->get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
+					data1heights16Buffer->get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
 
@@ -3852,18 +3852,18 @@ namespace TheWorld_Utils
 				size_t border2X = 0;					size_t border2Z = idx;
 				size_t nearBorder2X = 1;				size_t nearBorder2Z = idx;
 
-				float nearBorderH1 = data1heights32Buffer->at<float>(nearBorder1X, nearBorder1Z, numVerticesPerSize);
-				float nearBorderH2 = data2heights32Buffer->at<float>(nearBorder2X, nearBorder2Z, numVerticesPerSize);
-				float borderH1 = data1heights32Buffer->at<float>(border1X, border1Z, numVerticesPerSize);
-				float borderH2 = data2heights32Buffer->at<float>(border2X, border2Z, numVerticesPerSize);
+				float nearBorderH1 = data1heights32Buffer->get_at_ref<float>(nearBorder1X, nearBorder1Z, numVerticesPerSize);
+				float nearBorderH2 = data2heights32Buffer->get_at_ref<float>(nearBorder2X, nearBorder2Z, numVerticesPerSize);
+				float borderH1 = data1heights32Buffer->get_at_ref<float>(border1X, border1Z, numVerticesPerSize);
+				float borderH2 = data2heights32Buffer->get_at_ref<float>(border2X, border2Z, numVerticesPerSize);
 				if (borderH1 != borderH2)
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
 					TheWorld_Utils::FLOAT_32 f(h);
 					uint16_t half = half_from_float(f.u32);
-					data1heights32Buffer->at<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->at<float>(border2X, border2Z, numVerticesPerSize) = h;
-					data1heights16Buffer->at<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->at<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
+					data1heights32Buffer->get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
+					data1heights16Buffer->get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
 
@@ -3889,18 +3889,18 @@ namespace TheWorld_Utils
 				size_t border2X = 0;					size_t border2Z = idx;
 				size_t nearBorder2X = 1;				size_t nearBorder2Z = idx;
 
-				float nearBorderH1 = data1heights32Buffer->at<float>(nearBorder1X, nearBorder1Z, numVerticesPerSize);
-				float nearBorderH2 = data2heights32Buffer->at<float>(nearBorder2X, nearBorder2Z, numVerticesPerSize);
-				float borderH1 = data1heights32Buffer->at<float>(border1X, border1Z, numVerticesPerSize);
-				float borderH2 = data2heights32Buffer->at<float>(border2X, border2Z, numVerticesPerSize);
+				float nearBorderH1 = data1heights32Buffer->get_at_ref<float>(nearBorder1X, nearBorder1Z, numVerticesPerSize);
+				float nearBorderH2 = data2heights32Buffer->get_at_ref<float>(nearBorder2X, nearBorder2Z, numVerticesPerSize);
+				float borderH1 = data1heights32Buffer->get_at_ref<float>(border1X, border1Z, numVerticesPerSize);
+				float borderH2 = data2heights32Buffer->get_at_ref<float>(border2X, border2Z, numVerticesPerSize);
 				if (borderH1 != borderH2)
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
 					TheWorld_Utils::FLOAT_32 f(h);
 					uint16_t half = half_from_float(f.u32);
-					data1heights32Buffer->at<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->at<float>(border2X, border2Z, numVerticesPerSize) = h;
-					data1heights16Buffer->at<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->at<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
+					data1heights32Buffer->get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
+					data1heights16Buffer->get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
 
@@ -3926,18 +3926,18 @@ namespace TheWorld_Utils
 				size_t border2X = idx;				size_t border2Z = 0;
 				size_t nearBorder2X = idx;			size_t nearBorder2Z = 1;
 
-				float nearBorderH1 = data1heights32Buffer->at<float>(nearBorder1X, nearBorder1Z, numVerticesPerSize);
-				float nearBorderH2 = data2heights32Buffer->at<float>(nearBorder2X, nearBorder2Z, numVerticesPerSize);
-				float borderH1 = data1heights32Buffer->at<float>(border1X, border1Z, numVerticesPerSize);
-				float borderH2 = data2heights32Buffer->at<float>(border2X, border2Z, numVerticesPerSize);
+				float nearBorderH1 = data1heights32Buffer->get_at_ref<float>(nearBorder1X, nearBorder1Z, numVerticesPerSize);
+				float nearBorderH2 = data2heights32Buffer->get_at_ref<float>(nearBorder2X, nearBorder2Z, numVerticesPerSize);
+				float borderH1 = data1heights32Buffer->get_at_ref<float>(border1X, border1Z, numVerticesPerSize);
+				float borderH2 = data2heights32Buffer->get_at_ref<float>(border2X, border2Z, numVerticesPerSize);
 				if (borderH1 != borderH2)
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
 					TheWorld_Utils::FLOAT_32 f(h);
 					uint16_t half = half_from_float(f.u32);
-					data1heights32Buffer->at<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->at<float>(border2X, border2Z, numVerticesPerSize) = h;
-					data1heights16Buffer->at<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->at<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
+					data1heights32Buffer->get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
+					data1heights16Buffer->get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
 
@@ -3963,18 +3963,18 @@ namespace TheWorld_Utils
 				size_t border2X = idx;				size_t border2Z = 0;
 				size_t nearBorder2X = idx;			size_t nearBorder2Z = 1;
 
-				float nearBorderH1 = data1heights32Buffer->at<float>(nearBorder1X, nearBorder1Z, numVerticesPerSize);
-				float nearBorderH2 = data2heights32Buffer->at<float>(nearBorder2X, nearBorder2Z, numVerticesPerSize);
-				float borderH1 = data1heights32Buffer->at<float>(border1X, border1Z, numVerticesPerSize);
-				float borderH2 = data2heights32Buffer->at<float>(border2X, border2Z, numVerticesPerSize);
+				float nearBorderH1 = data1heights32Buffer->get_at_ref<float>(nearBorder1X, nearBorder1Z, numVerticesPerSize);
+				float nearBorderH2 = data2heights32Buffer->get_at_ref<float>(nearBorder2X, nearBorder2Z, numVerticesPerSize);
+				float borderH1 = data1heights32Buffer->get_at_ref<float>(border1X, border1Z, numVerticesPerSize);
+				float borderH2 = data2heights32Buffer->get_at_ref<float>(border2X, border2Z, numVerticesPerSize);
 				if (borderH1 != borderH2)
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
 					TheWorld_Utils::FLOAT_32 f(h);
 					uint16_t half = half_from_float(f.u32);
-					data1heights32Buffer->at<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->at<float>(border2X, border2Z, numVerticesPerSize) = h;
-					data1heights16Buffer->at<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->at<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
+					data1heights32Buffer->get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
+					data1heights16Buffer->get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
 
@@ -4000,18 +4000,18 @@ namespace TheWorld_Utils
 				size_t border2X = idx;				size_t border2Z = 0;
 				size_t nearBorder2X = idx;			size_t nearBorder2Z = 1;
 
-				float nearBorderH1 = data1heights32Buffer->at<float>(nearBorder1X, nearBorder1Z, numVerticesPerSize);
-				float nearBorderH2 = data2heights32Buffer->at<float>(nearBorder2X, nearBorder2Z, numVerticesPerSize);
-				float borderH1 = data1heights32Buffer->at<float>(border1X, border1Z, numVerticesPerSize);
-				float borderH2 = data2heights32Buffer->at<float>(border2X, border2Z, numVerticesPerSize);
+				float nearBorderH1 = data1heights32Buffer->get_at_ref<float>(nearBorder1X, nearBorder1Z, numVerticesPerSize);
+				float nearBorderH2 = data2heights32Buffer->get_at_ref<float>(nearBorder2X, nearBorder2Z, numVerticesPerSize);
+				float borderH1 = data1heights32Buffer->get_at_ref<float>(border1X, border1Z, numVerticesPerSize);
+				float borderH2 = data2heights32Buffer->get_at_ref<float>(border2X, border2Z, numVerticesPerSize);
 				if (borderH1 != borderH2)
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
 					TheWorld_Utils::FLOAT_32 f(h);
 					uint16_t half = half_from_float(f.u32);
-					data1heights32Buffer->at<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->at<float>(border2X, border2Z, numVerticesPerSize) = h;
-					data1heights16Buffer->at<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->at<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
+					data1heights32Buffer->get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
+					data1heights16Buffer->get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
 
@@ -4037,18 +4037,18 @@ namespace TheWorld_Utils
 				size_t border2X = idx;				size_t border2Z = 0;
 				size_t nearBorder2X = idx;			size_t nearBorder2Z = 1;
 
-				float nearBorderH1 = data1heights32Buffer->at<float>(nearBorder1X, nearBorder1Z, numVerticesPerSize);
-				float nearBorderH2 = data2heights32Buffer->at<float>(nearBorder2X, nearBorder2Z, numVerticesPerSize);
-				float borderH1 = data1heights32Buffer->at<float>(border1X, border1Z, numVerticesPerSize);
-				float borderH2 = data2heights32Buffer->at<float>(border2X, border2Z, numVerticesPerSize);
+				float nearBorderH1 = data1heights32Buffer->get_at_ref<float>(nearBorder1X, nearBorder1Z, numVerticesPerSize);
+				float nearBorderH2 = data2heights32Buffer->get_at_ref<float>(nearBorder2X, nearBorder2Z, numVerticesPerSize);
+				float borderH1 = data1heights32Buffer->get_at_ref<float>(border1X, border1Z, numVerticesPerSize);
+				float borderH2 = data2heights32Buffer->get_at_ref<float>(border2X, border2Z, numVerticesPerSize);
 				if (borderH1 != borderH2)
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
 					TheWorld_Utils::FLOAT_32 f(h);
 					uint16_t half = half_from_float(f.u32);
-					data1heights32Buffer->at<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->at<float>(border2X, border2Z, numVerticesPerSize) = h;
-					data1heights16Buffer->at<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->at<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
+					data1heights32Buffer->get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
+					data1heights16Buffer->get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
 
@@ -4074,18 +4074,18 @@ namespace TheWorld_Utils
 				size_t border2X = 0;					size_t border2Z = idx;
 				size_t nearBorder2X = 1;				size_t nearBorder2Z = idx;
 
-				float nearBorderH1 = data1heights32Buffer->at<float>(nearBorder1X, nearBorder1Z, numVerticesPerSize);
-				float nearBorderH2 = data2heights32Buffer->at<float>(nearBorder2X, nearBorder2Z, numVerticesPerSize);
-				float borderH1 = data1heights32Buffer->at<float>(border1X, border1Z, numVerticesPerSize);
-				float borderH2 = data2heights32Buffer->at<float>(border2X, border2Z, numVerticesPerSize);
+				float nearBorderH1 = data1heights32Buffer->get_at_ref<float>(nearBorder1X, nearBorder1Z, numVerticesPerSize);
+				float nearBorderH2 = data2heights32Buffer->get_at_ref<float>(nearBorder2X, nearBorder2Z, numVerticesPerSize);
+				float borderH1 = data1heights32Buffer->get_at_ref<float>(border1X, border1Z, numVerticesPerSize);
+				float borderH2 = data2heights32Buffer->get_at_ref<float>(border2X, border2Z, numVerticesPerSize);
 				if (borderH1 != borderH2)
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
 					TheWorld_Utils::FLOAT_32 f(h);
 					uint16_t half = half_from_float(f.u32);
-					data1heights32Buffer->at<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->at<float>(border2X, border2Z, numVerticesPerSize) = h;
-					data1heights16Buffer->at<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->at<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
+					data1heights32Buffer->get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
+					data1heights16Buffer->get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
 
@@ -4111,124 +4111,124 @@ namespace TheWorld_Utils
 				size_t border2X = 0;					size_t border2Z = idx;
 				size_t nearBorder2X = 1;				size_t nearBorder2Z = idx;
 
-				float nearBorderH1 = data1heights32Buffer->at<float>(nearBorder1X, nearBorder1Z, numVerticesPerSize);
-				float nearBorderH2 = data2heights32Buffer->at<float>(nearBorder2X, nearBorder2Z, numVerticesPerSize);
-				float borderH1 = data1heights32Buffer->at<float>(border1X, border1Z, numVerticesPerSize);
-				float borderH2 = data2heights32Buffer->at<float>(border2X, border2Z, numVerticesPerSize);
+				float nearBorderH1 = data1heights32Buffer->get_at_ref<float>(nearBorder1X, nearBorder1Z, numVerticesPerSize);
+				float nearBorderH2 = data2heights32Buffer->get_at_ref<float>(nearBorder2X, nearBorder2Z, numVerticesPerSize);
+				float borderH1 = data1heights32Buffer->get_at_ref<float>(border1X, border1Z, numVerticesPerSize);
+				float borderH2 = data2heights32Buffer->get_at_ref<float>(border2X, border2Z, numVerticesPerSize);
 				if (borderH1 != borderH2)
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
 					TheWorld_Utils::FLOAT_32 f(h);
 					uint16_t half = half_from_float(f.u32);
-					data1heights32Buffer->at<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->at<float>(border2X, border2Z, numVerticesPerSize) = h;
-					data1heights16Buffer->at<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->at<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
+					data1heights32Buffer->get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
+					data1heights16Buffer->get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
 		}
 
-		float northWestCornerHeight = currentData.heights32Buffer->at<float>(0, 0, numVerticesPerSize);
+		float northWestCornerHeight = currentData.heights32Buffer->get_at_ref<float>(0, 0, numVerticesPerSize);
 		if (northData.heights32Buffer != nullptr && northData.heights32Buffer->size() > 0
 			&& northData.heights16Buffer != nullptr && northData.heights16Buffer->size() > 0)
 		{
 			TheWorld_Utils::FLOAT_32 f(northWestCornerHeight);
 			uint16_t half = half_from_float(f.u32);
-			northData.heights32Buffer->at<float>(0, maxIndex, numVerticesPerSize) = northWestCornerHeight;
-			northData.heights16Buffer->at<uint16_t>(0, maxIndex, numVerticesPerSize) = half;
+			northData.heights32Buffer->get_at_ref<float>(0, maxIndex, numVerticesPerSize) = northWestCornerHeight;
+			northData.heights16Buffer->get_at_ref<uint16_t>(0, maxIndex, numVerticesPerSize) = half;
 		}
 		if (northwestData.heights32Buffer != nullptr && northwestData.heights32Buffer->size() > 0
 			&& northwestData.heights16Buffer != nullptr && northwestData.heights16Buffer->size() > 0)
 		{
 			TheWorld_Utils::FLOAT_32 f(northWestCornerHeight);
 			uint16_t half = half_from_float(f.u32);
-			northwestData.heights32Buffer->at<float>(maxIndex, maxIndex, numVerticesPerSize) = northWestCornerHeight;
-			northwestData.heights16Buffer->at<uint16_t>(maxIndex, maxIndex, numVerticesPerSize) = half;
+			northwestData.heights32Buffer->get_at_ref<float>(maxIndex, maxIndex, numVerticesPerSize) = northWestCornerHeight;
+			northwestData.heights16Buffer->get_at_ref<uint16_t>(maxIndex, maxIndex, numVerticesPerSize) = half;
 		}
 		if (westData.heights32Buffer != nullptr && westData.heights32Buffer->size() > 0
 			&& westData.heights16Buffer != nullptr && westData.heights16Buffer->size() > 0)
 		{
 			TheWorld_Utils::FLOAT_32 f(northWestCornerHeight);
 			uint16_t half = half_from_float(f.u32);
-			westData.heights32Buffer->at<float>(maxIndex, 0, numVerticesPerSize) = northWestCornerHeight;
-			westData.heights16Buffer->at<uint16_t>(maxIndex, 0, numVerticesPerSize) = half;
+			westData.heights32Buffer->get_at_ref<float>(maxIndex, 0, numVerticesPerSize) = northWestCornerHeight;
+			westData.heights16Buffer->get_at_ref<uint16_t>(maxIndex, 0, numVerticesPerSize) = half;
 		}
 
-		float northEastCornerHeight = currentData.heights32Buffer->at<float>(maxIndex, 0, numVerticesPerSize);
+		float northEastCornerHeight = currentData.heights32Buffer->get_at_ref<float>(maxIndex, 0, numVerticesPerSize);
 		if (northData.heights32Buffer != nullptr && northData.heights32Buffer->size() > 0
 			&& northData.heights16Buffer != nullptr && northData.heights16Buffer->size() > 0)
 		{
 			TheWorld_Utils::FLOAT_32 f(northEastCornerHeight);
 			uint16_t half = half_from_float(f.u32);
-			northData.heights32Buffer->at<float>(maxIndex, maxIndex, numVerticesPerSize) = northEastCornerHeight;
-			northData.heights16Buffer->at<uint16_t>(maxIndex, maxIndex, numVerticesPerSize) = half;
+			northData.heights32Buffer->get_at_ref<float>(maxIndex, maxIndex, numVerticesPerSize) = northEastCornerHeight;
+			northData.heights16Buffer->get_at_ref<uint16_t>(maxIndex, maxIndex, numVerticesPerSize) = half;
 		}
 		if (northeastData.heights32Buffer != nullptr && northeastData.heights32Buffer->size() > 0
 			&& northeastData.heights16Buffer != nullptr && northeastData.heights16Buffer->size() > 0)
 		{
 			TheWorld_Utils::FLOAT_32 f(northEastCornerHeight);
 			uint16_t half = half_from_float(f.u32);
-			northeastData.heights32Buffer->at<float>(0, maxIndex, numVerticesPerSize) = northEastCornerHeight;
-			northeastData.heights16Buffer->at<uint16_t>(0, maxIndex, numVerticesPerSize) = half;
+			northeastData.heights32Buffer->get_at_ref<float>(0, maxIndex, numVerticesPerSize) = northEastCornerHeight;
+			northeastData.heights16Buffer->get_at_ref<uint16_t>(0, maxIndex, numVerticesPerSize) = half;
 		}
 		if (eastData.heights32Buffer != nullptr && eastData.heights32Buffer->size() > 0
 			&& eastData.heights16Buffer != nullptr && eastData.heights16Buffer->size() > 0)
 		{
 			TheWorld_Utils::FLOAT_32 f(northEastCornerHeight);
 			uint16_t half = half_from_float(f.u32);
-			eastData.heights32Buffer->at<float>(0, 0, numVerticesPerSize) = northEastCornerHeight;
-			eastData.heights16Buffer->at<uint16_t>(0, 0, numVerticesPerSize) = half;
+			eastData.heights32Buffer->get_at_ref<float>(0, 0, numVerticesPerSize) = northEastCornerHeight;
+			eastData.heights16Buffer->get_at_ref<uint16_t>(0, 0, numVerticesPerSize) = half;
 		}
 
-		float southWestCornerHeight = currentData.heights32Buffer->at<float>(0, maxIndex, numVerticesPerSize);
+		float southWestCornerHeight = currentData.heights32Buffer->get_at_ref<float>(0, maxIndex, numVerticesPerSize);
 		if (southData.heights32Buffer != nullptr && southData.heights32Buffer->size() > 0
 			&& southData.heights16Buffer != nullptr && southData.heights16Buffer->size() > 0)
 		{
 			TheWorld_Utils::FLOAT_32 f(southWestCornerHeight);
 			uint16_t half = half_from_float(f.u32);
-			southData.heights32Buffer->at<float>(0, 0, numVerticesPerSize) = southWestCornerHeight;
-			southData.heights16Buffer->at<uint16_t>(0, 0, numVerticesPerSize) = half;
+			southData.heights32Buffer->get_at_ref<float>(0, 0, numVerticesPerSize) = southWestCornerHeight;
+			southData.heights16Buffer->get_at_ref<uint16_t>(0, 0, numVerticesPerSize) = half;
 		}
 		if (southwestData.heights32Buffer != nullptr && southwestData.heights32Buffer->size() > 0
 			&& southwestData.heights16Buffer != nullptr && southwestData.heights16Buffer->size() > 0)
 		{
 			TheWorld_Utils::FLOAT_32 f(southWestCornerHeight);
 			uint16_t half = half_from_float(f.u32);
-			southwestData.heights32Buffer->at<float>(maxIndex, 0, numVerticesPerSize) = southWestCornerHeight;
-			southwestData.heights16Buffer->at<uint16_t>(maxIndex, 0, numVerticesPerSize) = half;
+			southwestData.heights32Buffer->get_at_ref<float>(maxIndex, 0, numVerticesPerSize) = southWestCornerHeight;
+			southwestData.heights16Buffer->get_at_ref<uint16_t>(maxIndex, 0, numVerticesPerSize) = half;
 		}
 		if (westData.heights32Buffer != nullptr && westData.heights32Buffer->size() > 0
 			&& westData.heights16Buffer != nullptr && westData.heights16Buffer->size() > 0)
 		{
 			TheWorld_Utils::FLOAT_32 f(southWestCornerHeight);
 			uint16_t half = half_from_float(f.u32);
-			westData.heights32Buffer->at<float>(maxIndex, maxIndex, numVerticesPerSize) = southWestCornerHeight;
-			westData.heights16Buffer->at<uint16_t>(maxIndex, maxIndex, numVerticesPerSize) = half;
+			westData.heights32Buffer->get_at_ref<float>(maxIndex, maxIndex, numVerticesPerSize) = southWestCornerHeight;
+			westData.heights16Buffer->get_at_ref<uint16_t>(maxIndex, maxIndex, numVerticesPerSize) = half;
 		}
 
-		float southEastCornerHeight = currentData.heights32Buffer->at<float>(maxIndex, maxIndex, numVerticesPerSize);
+		float southEastCornerHeight = currentData.heights32Buffer->get_at_ref<float>(maxIndex, maxIndex, numVerticesPerSize);
 		if (southData.heights32Buffer != nullptr && southData.heights32Buffer->size() > 0
 			&& southData.heights16Buffer != nullptr && southData.heights16Buffer->size() > 0)
 		{
 			TheWorld_Utils::FLOAT_32 f(southEastCornerHeight);
 			uint16_t half = half_from_float(f.u32);
-			southData.heights32Buffer->at<float>(maxIndex, 0, numVerticesPerSize) = southEastCornerHeight;
-			southData.heights16Buffer->at<uint16_t>(maxIndex, 0, numVerticesPerSize) = half;
+			southData.heights32Buffer->get_at_ref<float>(maxIndex, 0, numVerticesPerSize) = southEastCornerHeight;
+			southData.heights16Buffer->get_at_ref<uint16_t>(maxIndex, 0, numVerticesPerSize) = half;
 		}
 		if (southeastData.heights32Buffer != nullptr && southeastData.heights32Buffer->size() > 0
 			&& southeastData.heights16Buffer != nullptr && southeastData.heights16Buffer->size() > 0)
 		{
 			TheWorld_Utils::FLOAT_32 f(southEastCornerHeight);
 			uint16_t half = half_from_float(f.u32);
-			southeastData.heights32Buffer->at<float>(0, 0, numVerticesPerSize) = southEastCornerHeight;
-			southeastData.heights16Buffer->at<uint16_t>(0, 0, numVerticesPerSize) = half;
+			southeastData.heights32Buffer->get_at_ref<float>(0, 0, numVerticesPerSize) = southEastCornerHeight;
+			southeastData.heights16Buffer->get_at_ref<uint16_t>(0, 0, numVerticesPerSize) = half;
 		}
 		if (eastData.heights32Buffer != nullptr && eastData.heights32Buffer->size() > 0
 			&& eastData.heights16Buffer != nullptr && eastData.heights16Buffer->size() > 0)
 		{
 			TheWorld_Utils::FLOAT_32 f(southEastCornerHeight);
 			uint16_t half = half_from_float(f.u32);
-			eastData.heights32Buffer->at<float>(0, maxIndex, numVerticesPerSize) = southEastCornerHeight;
-			eastData.heights16Buffer->at<uint16_t>(0, maxIndex, numVerticesPerSize) = half;
+			eastData.heights32Buffer->get_at_ref<float>(0, maxIndex, numVerticesPerSize) = southEastCornerHeight;
+			eastData.heights16Buffer->get_at_ref<uint16_t>(0, maxIndex, numVerticesPerSize) = half;
 		}
 
 		return updated;
@@ -4253,7 +4253,7 @@ namespace TheWorld_Utils
 		{
 			for (size_t x = 0; x < numVerticesPerSize; x++)
 			{
-				float h = heights32Buffer.at<float>(x, z, numVerticesPerSize);
+				float h = heights32Buffer.get_at_ref<float>(x, z, numVerticesPerSize);
 				if (h < terrainEdit->minHeight)
 					terrainEdit->minHeight = h;
 				if (h > terrainEdit->maxHeight)
@@ -4345,7 +4345,7 @@ namespace TheWorld_Utils
 			// moving on north side: every x with z = 0 
 			for (size_t x = 0; x < numVerticesPerSize; x++)
 			{
-				float heightGapForEachQuandrantOnBorder = abs(data.heights32Buffer->at<float>(x, 0, numVerticesPerSize) - northData.heights32Buffer->at<float>(x, maxIndex, numVerticesPerSize)) / 2;
+				float heightGapForEachQuandrantOnBorder = abs(data.heights32Buffer->get_at_ref<float>(x, 0, numVerticesPerSize) - northData.heights32Buffer->get_at_ref<float>(x, maxIndex, numVerticesPerSize)) / 2;
 				size_t numVerticesToAdjustInEachQuadrant = (size_t)ceilf(heightGapForEachQuandrantOnBorder * terrainEdit->extraValues.amplitudeBlendFactor);
 				if (numVerticesToAdjustInEachQuadrant > numVerticesPerSize)
 					numVerticesToAdjustInEachQuadrant = numVerticesPerSize;
@@ -4353,8 +4353,8 @@ namespace TheWorld_Utils
 				if (numVerticesToAdjustInEachQuadrant > 0)
 				{
 					float increment = 0.0f;
-					float averageStep = (abs(data.heights32Buffer->at<float>(x, numVerticesToAdjustInEachQuadrant - 1, numVerticesPerSize)
-								- northData.heights32Buffer->at<float>(x, maxIndex - (numVerticesToAdjustInEachQuadrant - 1), numVerticesPerSize)) / 2) / numVerticesToAdjustInEachQuadrant;
+					float averageStep = (abs(data.heights32Buffer->get_at_ref<float>(x, numVerticesToAdjustInEachQuadrant - 1, numVerticesPerSize)
+								- northData.heights32Buffer->get_at_ref<float>(x, maxIndex - (numVerticesToAdjustInEachQuadrant - 1), numVerticesPerSize)) / 2) / numVerticesToAdjustInEachQuadrant;
 
 					data.heightsUpdated = true;
 					northData.heightsUpdated = true;
@@ -4364,12 +4364,12 @@ namespace TheWorld_Utils
 					bool heightSaved = false;
 					for (int z = (int)numVerticesToAdjustInEachQuadrant - 1; z >= 0; z--)
 					{
-						float currentGapInEachQuadrant = abs(data.heights32Buffer->at<float>(x, z, numVerticesPerSize) - northData.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize)) / 2;
+						float currentGapInEachQuadrant = abs(data.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize) - northData.heights32Buffer->get_at_ref<float>(x, maxIndex - z, numVerticesPerSize)) / 2;
 						float desideredGapInEachQuadrant = abs(averageStep) * z;
 						if (currentGapInEachQuadrant > desideredGapInEachQuadrant)
 						{
 							increment = currentGapInEachQuadrant - desideredGapInEachQuadrant;
-							if (data.heights32Buffer->at<float>(x, z, numVerticesPerSize) > northData.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize))
+							if (data.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize) > northData.heights32Buffer->get_at_ref<float>(x, maxIndex - z, numVerticesPerSize))
 								increment = -increment;
 						}
 						else
@@ -4377,34 +4377,34 @@ namespace TheWorld_Utils
 
 						if (z == 0 && heightSaved)
 						{
-							data.heights32Buffer->at<float>(x, z, numVerticesPerSize) = saveHeight;
+							data.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize) = saveHeight;
 						}
 						else
-							data.heights32Buffer->at<float>(x, z, numVerticesPerSize) += increment;
-						TheWorld_Utils::FLOAT_32 f(data.heights32Buffer->at<float>(x, z, numVerticesPerSize));
+							data.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize) += increment;
+						TheWorld_Utils::FLOAT_32 f(data.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize));
 						uint16_t half = half_from_float(f.u32);
-						data.heights16Buffer->at<uint16_t>(x, z, numVerticesPerSize) = half;
+						data.heights16Buffer->get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half;
 
 						if (z == 0 && heightSaved)
 						{
-							northData.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize) = saveHeight;
+							northData.heights32Buffer->get_at_ref<float>(x, maxIndex - z, numVerticesPerSize) = saveHeight;
 						}
 						else
-							northData.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize) -= increment;
-						TheWorld_Utils::FLOAT_32 f1(northData.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize));
+							northData.heights32Buffer->get_at_ref<float>(x, maxIndex - z, numVerticesPerSize) -= increment;
+						TheWorld_Utils::FLOAT_32 f1(northData.heights32Buffer->get_at_ref<float>(x, maxIndex - z, numVerticesPerSize));
 						uint16_t half1 = half_from_float(f1.u32);
-						northData.heights16Buffer->at<uint16_t>(x, maxIndex - z, numVerticesPerSize) = half1;
+						northData.heights16Buffer->get_at_ref<uint16_t>(x, maxIndex - z, numVerticesPerSize) = half1;
 
 						if (z == 1)
 						{
-							float h1 = data.heights32Buffer->at<float>(x, z, numVerticesPerSize);
-							float h2 = northData.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize);
+							float h1 = data.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize);
+							float h2 = northData.heights32Buffer->get_at_ref<float>(x, maxIndex - z, numVerticesPerSize);
 							saveHeight = (h1 + h2) / 2;
 							heightSaved = true;
 						}
 
 						//if (x == 0)
-						//	PLOG_DEBUG << "x=" << std::to_string(x) << " z=" << std::to_string(z) << "/" << std::to_string(maxIndex - z) << " increment= " << std::to_string(increment) << " " << std::to_string(h) << " ==> " << std::to_string(data.heights32Buffer->at<float>(x, z, numVerticesPerSize)) << " " << std::to_string(hNorth) << " ==> " << std::to_string(northData.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize));
+						//	PLOG_DEBUG << "x=" << std::to_string(x) << " z=" << std::to_string(z) << "/" << std::to_string(maxIndex - z) << " increment= " << std::to_string(increment) << " " << std::to_string(h) << " ==> " << std::to_string(data.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize)) << " " << std::to_string(hNorth) << " ==> " << std::to_string(northData.heights32Buffer->get_at_ref<float>(x, maxIndex - z, numVerticesPerSize));
 					}
 
 					// DISABLED ATM BECAUSE terrainEdit->extraValues.blendingBendingFactor IS ALWAYS ZERO
@@ -4418,26 +4418,26 @@ namespace TheWorld_Utils
 						numVerticesToAdjustInEachQuadrant = size_t(ceilf(numVerticesToAdjustInEachQuadrant * random_f));
 						float radiantStepPerVertex = TheWorld_Utils::kPi / (numVerticesToAdjustInEachQuadrant);
 
-						float gapToFlatten1 = data.heights32Buffer->at<float>(x, numVerticesToAdjustInEachQuadrant, numVerticesPerSize) - data.heights32Buffer->at<float>(x, 0, numVerticesPerSize);
+						float gapToFlatten1 = data.heights32Buffer->get_at_ref<float>(x, numVerticesToAdjustInEachQuadrant, numVerticesPerSize) - data.heights32Buffer->get_at_ref<float>(x, 0, numVerticesPerSize);
 						float heightStep1 = gapToFlatten1 / numVerticesToAdjustInEachQuadrant;
 						float heightStepFactor1 = heightStep1 * terrainEdit->extraValues.blendingBendingFactor;
-						float gapToFlatten2 = northData.heights32Buffer->at<float>(x, maxIndex - numVerticesToAdjustInEachQuadrant, numVerticesPerSize) - northData.heights32Buffer->at<float>(x, maxIndex, numVerticesPerSize);
+						float gapToFlatten2 = northData.heights32Buffer->get_at_ref<float>(x, maxIndex - numVerticesToAdjustInEachQuadrant, numVerticesPerSize) - northData.heights32Buffer->get_at_ref<float>(x, maxIndex, numVerticesPerSize);
 						float heightStep2 = gapToFlatten2 / numVerticesToAdjustInEachQuadrant;
 						float heightStepFactor2 = heightStep2 * terrainEdit->extraValues.blendingBendingFactor;
 						size_t idx = 0;
 						for (int z = (int)numVerticesToAdjustInEachQuadrant; z >= 0; z--)
 						{
 							float modifiedHeightStep1 = heightStep1 + sin(float(idx) * radiantStepPerVertex) * heightStepFactor1;
-							data.heights32Buffer->at<float>(x, z, numVerticesPerSize) -= modifiedHeightStep1;
-							TheWorld_Utils::FLOAT_32 f1(data.heights32Buffer->at<float>(x, z, numVerticesPerSize));
+							data.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize) -= modifiedHeightStep1;
+							TheWorld_Utils::FLOAT_32 f1(data.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize));
 							uint16_t half1 = half_from_float(f1.u32);
-							data.heights16Buffer->at<uint16_t>(x, z, numVerticesPerSize) = half1;
+							data.heights16Buffer->get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half1;
 
 							float modifiedHeightStep2 = heightStep2 + sin(float(idx) * radiantStepPerVertex) * heightStepFactor2;
-							northData.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize) -= modifiedHeightStep2;
-							TheWorld_Utils::FLOAT_32 f2(northData.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize));
+							northData.heights32Buffer->get_at_ref<float>(x, maxIndex - z, numVerticesPerSize) -= modifiedHeightStep2;
+							TheWorld_Utils::FLOAT_32 f2(northData.heights32Buffer->get_at_ref<float>(x, maxIndex - z, numVerticesPerSize));
 							uint16_t half2 = half_from_float(f2.u32);
-							northData.heights16Buffer->at<uint16_t>(x, maxIndex - z, numVerticesPerSize) = half2;
+							northData.heights16Buffer->get_at_ref<uint16_t>(x, maxIndex - z, numVerticesPerSize) = half2;
 
 							idx++;
 						}
@@ -4503,7 +4503,7 @@ namespace TheWorld_Utils
 			// moving on south side: every x with z = 0 
 			for (size_t x = 0; x < numVerticesPerSize; x++)
 			{
-				float heightGapForEachQuandrantOnBorder = abs(data.heights32Buffer->at<float>(x, maxIndex, numVerticesPerSize) - southData.heights32Buffer->at<float>(x, 0, numVerticesPerSize)) / 2;
+				float heightGapForEachQuandrantOnBorder = abs(data.heights32Buffer->get_at_ref<float>(x, maxIndex, numVerticesPerSize) - southData.heights32Buffer->get_at_ref<float>(x, 0, numVerticesPerSize)) / 2;
 
 				size_t numVerticesToAdjustInEachQuadrant = (size_t)ceilf(heightGapForEachQuandrantOnBorder * terrainEdit->extraValues.amplitudeBlendFactor);
 				if (numVerticesToAdjustInEachQuadrant > numVerticesPerSize)
@@ -4512,8 +4512,8 @@ namespace TheWorld_Utils
 				if (numVerticesToAdjustInEachQuadrant > 0)
 				{
 					float increment = 0.0f;
-					float averageStep = (abs(data.heights32Buffer->at<float>(x, maxIndex - (numVerticesToAdjustInEachQuadrant - 1), numVerticesPerSize)
-						- southData.heights32Buffer->at<float>(x, numVerticesToAdjustInEachQuadrant - 1, numVerticesPerSize)) / 2) / numVerticesToAdjustInEachQuadrant;
+					float averageStep = (abs(data.heights32Buffer->get_at_ref<float>(x, maxIndex - (numVerticesToAdjustInEachQuadrant - 1), numVerticesPerSize)
+						- southData.heights32Buffer->get_at_ref<float>(x, numVerticesToAdjustInEachQuadrant - 1, numVerticesPerSize)) / 2) / numVerticesToAdjustInEachQuadrant;
 
 					data.heightsUpdated = true;
 					southData.heightsUpdated = true;
@@ -4523,12 +4523,12 @@ namespace TheWorld_Utils
 					bool heightSaved = false;
 					for (int z = (int)numVerticesToAdjustInEachQuadrant - 1; z >= 0; z--)
 					{
-						float currentGapInEachQuadrant = abs(data.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize) - southData.heights32Buffer->at<float>(x, z, numVerticesPerSize)) / 2;
+						float currentGapInEachQuadrant = abs(data.heights32Buffer->get_at_ref<float>(x, maxIndex - z, numVerticesPerSize) - southData.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize)) / 2;
 						float desideredGapInEachQuadrant = abs(averageStep) * z;
 						if (currentGapInEachQuadrant > desideredGapInEachQuadrant)
 						{
 							increment = currentGapInEachQuadrant - desideredGapInEachQuadrant;
-							if (data.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize) > southData.heights32Buffer->at<float>(x, z, numVerticesPerSize))
+							if (data.heights32Buffer->get_at_ref<float>(x, maxIndex - z, numVerticesPerSize) > southData.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize))
 								increment = -increment;
 						}
 						else
@@ -4536,28 +4536,28 @@ namespace TheWorld_Utils
 
 						if (z == 0 && heightSaved)
 						{
-							data.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize) = saveHeight;
+							data.heights32Buffer->get_at_ref<float>(x, maxIndex - z, numVerticesPerSize) = saveHeight;
 						}
 						else
-							data.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize) += increment;
-						TheWorld_Utils::FLOAT_32 f(data.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize));
+							data.heights32Buffer->get_at_ref<float>(x, maxIndex - z, numVerticesPerSize) += increment;
+						TheWorld_Utils::FLOAT_32 f(data.heights32Buffer->get_at_ref<float>(x, maxIndex - z, numVerticesPerSize));
 						uint16_t half = half_from_float(f.u32);
-						data.heights16Buffer->at<uint16_t>(x, maxIndex - z, numVerticesPerSize) = half;
+						data.heights16Buffer->get_at_ref<uint16_t>(x, maxIndex - z, numVerticesPerSize) = half;
 
 						if (z == 0 && heightSaved)
 						{
-							southData.heights32Buffer->at<float>(x, z, numVerticesPerSize) = saveHeight;
+							southData.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize) = saveHeight;
 						}
 						else
-							southData.heights32Buffer->at<float>(x, z, numVerticesPerSize) -= increment;
-						TheWorld_Utils::FLOAT_32 f1(southData.heights32Buffer->at<float>(x, z, numVerticesPerSize));
+							southData.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize) -= increment;
+						TheWorld_Utils::FLOAT_32 f1(southData.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize));
 						uint16_t half1 = half_from_float(f1.u32);
-						southData.heights16Buffer->at<uint16_t>(x, z, numVerticesPerSize) = half1;
+						southData.heights16Buffer->get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half1;
 
 						if (z == 1)
 						{
-							float h1 = data.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize);
-							float h2 = southData.heights32Buffer->at<float>(x, z, numVerticesPerSize);
+							float h1 = data.heights32Buffer->get_at_ref<float>(x, maxIndex - z, numVerticesPerSize);
+							float h2 = southData.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize);
 							saveHeight = (h1 + h2) / 2;
 							heightSaved = true;
 						}
@@ -4574,26 +4574,26 @@ namespace TheWorld_Utils
 						numVerticesToAdjustInEachQuadrant = size_t(ceilf(numVerticesToAdjustInEachQuadrant * random_f));
 						float radiantStepPerVertex = TheWorld_Utils::kPi / (numVerticesToAdjustInEachQuadrant);
 
-						float gapToFlatten1 = data.heights32Buffer->at<float>(x, maxIndex - numVerticesToAdjustInEachQuadrant, numVerticesPerSize) - data.heights32Buffer->at<float>(x, maxIndex, numVerticesPerSize);
+						float gapToFlatten1 = data.heights32Buffer->get_at_ref<float>(x, maxIndex - numVerticesToAdjustInEachQuadrant, numVerticesPerSize) - data.heights32Buffer->get_at_ref<float>(x, maxIndex, numVerticesPerSize);
 						float heightStep1 = gapToFlatten1 / numVerticesToAdjustInEachQuadrant;
 						float heightStepFactor1 = heightStep1 * terrainEdit->extraValues.blendingBendingFactor;
-						float gapToFlatten2 = southData.heights32Buffer->at<float>(x, numVerticesToAdjustInEachQuadrant, numVerticesPerSize) - southData.heights32Buffer->at<float>(x, 0, numVerticesPerSize);
+						float gapToFlatten2 = southData.heights32Buffer->get_at_ref<float>(x, numVerticesToAdjustInEachQuadrant, numVerticesPerSize) - southData.heights32Buffer->get_at_ref<float>(x, 0, numVerticesPerSize);
 						float heightStep2 = gapToFlatten2 / numVerticesToAdjustInEachQuadrant;
 						float heightStepFactor2 = heightStep2 * terrainEdit->extraValues.blendingBendingFactor;
 						size_t idx = 0;
 						for (int z = (int)numVerticesToAdjustInEachQuadrant; z >= 0; z--)
 						{
 							float modifiedHeightStep1 = heightStep1 + sin(float(idx) * radiantStepPerVertex) * heightStepFactor1;
-							data.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize) -= modifiedHeightStep1;
-							TheWorld_Utils::FLOAT_32 f1(data.heights32Buffer->at<float>(x, maxIndex - z, numVerticesPerSize));
+							data.heights32Buffer->get_at_ref<float>(x, maxIndex - z, numVerticesPerSize) -= modifiedHeightStep1;
+							TheWorld_Utils::FLOAT_32 f1(data.heights32Buffer->get_at_ref<float>(x, maxIndex - z, numVerticesPerSize));
 							uint16_t half1 = half_from_float(f1.u32);
-							data.heights16Buffer->at<uint16_t>(x, maxIndex - z, numVerticesPerSize) = half1;
+							data.heights16Buffer->get_at_ref<uint16_t>(x, maxIndex - z, numVerticesPerSize) = half1;
 
 							float modifiedHeightStep2 = heightStep2 + sin(float(idx) * radiantStepPerVertex) * heightStepFactor2;
-							southData.heights32Buffer->at<float>(x, z, numVerticesPerSize) -= modifiedHeightStep2;
-							TheWorld_Utils::FLOAT_32 f2(southData.heights32Buffer->at<float>(x, z, numVerticesPerSize));
+							southData.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize) -= modifiedHeightStep2;
+							TheWorld_Utils::FLOAT_32 f2(southData.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize));
 							uint16_t half2 = half_from_float(f2.u32);
-							southData.heights16Buffer->at<uint16_t>(x, z, numVerticesPerSize) = half2;
+							southData.heights16Buffer->get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half2;
 
 							idx++;
 						}
@@ -4659,7 +4659,7 @@ namespace TheWorld_Utils
 			// moving on west side: every z with x = 0 
 			for (size_t z = 0; z < numVerticesPerSize; z++)
 			{
-				float heightGapForEachQuandrantOnBorder = abs(data.heights32Buffer->at<float>(0, z, numVerticesPerSize) - westData.heights32Buffer->at<float>(maxIndex, z, numVerticesPerSize)) / 2;
+				float heightGapForEachQuandrantOnBorder = abs(data.heights32Buffer->get_at_ref<float>(0, z, numVerticesPerSize) - westData.heights32Buffer->get_at_ref<float>(maxIndex, z, numVerticesPerSize)) / 2;
 				size_t numVerticesToAdjustInEachQuadrant = (size_t)ceilf(heightGapForEachQuandrantOnBorder * terrainEdit->extraValues.amplitudeBlendFactor);
 				if (numVerticesToAdjustInEachQuadrant > numVerticesPerSize)
 					numVerticesToAdjustInEachQuadrant = numVerticesPerSize;
@@ -4667,8 +4667,8 @@ namespace TheWorld_Utils
 				if (numVerticesToAdjustInEachQuadrant > 0)
 				{
 					float increment = 0.0f;
-					float averageStep = (abs(data.heights32Buffer->at<float>(numVerticesToAdjustInEachQuadrant - 1, z, numVerticesPerSize)
-						- westData.heights32Buffer->at<float>(maxIndex - (numVerticesToAdjustInEachQuadrant - 1), z, numVerticesPerSize)) / 2) / numVerticesToAdjustInEachQuadrant;
+					float averageStep = (abs(data.heights32Buffer->get_at_ref<float>(numVerticesToAdjustInEachQuadrant - 1, z, numVerticesPerSize)
+						- westData.heights32Buffer->get_at_ref<float>(maxIndex - (numVerticesToAdjustInEachQuadrant - 1), z, numVerticesPerSize)) / 2) / numVerticesToAdjustInEachQuadrant;
 
 					data.heightsUpdated = true;
 					westData.heightsUpdated = true;
@@ -4678,12 +4678,12 @@ namespace TheWorld_Utils
 					bool heightSaved = false;
 					for (int x = (int)numVerticesToAdjustInEachQuadrant - 1; x >= 0; x--)
 					{
-						float currentGapInEachQuadrant = abs(data.heights32Buffer->at<float>(x, z, numVerticesPerSize) - westData.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize)) / 2;
+						float currentGapInEachQuadrant = abs(data.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize) - westData.heights32Buffer->get_at_ref<float>(maxIndex - x, z, numVerticesPerSize)) / 2;
 						float desideredGapInEachQuadrant = abs(averageStep) * x;
 						if (currentGapInEachQuadrant > desideredGapInEachQuadrant)
 						{
 							increment = currentGapInEachQuadrant - desideredGapInEachQuadrant;
-							if (data.heights32Buffer->at<float>(x, z, numVerticesPerSize) > westData.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize))
+							if (data.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize) > westData.heights32Buffer->get_at_ref<float>(maxIndex - x, z, numVerticesPerSize))
 								increment = -increment;
 						}
 						else
@@ -4691,28 +4691,28 @@ namespace TheWorld_Utils
 
 						if (x == 0 && heightSaved)
 						{
-							data.heights32Buffer->at<float>(x, z, numVerticesPerSize) = saveHeight;
+							data.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize) = saveHeight;
 						}
 						else
-							data.heights32Buffer->at<float>(x, z, numVerticesPerSize) += increment;
-						TheWorld_Utils::FLOAT_32 f(data.heights32Buffer->at<float>(x, z, numVerticesPerSize));
+							data.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize) += increment;
+						TheWorld_Utils::FLOAT_32 f(data.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize));
 						uint16_t half = half_from_float(f.u32);
-						data.heights16Buffer->at<uint16_t>(x, z, numVerticesPerSize) = half;
+						data.heights16Buffer->get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half;
 
 						if (x == 0 && heightSaved)
 						{
-							westData.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize) = saveHeight;
+							westData.heights32Buffer->get_at_ref<float>(maxIndex - x, z, numVerticesPerSize) = saveHeight;
 						}
 						else
-							westData.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize) -= increment;
-						TheWorld_Utils::FLOAT_32 f1(westData.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize));
+							westData.heights32Buffer->get_at_ref<float>(maxIndex - x, z, numVerticesPerSize) -= increment;
+						TheWorld_Utils::FLOAT_32 f1(westData.heights32Buffer->get_at_ref<float>(maxIndex - x, z, numVerticesPerSize));
 						uint16_t half1 = half_from_float(f1.u32);
-						westData.heights16Buffer->at<uint16_t>(maxIndex - x, z, numVerticesPerSize) = half1;
+						westData.heights16Buffer->get_at_ref<uint16_t>(maxIndex - x, z, numVerticesPerSize) = half1;
 
 						if (x == 1)
 						{
-							float h1 = data.heights32Buffer->at<float>(x, z, numVerticesPerSize);
-							float h2 = westData.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize);
+							float h1 = data.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize);
+							float h2 = westData.heights32Buffer->get_at_ref<float>(maxIndex - x, z, numVerticesPerSize);
 							saveHeight = (h1 + h2) / 2;
 							heightSaved = true;
 						}
@@ -4729,26 +4729,26 @@ namespace TheWorld_Utils
 						numVerticesToAdjustInEachQuadrant = size_t(ceilf(numVerticesToAdjustInEachQuadrant * random_f));
 						float radiantStepPerVertex = TheWorld_Utils::kPi / (numVerticesToAdjustInEachQuadrant);
 
-						float gapToFlatten1 = data.heights32Buffer->at<float>(numVerticesToAdjustInEachQuadrant, z, numVerticesPerSize) - data.heights32Buffer->at<float>(0, z, numVerticesPerSize);
+						float gapToFlatten1 = data.heights32Buffer->get_at_ref<float>(numVerticesToAdjustInEachQuadrant, z, numVerticesPerSize) - data.heights32Buffer->get_at_ref<float>(0, z, numVerticesPerSize);
 						float heightStep1 = gapToFlatten1 / numVerticesToAdjustInEachQuadrant;
 						float heightStepFactor1 = heightStep1 * terrainEdit->extraValues.blendingBendingFactor;
-						float gapToFlatten2 = westData.heights32Buffer->at<float>(maxIndex - numVerticesToAdjustInEachQuadrant, z, numVerticesPerSize) - westData.heights32Buffer->at<float>(maxIndex, z, numVerticesPerSize);
+						float gapToFlatten2 = westData.heights32Buffer->get_at_ref<float>(maxIndex - numVerticesToAdjustInEachQuadrant, z, numVerticesPerSize) - westData.heights32Buffer->get_at_ref<float>(maxIndex, z, numVerticesPerSize);
 						float heightStep2 = gapToFlatten2 / numVerticesToAdjustInEachQuadrant;
 						float heightStepFactor2 = heightStep2 * terrainEdit->extraValues.blendingBendingFactor;
 						size_t idx = 0;
 						for (int x = (int)numVerticesToAdjustInEachQuadrant; x >= 0; x--)
 						{
 							float modifiedHeightStep1 = heightStep1 + sin(float(idx) * radiantStepPerVertex) * heightStepFactor1;
-							data.heights32Buffer->at<float>(x, z, numVerticesPerSize) -= modifiedHeightStep1;
-							TheWorld_Utils::FLOAT_32 f1(data.heights32Buffer->at<float>(x, z, numVerticesPerSize));
+							data.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize) -= modifiedHeightStep1;
+							TheWorld_Utils::FLOAT_32 f1(data.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize));
 							uint16_t half1 = half_from_float(f1.u32);
-							data.heights16Buffer->at<uint16_t>(x, z, numVerticesPerSize) = half1;
+							data.heights16Buffer->get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half1;
 
 							float modifiedHeightStep2 = heightStep2 + sin(float(idx) * radiantStepPerVertex) * heightStepFactor2;
-							westData.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize) -= modifiedHeightStep2;
-							TheWorld_Utils::FLOAT_32 f2(westData.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize));
+							westData.heights32Buffer->get_at_ref<float>(maxIndex - x, z, numVerticesPerSize) -= modifiedHeightStep2;
+							TheWorld_Utils::FLOAT_32 f2(westData.heights32Buffer->get_at_ref<float>(maxIndex - x, z, numVerticesPerSize));
 							uint16_t half2 = half_from_float(f2.u32);
-							westData.heights16Buffer->at<uint16_t>(maxIndex - x, z, numVerticesPerSize) = half2;
+							westData.heights16Buffer->get_at_ref<uint16_t>(maxIndex - x, z, numVerticesPerSize) = half2;
 
 							idx++;
 						}
@@ -4814,7 +4814,7 @@ namespace TheWorld_Utils
 			// moving on east side: every z with x = 0 
 			for (size_t z = 0; z < numVerticesPerSize; z++)
 			{
-				float heightGapForEachQuandrantOnBorder = abs(data.heights32Buffer->at<float>(maxIndex, z, numVerticesPerSize) - eastData.heights32Buffer->at<float>(0, z, numVerticesPerSize)) / 2;
+				float heightGapForEachQuandrantOnBorder = abs(data.heights32Buffer->get_at_ref<float>(maxIndex, z, numVerticesPerSize) - eastData.heights32Buffer->get_at_ref<float>(0, z, numVerticesPerSize)) / 2;
 				size_t numVerticesToAdjustInEachQuadrant = (size_t)ceilf(heightGapForEachQuandrantOnBorder * terrainEdit->extraValues.amplitudeBlendFactor);
 				if (numVerticesToAdjustInEachQuadrant > numVerticesPerSize)
 					numVerticesToAdjustInEachQuadrant = numVerticesPerSize;
@@ -4822,8 +4822,8 @@ namespace TheWorld_Utils
 				if (numVerticesToAdjustInEachQuadrant > 0)
 				{
 					float increment = 0.0f;
-					float averageStep = (abs(data.heights32Buffer->at<float>(maxIndex - (numVerticesToAdjustInEachQuadrant - 1), z, numVerticesPerSize)
-						- eastData.heights32Buffer->at<float>(numVerticesToAdjustInEachQuadrant - 1, z, numVerticesPerSize)) / 2) / numVerticesToAdjustInEachQuadrant;
+					float averageStep = (abs(data.heights32Buffer->get_at_ref<float>(maxIndex - (numVerticesToAdjustInEachQuadrant - 1), z, numVerticesPerSize)
+						- eastData.heights32Buffer->get_at_ref<float>(numVerticesToAdjustInEachQuadrant - 1, z, numVerticesPerSize)) / 2) / numVerticesToAdjustInEachQuadrant;
 
 					data.heightsUpdated = true;
 					eastData.heightsUpdated = true;
@@ -4833,12 +4833,12 @@ namespace TheWorld_Utils
 					bool heightSaved = false;
 					for (int x = (int)numVerticesToAdjustInEachQuadrant - 1; x >= 0; x--)
 					{
-						float currentGapInEachQuadrant = abs(data.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize) - eastData.heights32Buffer->at<float>(x, z, numVerticesPerSize)) / 2;
+						float currentGapInEachQuadrant = abs(data.heights32Buffer->get_at_ref<float>(maxIndex - x, z, numVerticesPerSize) - eastData.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize)) / 2;
 						float desideredGapInEachQuadrant = abs(averageStep) * x;
 						if (currentGapInEachQuadrant > desideredGapInEachQuadrant)
 						{
 							increment = currentGapInEachQuadrant - desideredGapInEachQuadrant;
-							if (data.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize) > eastData.heights32Buffer->at<float>(x, z, numVerticesPerSize))
+							if (data.heights32Buffer->get_at_ref<float>(maxIndex - x, z, numVerticesPerSize) > eastData.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize))
 								increment = -increment;
 						}
 						else
@@ -4846,28 +4846,28 @@ namespace TheWorld_Utils
 
 						if (x == 0 && heightSaved)
 						{
-							data.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize) = saveHeight;
+							data.heights32Buffer->get_at_ref<float>(maxIndex - x, z, numVerticesPerSize) = saveHeight;
 						}
 						else
-							data.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize) += increment;
-						TheWorld_Utils::FLOAT_32 f(data.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize));
+							data.heights32Buffer->get_at_ref<float>(maxIndex - x, z, numVerticesPerSize) += increment;
+						TheWorld_Utils::FLOAT_32 f(data.heights32Buffer->get_at_ref<float>(maxIndex - x, z, numVerticesPerSize));
 						uint16_t half = half_from_float(f.u32);
-						data.heights16Buffer->at<uint16_t>(maxIndex - x, z, numVerticesPerSize) = half;
+						data.heights16Buffer->get_at_ref<uint16_t>(maxIndex - x, z, numVerticesPerSize) = half;
 
 						if (x == 0 && heightSaved)
 						{
-							eastData.heights32Buffer->at<float>(x, z, numVerticesPerSize) = saveHeight;
+							eastData.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize) = saveHeight;
 						}
 						else
-							eastData.heights32Buffer->at<float>(x, z, numVerticesPerSize) -= increment;
-						TheWorld_Utils::FLOAT_32 f1(eastData.heights32Buffer->at<float>(x, z, numVerticesPerSize));
+							eastData.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize) -= increment;
+						TheWorld_Utils::FLOAT_32 f1(eastData.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize));
 						uint16_t half1 = half_from_float(f1.u32);
-						eastData.heights16Buffer->at<uint16_t>(x, z, numVerticesPerSize) = half1;
+						eastData.heights16Buffer->get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half1;
 
 						if (x == 1)
 						{
-							float h1 = data.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize);
-							float h2 = eastData.heights32Buffer->at<float>(x, z, numVerticesPerSize);
+							float h1 = data.heights32Buffer->get_at_ref<float>(maxIndex - x, z, numVerticesPerSize);
+							float h2 = eastData.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize);
 							saveHeight = (h1 + h2) / 2;
 							heightSaved = true;
 						}
@@ -4884,26 +4884,26 @@ namespace TheWorld_Utils
 						numVerticesToAdjustInEachQuadrant = size_t(ceilf(numVerticesToAdjustInEachQuadrant * random_f));
 						float radiantStepPerVertex = TheWorld_Utils::kPi / (numVerticesToAdjustInEachQuadrant);
 
-						float gapToFlatten1 = data.heights32Buffer->at<float>(maxIndex - numVerticesToAdjustInEachQuadrant, z, numVerticesPerSize) - data.heights32Buffer->at<float>(maxIndex, z, numVerticesPerSize);
+						float gapToFlatten1 = data.heights32Buffer->get_at_ref<float>(maxIndex - numVerticesToAdjustInEachQuadrant, z, numVerticesPerSize) - data.heights32Buffer->get_at_ref<float>(maxIndex, z, numVerticesPerSize);
 						float heightStep1 = gapToFlatten1 / numVerticesToAdjustInEachQuadrant;
 						float heightStepFactor1 = heightStep1 * terrainEdit->extraValues.blendingBendingFactor;
-						float gapToFlatten2 = eastData.heights32Buffer->at<float>(numVerticesToAdjustInEachQuadrant, z, numVerticesPerSize) - eastData.heights32Buffer->at<float>(0, z, numVerticesPerSize);
+						float gapToFlatten2 = eastData.heights32Buffer->get_at_ref<float>(numVerticesToAdjustInEachQuadrant, z, numVerticesPerSize) - eastData.heights32Buffer->get_at_ref<float>(0, z, numVerticesPerSize);
 						float heightStep2 = gapToFlatten2 / numVerticesToAdjustInEachQuadrant;
 						float heightStepFactor2 = heightStep2 * terrainEdit->extraValues.blendingBendingFactor;
 						size_t idx = 0;
 						for (int x = (int)numVerticesToAdjustInEachQuadrant; x >= 0; x--)
 						{
 							float modifiedHeightStep1 = heightStep1 + sin(float(idx) * radiantStepPerVertex) * heightStepFactor1;
-							data.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize) -= modifiedHeightStep1;
-							TheWorld_Utils::FLOAT_32 f1(data.heights32Buffer->at<float>(maxIndex - x, z, numVerticesPerSize));
+							data.heights32Buffer->get_at_ref<float>(maxIndex - x, z, numVerticesPerSize) -= modifiedHeightStep1;
+							TheWorld_Utils::FLOAT_32 f1(data.heights32Buffer->get_at_ref<float>(maxIndex - x, z, numVerticesPerSize));
 							uint16_t half1 = half_from_float(f1.u32);
-							data.heights16Buffer->at<uint16_t>(maxIndex - x, z, numVerticesPerSize) = half1;
+							data.heights16Buffer->get_at_ref<uint16_t>(maxIndex - x, z, numVerticesPerSize) = half1;
 
 							float modifiedHeightStep2 = heightStep2 + sin(float(idx) * radiantStepPerVertex) * heightStepFactor2;
-							eastData.heights32Buffer->at<float>(x, z, numVerticesPerSize) -= modifiedHeightStep2;
-							TheWorld_Utils::FLOAT_32 f2(eastData.heights32Buffer->at<float>(x, z, numVerticesPerSize));
+							eastData.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize) -= modifiedHeightStep2;
+							TheWorld_Utils::FLOAT_32 f2(eastData.heights32Buffer->get_at_ref<float>(x, z, numVerticesPerSize));
 							uint16_t half2 = half_from_float(f2.u32);
-							eastData.heights16Buffer->at<uint16_t>(x, z, numVerticesPerSize) = half2;
+							eastData.heights16Buffer->get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half2;
 
 							idx++;
 						}

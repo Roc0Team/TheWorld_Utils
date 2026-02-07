@@ -277,21 +277,31 @@ namespace TheWorld_Utils
 		__declspec(dllexport) void toString(std::string& buffer);
 		__declspec(dllexport) void allocationSlotSize(size_t _allocationSlotSize);
 		__declspec(dllexport) void operator=(const MemoryBuffer& o);
-		template <typename T> __declspec(dllexport) T& at(size_t idx)
+		template <typename T> __declspec(dllexport) T get_at(size_t idx)
+		{
+			// z-based idx
+			return get_at_ref<T>(idx);
+		}
+		template <typename T> __declspec(dllexport) T& get_at_ref(size_t idx)
 		{
 			// z-based idx
 			T* ptr = (T*)m_ptr;
 			ptr += idx;
 			return *ptr;
 		}
-		template <typename T> __declspec(dllexport) T& at(size_t x, size_t y, size_t size)
+		template <typename T> __declspec(dllexport) T get_at(size_t x, size_t y, size_t size)
+		{
+			// z-based col/row
+			return get_at_ref<T>(x, y, size);
+		}
+		template <typename T> __declspec(dllexport) T& get_at_ref(size_t x, size_t y, size_t size)
 		{
 			// z-based col/row
 			T* ptr = (T*)m_ptr;
 			ptr += ((y * size) + x);
 			return *ptr;
 		}
-		template <typename T> __declspec(dllexport) T* at_ptr(size_t x, size_t y, size_t size)
+		template <typename T> __declspec(dllexport) T* get_at_ptr(size_t x, size_t y, size_t size)
 		{
 			// z-based col/row
 			T* ptr = (T*)m_ptr;
