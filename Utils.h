@@ -261,15 +261,38 @@ namespace TheWorld_Utils
 		}
 		__declspec(dllexport) void set(BYTE* in, size_t size);
 		__declspec(dllexport) void setPart(BYTE* in, size_t size, size_t offset);
+		__declspec(dllexport) void setPartOfRow(BYTE* in, size_t size, size_t row, size_t col, size_t rowSizeInBytes);	// z-based col/row expressed in bytes
+		template <typename T> __declspec(dllexport) void setPartOfRow(T* in, size_t numElements, size_t row, size_t col, size_t numElementsPerRow)
+		{
+			// z-based col/row expressed in num elements
+			size_t offset = (row * numElementsPerRow + col) * sizeof(T);
+			setPart((BYTE*)in, numElements * sizeof(T), offset);
+		}
 		__declspec(dllexport) void append(BYTE* in, size_t size);
 		__declspec(dllexport) void reserve(size_t size);
+		template <typename T> __declspec(dllexport) void reserve(size_t numElements)
+		{
+			size_t size = numElements * sizeof(T);
+			reserve(size);
+		}
 		__declspec(dllexport) size_t reserved(void) const;
 		__declspec(dllexport) void reset(void);
 		__declspec(dllexport) BYTE* ptr();
 		__declspec(dllexport) size_t size(void) const;
+		template <typename T> __declspec(dllexport) size_t size(void) const
+		{
+			float numElements = float(m_size) / sizeof(T);
+			my_assert(float(m_size) == numElements * sizeof(T));
+			return size_t(numElements);
+		}
 		__declspec(dllexport) bool empty(void) const;
 		__declspec(dllexport) void clear(std::string lastActor = "");
 		__declspec(dllexport) void adjustSize(size_t size);
+		template <typename T> void adjustSize(size_t numElements)
+		{
+			size_t size = numElements * sizeof(T);
+			adjustSize(size);
+		}
 		__declspec(dllexport) void adjustCursorAndSize(size_t& cursor, size_t size);
 		__declspec(dllexport) void copyFrom(MemoryBuffer& inBuffer, std::string lastActor);
 		__declspec(dllexport) void populateFloatVector(std::vector<float>& v) const;
@@ -289,23 +312,30 @@ namespace TheWorld_Utils
 			ptr += idx;
 			return *ptr;
 		}
-		template <typename T> __declspec(dllexport) T get_at(size_t x, size_t y, size_t size)
+		template <typename T> __declspec(dllexport) T get_at(size_t row, size_t col, size_t numElementsPerRow)
 		{
 			// z-based col/row
-			return get_at_ref<T>(x, y, size);
+			return get_at_ref<T>(row, col, numElementsPerRow);
 		}
-		template <typename T> __declspec(dllexport) T& get_at_ref(size_t x, size_t y, size_t size)
+		template <typename T> __declspec(dllexport) T& get_at_ref(size_t row, size_t col, size_t numElementsPerRow)
 		{
 			// z-based col/row
 			T* ptr = (T*)m_ptr;
-			ptr += ((y * size) + x);
+			ptr += ((row * numElementsPerRow) + col);
 			return *ptr;
 		}
-		template <typename T> __declspec(dllexport) T* get_at_ptr(size_t x, size_t y, size_t size)
+		template <typename T> __declspec(dllexport) T& _deprecated_get_at_ref(size_t col, size_t row, size_t numElementsPerRow)		// deprecated: use get_at_ref instead with row and column in reversed order 
 		{
 			// z-based col/row
 			T* ptr = (T*)m_ptr;
-			ptr += ((y * size) + x);
+			ptr += ((row * numElementsPerRow) + col);
+			return *ptr;
+		}
+		template <typename T> __declspec(dllexport) T* get_at_ptr(size_t row, size_t col, size_t numElementsPerRow)
+		{
+			// z-based col/row
+			T* ptr = (T*)m_ptr;
+			ptr += ((row * numElementsPerRow) + col);
 			return ptr;
 		}
 		template <typename T> __declspec(dllexport) void populateVector(std::vector<T>& v)
@@ -314,11 +344,16 @@ namespace TheWorld_Utils
 			my_assert(size() == numElements * sizeof(T));
 			v.assign((T*)m_ptr, (T*)m_ptr + numElements);
 		}
-		template <typename T> __declspec(dllexport) void set_at(T& element, size_t x, size_t y, size_t size)
+		template <typename T> __declspec(dllexport) void set_at(T element, size_t row, size_t col, size_t numElementsPerRow)
+		{
+			// z-based col/row
+			set_at_ref(element, col, row, numElementsPerRow);
+		}
+		template <typename T> __declspec(dllexport) void set_at_ref(T& element, size_t col, size_t row, size_t numElementsPerRow)
 		{
 			// z-based col/row
 			T* ptr = (T*)m_ptr;
-			ptr += ((y * size) + x);
+			ptr += ((row * numElementsPerRow) + col);
 			*ptr = element;
 			return;
 		}
