@@ -20,17 +20,18 @@ namespace TheWorld_Utils
 
 	void ProfilingData::startElapsedNonMultithread(void)
 	{
+		std::lock_guard<std::recursive_mutex> lock(m_Mtx);
 		m_clock.tick();
 	}
 
 	void ProfilingData::addElapsedMcs(size_t elapsed)
 	{
+		std::lock_guard<std::recursive_mutex> lock(m_Mtx);
 		if (elapsed == -1)
 		{
 			m_clock.tock();
 			elapsed = m_clock.duration().count();
 		}
-		std::lock_guard<std::recursive_mutex> lock(m_Mtx);
 		m_num++;
 		m_elapsed += elapsed;
 		if (elapsed > m_maxElapsed)

@@ -1184,6 +1184,8 @@ namespace TheWorld_Utils
 
 		template <class TT = TimeT>	TT duration() const
 		{
+			if (_end == timep_t{})
+				return std::chrono::duration_cast<TT>(ClockT::now() - _start);
 			Expects(_end != timep_t{} && "toc before reporting");
 			//assert(_end != timep_t{} && "toc before reporting");
 			return std::chrono::duration_cast<TT>(_end - _start);
@@ -1209,6 +1211,9 @@ namespace TheWorld_Utils
 	class MeshCacheBuffer
 	{
 	public:
+		static bool s_newQuadrantFile;
+		__declspec(dllexport) static bool newQuadrantFile(void);
+		
 		class CacheQuadrantData
 		{
 		public:
@@ -1322,8 +1327,10 @@ namespace TheWorld_Utils
 		bool operator<(const MeshCacheBuffer& c) const;
 		bool operator==(const MeshCacheBuffer& c) const;
 
+		__declspec(dllexport) static uint16_t halfFromFloat(float f);
 		__declspec(dllexport) static uint16_t halfFromFloat(uint32_t f);
 		__declspec(dllexport) static uint32_t halfToFloat(uint16_t f);
+		__declspec(dllexport) static float halfToFloat_1(uint16_t f);
 
 		__declspec(dllexport) TheWorld_Utils::QuadrantPos getQuadrantPos(void)
 		{

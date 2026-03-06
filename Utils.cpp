@@ -41,6 +41,14 @@ namespace fs = std::filesystem;
 
 namespace TheWorld_Utils
 {
+	bool MeshCacheBuffer::s_newQuadrantFile = false;
+
+	bool MeshCacheBuffer::newQuadrantFile(void)
+	{
+		return s_newQuadrantFile;
+	}
+
+
 	std::string getModuleLoadPath(void)
 	{
 		char path[MAX_PATH];
@@ -2236,7 +2244,18 @@ namespace TheWorld_Utils
 			movingStreamBuffer += float16HeightMapSize;
 
 			size_t float32HeightMapSize = vectSize * float_size;
-			float32HeigthsBuffer.set((BYTE*)movingStreamBuffer, float32HeightMapSize);
+			if (TheWorld_Utils::MeshCacheBuffer::newQuadrantFile())
+			{
+				//TheWorld_Utils::GuardProfiler profiler(std::string("refreshMapsFromBuffer calc heights 32 ") + __FUNCTION__, "Loop");
+				float32HeigthsBuffer.reserve(float32HeightMapSize);
+				float32HeigthsBuffer.adjustSize(float32HeightMapSize);
+				float* pFloat32 = (float*)float32HeigthsBuffer.ptr();
+				uint16_t* pFloat16 = (uint16_t*)float16HeigthsBuffer.ptr();
+				for (int i = 0; i < vectSize; i++)
+					pFloat32[i] = TheWorld_Utils::MeshCacheBuffer::halfToFloat_1(pFloat16[i]);
+			}
+			else
+				float32HeigthsBuffer.set((BYTE*)movingStreamBuffer, float32HeightMapSize);
 			movingStreamBuffer += float32HeightMapSize;
 
 			struct TheWorld_Utils::_RGB* rgb = (struct TheWorld_Utils::_RGB*)movingStreamBuffer;
@@ -3426,15 +3445,28 @@ namespace TheWorld_Utils
 		setBufferFromCacheQuadrantData(numVerticesPerSize, cacheQuadrantData, buffer);
 	}
 
-	uint16_t MeshCacheBuffer::halfFromFloat(uint32_t f)
+	uint16_t MeshCacheBuffer::halfFromFloat(float _f)
 	{
-		// https://github.com/macton/ps3-archive.git thanks to Mike Acton
-		return half_from_float(f);
+		TheWorld_Utils::FLOAT_32 f(_f);
+		return halfFromFloat(f.u32);
 	}
-	uint32_t MeshCacheBuffer::halfToFloat(uint16_t f)
+		
+	uint16_t MeshCacheBuffer::halfFromFloat(uint32_t _f)
 	{
 		// https://github.com/macton/ps3-archive.git thanks to Mike Acton
-		return half_to_float(f);
+		return half_from_float(_f);
+	}
+	uint32_t MeshCacheBuffer::halfToFloat(uint16_t _f)
+	{
+		// https://github.com/macton/ps3-archive.git thanks to Mike Acton
+		return half_to_float(_f);
+	}
+	float MeshCacheBuffer::halfToFloat_1(uint16_t _f)
+	{
+		// https://github.com/macton/ps3-archive.git thanks to Mike Acton
+		TheWorld_Utils::FLOAT_32 f;
+		f.u32 = (half_to_float(_f));
+		return f.f32;
 	}
 
 	void MeshCacheBuffer::setDummyBuffer(std::string meshId, std::string& buffer)
