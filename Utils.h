@@ -300,6 +300,13 @@ namespace TheWorld_Utils
 		__declspec(dllexport) void toString(std::string& buffer);
 		__declspec(dllexport) void allocationSlotSize(size_t _allocationSlotSize);
 		__declspec(dllexport) void operator=(const MemoryBuffer& o);
+		__declspec(dllexport) void getBorders(size_t numElementsPerBorder, size_t borderElementSize, BYTE* northBorder, BYTE* southBorder, BYTE* westBorder, BYTE* eastBorder);
+		//template <typename T> __declspec(dllexport) void getBorders(size_t numElementsPerBorder, MemoryBuffer& borderBuffer) // first row upper border, second row lower border, third row left border, fourth row right border
+		//{
+		//	size_t borderSize = numElementsPerBorder * sizeof(T);
+		//	getBorders(numElementsPerBorder, sizeof(T), borderBuffer.ptr(), borderBuffer.ptr() + borderSize, borderBuffer.ptr() + (borderSize * 2), borderBuffer.ptr() + (borderSize * 3));
+		//}
+		//template <typename T> __declspec(dllexport) void getBorders(size_t verticesPerBorder, MemoryBuffer& northBorder, MemoryBuffer& southBorder, MemoryBuffer& westBorder, MemoryBuffer& eastBorder);
 		template <typename T> __declspec(dllexport) T get_at(size_t idx)
 		{
 			// z-based idx
@@ -1211,9 +1218,6 @@ namespace TheWorld_Utils
 	class MeshCacheBuffer
 	{
 	public:
-		static bool s_newQuadrantFile;
-		__declspec(dllexport) static bool newQuadrantFile(void);
-		
 		class CacheQuadrantData
 		{
 		public:
@@ -1369,6 +1373,8 @@ namespace TheWorld_Utils
 		__declspec(dllexport) std::string writeBufferToDiskCache(const BYTE* buffer, const size_t bufferSize, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* terrainEdit = nullptr) const;
 		__declspec(dllexport) std::string writeBufferToDiskCache2(const BYTE* buffer, const size_t bufferSize, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* terrainEdit = nullptr);
 		__declspec(dllexport) void setDummyBuffer(std::string meshId, std::string& buffer);
+		__declspec(dllexport) void setDummyBuffer_Format1(std::string meshId, std::string& buffer);
+		__declspec(dllexport) void setBufferFromCacheQuadrantData_Format1(size_t numVerticesPerSize, CacheQuadrantData& cacheQuadrantData, TheWorld_Utils::MemoryBuffer& buffer);
 		__declspec(dllexport) void setBufferFromCacheQuadrantData(size_t numVerticesPerSize, CacheQuadrantData& cacheQuadrantData, TheWorld_Utils::MemoryBuffer& buffer);
 		__declspec(dllexport) void setBufferFromCacheQuadrantData(size_t numVerticesPerSize, CacheQuadrantData& cacheQuadrantData, std::string& buffer);
 		__declspec(dllexport) void setEmptyBuffer(size_t numVerticesPerSize, std::string& meshId, TheWorld_Utils::MemoryBuffer& buffer);
