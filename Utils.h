@@ -53,6 +53,27 @@
 
 namespace TheWorld_Utils
 {
+	template <typename T>
+	void serializeToByteStream(T in, BYTE* stream, size_t& size)
+	{
+		T* pIn = &in;
+		BYTE* pc = reinterpret_cast<BYTE*>(pIn);
+		for (size_t i = 0; i < sizeof(T); i++)
+		{
+			stream[i] = *pc;
+			pc++;
+		}
+		size = sizeof(T);
+	}
+
+	template <typename T>
+	T deserializeFromByteStream(BYTE* stream, size_t& size)
+	{
+		T* pOut = reinterpret_cast<T*>(stream);
+		size = sizeof(T);
+		return *pOut;
+	}
+
 	// https://cellperformance.beyond3d.com/articles/2006/07/branchfree_implementation_of_h_1.html
 
 	__declspec(dllexport) Eigen::Vector3d packNormal(Eigen::Vector3d normal);
@@ -240,6 +261,7 @@ namespace TheWorld_Utils
 	public:
 		__declspec(dllexport) MemoryBuffer(void);
 		__declspec(dllexport) MemoryBuffer(BYTE* in, size_t size);
+		__declspec(dllexport) MemoryBuffer(const MemoryBuffer&);
 		__declspec(dllexport) ~MemoryBuffer(void);
 		template <typename T> __declspec(dllexport) void init(size_t numElements)
 		{
@@ -298,15 +320,102 @@ namespace TheWorld_Utils
 		__declspec(dllexport) void populateFloatVector(std::vector<float>& v) const;
 		__declspec(dllexport) void populateUint16Vector(std::vector<uint16_t>& v) const;
 		__declspec(dllexport) void toString(std::string& buffer);
+		__declspec(dllexport) void fromString(std::string& buffer);
 		__declspec(dllexport) void allocationSlotSize(size_t _allocationSlotSize);
 		__declspec(dllexport) void operator=(const MemoryBuffer& o);
-		__declspec(dllexport) void getBorders(size_t numElementsPerBorder, size_t borderElementSize, BYTE* northBorder, BYTE* southBorder, BYTE* westBorder, BYTE* eastBorder);
-		//template <typename T> __declspec(dllexport) void getBorders(size_t numElementsPerBorder, MemoryBuffer& borderBuffer) // first row upper border, second row lower border, third row left border, fourth row right border
-		//{
-		//	size_t borderSize = numElementsPerBorder * sizeof(T);
-		//	getBorders(numElementsPerBorder, sizeof(T), borderBuffer.ptr(), borderBuffer.ptr() + borderSize, borderBuffer.ptr() + (borderSize * 2), borderBuffer.ptr() + (borderSize * 3));
-		//}
-		//template <typename T> __declspec(dllexport) void getBorders(size_t verticesPerBorder, MemoryBuffer& northBorder, MemoryBuffer& southBorder, MemoryBuffer& westBorder, MemoryBuffer& eastBorder);
+		template <typename T> __declspec(dllexport) void getBorders(size_t numElementsPerBorder, BYTE* northBorder, BYTE* southBorder, BYTE* westBorder, BYTE* eastBorder)
+		{
+			size_t borderSize = numElementsPerBorder * sizeof(T);
+
+			// North Border Row
+			{
+				memcpy(northBorder, ptr(), borderSize);
+			}
+
+			// South Border Row
+			{
+				BYTE* offset = ptr() + borderSize * (numElementsPerBorder - 1);
+				memcpy(southBorder, offset, borderSize);
+			}
+
+			// West Border Row
+			{
+				T* westBorderCursor = (T*)westBorder;
+				for (int idx = 0; idx < numElementsPerBorder; idx++)
+				{
+					T* element = get_at_ptr<T>(idx, 0, numElementsPerBorder);
+					*westBorderCursor = *element;
+					westBorderCursor++;
+				}
+			}
+
+			// East Border Row
+			{
+				T* eastBorderCursor = (T*)eastBorder;
+				for (int idx = 0; idx < numElementsPerBorder; idx++)
+				{
+					T* element = get_at_ptr<T>(idx, numElementsPerBorder - 1, numElementsPerBorder);
+					*eastBorderCursor = *element;
+					eastBorderCursor++;
+				}
+			}
+		}
+		template <typename T> __declspec(dllexport) void getBorders(size_t numElementsPerBorder, MemoryBuffer& borderBuffer) // first row upper border, second row lower border, third row left border, fourth row right border
+		{
+			size_t borderSize = numElementsPerBorder * sizeof(T);
+			borderBuffer.reserve(borderSize * 4);	// reserve for 4 borders (UP/NORTH,DOWN/SOUTH,LEFT/WEST,RIGHT/EAST)
+			borderBuffer.adjustSize(borderSize * 4);
+			getBorders<T>(numElementsPerBorder,
+				borderBuffer.ptr() + (borderSize * 0),		// UP/NORTH border
+				borderBuffer.ptr() + (borderSize * 1),		// DOWN/SOUTH border
+				borderBuffer.ptr() + (borderSize * 2),		// LEFT/WEST border
+				borderBuffer.ptr() + (borderSize * 3));		// RIGHT/EAST border
+		}
+		template <typename T> __declspec(dllexport) void getBorders(size_t numElementsPerBorder, MemoryBuffer& northUpBorder, MemoryBuffer& southDownBorder, MemoryBuffer& westLeftBorder, MemoryBuffer& eastRightBorder)
+		{
+			size_t borderSize = numElementsPerBorder * sizeof(T);
+
+			// North/Up Border Row
+			{
+				northUpBorder.set(ptr(), borderSize);
+			}
+
+			// South/Down Border Row
+			{
+				BYTE* offset = ptr() + borderSize * (numElementsPerBorder - 1);
+				southDownBorder.set(offset, borderSize);
+			}
+
+			// West/Left Border Row
+			{
+				westLeftBorder.reserve(borderSize);
+				westLeftBorder.adjustSize(borderSize);
+				for (int idx = 0; idx < numElementsPerBorder; idx++)
+				{
+					T* element = get_at_ptr<T>(idx, 0, numElementsPerBorder);
+					westLeftBorder.set_at_ref<T>(*element, idx, 0, numElementsPerBorder);
+				}
+			}
+
+			// East/Right Border Row
+			{
+				eastRightBorder.reserve(borderSize);
+				eastRightBorder.adjustSize(borderSize);
+				for (int idx = 0; idx < numElementsPerBorder; idx++)
+				{
+					T* element = get_at_ptr<T>(idx, numElementsPerBorder - 1, numElementsPerBorder);
+					eastRightBorder.set_at_ref<T>(*element, idx, 0, numElementsPerBorder);
+				}
+			}
+		}
+		__declspec(dllexport) static size_t getPosXFromIndex(size_t idx, size_t numElementsPerRow)	// 0-based pos X from 0-base index in a row-based buffer
+		{
+			return idx % numElementsPerRow;
+		}
+		__declspec(dllexport) static size_t getPosYFromIndex(size_t idx, size_t numElementsPerRow)	// 0-based pos Y from 0-base index in a row-based buffer
+		{
+			return idx / numElementsPerRow;
+		}
 		template <typename T> __declspec(dllexport) T get_at(size_t idx)
 		{
 			// z-based idx
@@ -365,13 +474,32 @@ namespace TheWorld_Utils
 			return;
 		}
 
-	private:
-		MemoryBuffer(const MemoryBuffer&);
-		//void operator=(const MemoryBuffer&);
+		template <typename T> __declspec(dllexport) void serialize(T in, size_t& offset)
+		{
+			reserve(offset + sizeof(T));		// to avoid memory overflow
+			size_t size = 0;
+			serializeToByteStream<T>(in, ptr() + offset, size);
+			adjustCursorAndSize(offset, size);
+		}
+		__declspec(dllexport) void serialize(BYTE* in, size_t size, size_t& offset);
+		__declspec(dllexport) void serialize(MemoryBuffer& in, size_t& offset);
+		__declspec(dllexport) void serialize(std::string& in, size_t& offset);
 
-		BYTE* m_ptr;
-		size_t m_size;
-		size_t m_bufferSize;
+		template <typename T> __declspec(dllexport) T deserialize(size_t& offset)
+		{
+			T out;
+			size_t size = 0;
+			out = deserializeFromByteStream<T>(ptr() + offset, size);
+			offset += size;
+			return out;
+		}
+		__declspec(dllexport) void deserialize(BYTE* out, size_t sieze, size_t& offset);
+
+	private:
+
+		BYTE* m_ptr = nullptr;
+		size_t m_size = 0;
+		size_t m_bufferSize = 0;
 		std::string m_lastActor;
 		size_t m_allocationSlotSize = 100000;
 	};
@@ -1218,6 +1346,10 @@ namespace TheWorld_Utils
 	class MeshCacheBuffer
 	{
 	public:
+		__declspec(dllexport) static bool cacheQuadrantFormat0(void);
+		__declspec(dllexport) static bool cacheQuadrantFormat1(void);
+		static bool s_cacheQuadrantFormat1;
+
 		class CacheQuadrantData
 		{
 		public:
@@ -1331,6 +1463,8 @@ namespace TheWorld_Utils
 		bool operator<(const MeshCacheBuffer& c) const;
 		bool operator==(const MeshCacheBuffer& c) const;
 
+		__declspec(dllexport) static void calcNormal(TheWorld_Utils::MemoryBuffer& heightmap, size_t numVerticesPerSize, float gridStepInWU, size_t index, float& normalX, float& normalY, float& normalZ);
+		
 		__declspec(dllexport) static uint16_t halfFromFloat(float f);
 		__declspec(dllexport) static uint16_t halfFromFloat(uint32_t f);
 		__declspec(dllexport) static uint32_t halfToFloat(uint16_t f);
@@ -1373,7 +1507,9 @@ namespace TheWorld_Utils
 		__declspec(dllexport) std::string writeBufferToDiskCache(const BYTE* buffer, const size_t bufferSize, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* terrainEdit = nullptr) const;
 		__declspec(dllexport) std::string writeBufferToDiskCache2(const BYTE* buffer, const size_t bufferSize, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* terrainEdit = nullptr);
 		__declspec(dllexport) void setDummyBuffer(std::string meshId, std::string& buffer);
+		__declspec(dllexport) void setDummyBuffer_Format0(std::string meshId, std::string& buffer);
 		__declspec(dllexport) void setDummyBuffer_Format1(std::string meshId, std::string& buffer);
+		__declspec(dllexport) void setBufferFromCacheQuadrantData_Format0(size_t numVerticesPerSize, CacheQuadrantData& cacheQuadrantData, TheWorld_Utils::MemoryBuffer& buffer);
 		__declspec(dllexport) void setBufferFromCacheQuadrantData_Format1(size_t numVerticesPerSize, CacheQuadrantData& cacheQuadrantData, TheWorld_Utils::MemoryBuffer& buffer);
 		__declspec(dllexport) void setBufferFromCacheQuadrantData(size_t numVerticesPerSize, CacheQuadrantData& cacheQuadrantData, TheWorld_Utils::MemoryBuffer& buffer);
 		__declspec(dllexport) void setBufferFromCacheQuadrantData(size_t numVerticesPerSize, CacheQuadrantData& cacheQuadrantData, std::string& buffer);
@@ -1799,27 +1935,6 @@ namespace TheWorld_Utils
 		TheWorld_Utils::MsTimePoint m_lastDiagnosticTime = std::chrono::time_point_cast<TheWorld_Utils::MsTimePoint::duration>(std::chrono::system_clock::now());
 		bool m_lastAllWorkingStatus = false;
 	};
-
-	template <typename T>
-	void serializeToByteStream(T in, BYTE* stream, size_t& size)
-	{
-		T* pIn = &in;
-		BYTE* pc = reinterpret_cast<BYTE*>(pIn);
-		for (size_t i = 0; i < sizeof(T); i++)
-		{
-			stream[i] = *pc;
-			pc++;
-		}
-		size = sizeof(T);
-	}
-
-	template <typename T>
-	T deserializeFromByteStream(BYTE* stream, size_t& size)
-	{
-		T* pOut = reinterpret_cast<T*>(stream);
-		size = sizeof(T);
-		return *pOut;
-	}
 
 	/*static float roundToDigit(float num, int digit)
 	{
