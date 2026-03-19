@@ -2185,7 +2185,7 @@ namespace TheWorld_Utils
 			}
 
 			{
-				TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromDisk 1.3 ") + __FUNCTION__, "readMapsFromMeshCache");
+				TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromDisk 1.3 ") + __FUNCTION__, "refreshMapsFromBuffer");
 
 				refreshMapsFromBuffer(tempBuffer, _meshId, terrainEditValues, minAltitude, maxAltitude, float16HeigthsBuffer, float32HeigthsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, false);
 			}
@@ -2284,7 +2284,7 @@ namespace TheWorld_Utils
 			}
 			if (float32HeightMapSize == 0)
 			{
-				//TheWorld_Utils::GuardProfiler profiler(std::string("refreshMapsFromBuffer calc heights 32 ") + __FUNCTION__, "Loop");
+				TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromBuffer 1.1 ") + __FUNCTION__, "calc heights 32");
 				float32HeightMapSize = vectSize * float_size;
 				float32HeigthsBuffer.reserve(float32HeightMapSize);
 				float32HeigthsBuffer.adjustSize(float32HeightMapSize);
