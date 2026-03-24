@@ -417,6 +417,7 @@ namespace TheWorld_Utils
 		case TerrainEdit::TerrainType::plateau_1:
 		{
 			noise.noiseType = FastNoiseLite::NoiseType::NoiseType_Perlin;
+			//noise.noiseType = FastNoiseLite::NoiseType::NoiseType_OpenSimplex2;
 			noise.rotationType3D = FastNoiseLite::RotationType3D::RotationType3D_None;
 			noise.noiseSeed = 1337;
 			noise.frequency = 0.0005f;

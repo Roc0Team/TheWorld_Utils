@@ -2861,8 +2861,12 @@ namespace TheWorld_Utils
 			{
 				//TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer generateHeights 1.2 ") + __FUNCTION__, "Generate Heights");
 
-				FastNoiseLite noiseLite(terrainEdit->noise.noiseSeed);
+				//FastNoiseLite noiseLite(terrainEdit->noise.noiseSeed);
+				float absProduct = abs(lowerXGridVertex * lowerZGridVertex);
+				int noiseSeed = abs(terrainEdit->noise.noiseSeed + int(absProduct));
+				FastNoiseLite noiseLite(noiseSeed);
 				noiseLite.SetNoiseType((enum FastNoiseLite::NoiseType)terrainEdit->noise.noiseType);
+				//noiseLite.SetNoiseType(FastNoiseLite::NoiseType::NoiseType_OpenSimplex2S);
 				//noiseLite.SetRotationType3D();
 				noiseLite.SetFrequency(terrainEdit->noise.frequency);
 				noiseLite.SetFractalType((enum FastNoiseLite::FractalType)terrainEdit->noise.fractalType);
@@ -2897,8 +2901,8 @@ namespace TheWorld_Utils
 						{
 							//TheWorld_Utils::GuardProfiler profiler(std::string("EditGenerate 1.2.2 ") + __FUNCTION__, "GetNoise main");
 
-							float xf = (lowerXGridVertex + (x * gridStepInWU)) * terrainEdit->noise.scaleFactor_JagIntensity;
-							float zf = (lowerZGridVertex + (z * gridStepInWU)) * terrainEdit->noise.scaleFactor_JagIntensity;
+							float xf = abs((lowerXGridVertex + (x * gridStepInWU)) * terrainEdit->noise.scaleFactor_JagIntensity);
+							float zf = abs((lowerZGridVertex + (z * gridStepInWU)) * terrainEdit->noise.scaleFactor_JagIntensity);
 							altitude = noiseLite.GetNoise(xf, zf);
 							// noises are value in range -1 to 1 we need to interpolate with heightsAmplitude
 							altitude *= (float)(terrainEdit->noise.heightsAmplitude / 2);
