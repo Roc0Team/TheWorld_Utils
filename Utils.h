@@ -366,10 +366,10 @@ namespace TheWorld_Utils
 			borderBuffer.reserve(borderSize * 4);	// reserve for 4 borders (UP/NORTH,DOWN/SOUTH,LEFT/WEST,RIGHT/EAST)
 			borderBuffer.adjustSize(borderSize * 4);
 			getBorders<T>(numElementsPerBorder,
-				borderBuffer.ptr() + (borderSize * 0),		// UP/NORTH border
-				borderBuffer.ptr() + (borderSize * 1),		// DOWN/SOUTH border
-				borderBuffer.ptr() + (borderSize * 2),		// LEFT/WEST border
-				borderBuffer.ptr() + (borderSize * 3));		// RIGHT/EAST border
+													borderBuffer.ptr() + (borderSize * 0),		// UP/NORTH border
+													borderBuffer.ptr() + (borderSize * 1),		// DOWN/SOUTH border
+													borderBuffer.ptr() + (borderSize * 2),		// LEFT/WEST border
+													borderBuffer.ptr() + (borderSize * 3));		// RIGHT/EAST border
 		}
 		template <typename T> __declspec(dllexport) void getBorders(size_t numElementsPerBorder, MemoryBuffer& northUpBorder, MemoryBuffer& southDownBorder, MemoryBuffer& westLeftBorder, MemoryBuffer& eastRightBorder)
 		{

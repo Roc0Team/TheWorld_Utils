@@ -3315,13 +3315,12 @@ namespace TheWorld_Utils
 		size_t normalmapSize = numNormals > 0 ? numNormals * sizeof(TheWorld_Utils::_RGB) : 0;
 		size_t splatmapSize = numSplatmapVertices > 0 ? numSplatmapVertices * sizeof(TheWorld_Utils::_RGBA) : 0;
 		size_t colormapSize = numColormapVertices > 0 ? numColormapVertices * sizeof(TheWorld_Utils::_RGBA) : 0;
-		//size_t globalmapSize = numGlobalmapVertices > 0 ? numGlobalmapVertices * sizeof(TheWorld_Utils::_RGB) : 0;
 		size_t globalmapSize = cacheQuadrantData.globalmapBuffer == nullptr ? 0 : cacheQuadrantData.globalmapBuffer->size();
 
-		float32HeightmapSize = 0;	// for now we don't want to use float32 heights in cache quadrant buffers, we will generate them on the fly when needed (we want to save memory and bandwidth, and float32 heights are heavy to be generated on the fly)
-		normalmapSize = 0;			// for now we don't want to use normals in cache quadrant buffers, we will generate them on the fly when needed (we want to save memory and bandwidth, and normals are not so heavy to be generated on the fly)
-		colormapSize = 0;			// for now we don't want to use colormap in cache quadrant buffers, we will generate them on the fly when needed (we want to save memory and bandwidth, and colormap are not so heavy to be generated on the fly)
-		//globalmapSize = 0;			// for now we don't want to use globalmap in cache quadrant buffers, we will generate them on the fly when needed (we want to save memory and bandwidth, and globalmap are not so heavy to be generated on the fly)
+		// Forcing not to save 32 heights and normals in the buffer to save memory, cache disk space and bandwidth (they must be generated on the fly by heights 16 and normals directly by the shader)
+		float32HeightmapSize = 0;	// for now we don't want to use float32 heights in cache quadrant buffers, we will generate them on the fly when needed (we want to save memory and bandwidth)
+		normalmapSize = 0;			// for now we don't want to use normals in cache quadrant buffers, we will generate them on the fly when needed (we want to save memory and bandwidth)
+		colormapSize = 0;			// colormaps are not used atm
 
 		size_t terrainEditValueSize = cacheQuadrantData.terrainEditValues == nullptr ? 0 : cacheQuadrantData.terrainEditValues->size();
 		size_t streamBufferSize = 1	/* buffer format "0"/"1" */
