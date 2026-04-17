@@ -2515,7 +2515,7 @@ namespace TheWorld_Utils
 	}
 
 	
-	void MeshCacheBuffer::readBufferFromDisk(std::string _meshId, TheWorld_Utils::MemoryBuffer& buffer, bool workDir, TerrainEdit* terrainEdit)
+	void MeshCacheBuffer::readBufferFromDisk(std::string _meshId, TheWorld_Utils::MemoryBuffer& buffer, bool workDir, TerrainEdit* terrainEdit, bool onlyTerrainEdit)
 	{
 		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer readBufferFromDisk 1 ") + __FUNCTION__, "ALL");
 
@@ -2606,6 +2606,13 @@ namespace TheWorld_Utils
 			}
 			terrainEditBuffer.adjustSize(terrainEditSize);
 			terrainEdit->deserialize(terrainEditBuffer);
+
+			if (onlyTerrainEdit)
+			{
+				fclose(inFile);
+				buffer.clear(__FUNCTION__);
+				return;
+			}
 		}
 		
 		buffer.reserve(streamBufferSize);
