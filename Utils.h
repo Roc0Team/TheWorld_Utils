@@ -182,6 +182,7 @@ namespace TheWorld_Utils
 		size_t m_numBlendedQuadrants = 0;
 		size_t m_numQuadrantsToBlend = 0;
 		size_t m_numQuadrantsToElabClientSide = 0;
+		size_t m_quadrantsToProcessServerSide = 0;
 	};
 	
 	class Exception : public std::exception
