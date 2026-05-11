@@ -801,6 +801,22 @@ namespace TheWorld_Utils
 		return ret;
 	}
 
+	constexpr auto QUADRANT_TRACKING_IDX_POS_X = -61;
+	constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -66;
+
+	bool QuadrantPos::isQuadrantTrackedForDebug(void) const
+	{
+		return (isInitialized() and m_quadrantPosX == QUADRANT_TRACKING_IDX_POS_X and m_quadrantPosZ == QUADRANT_TRACKING_IDX_POS_Z);
+	}
+
+	void QuadrantPos::trackQuadrantForDebug(std::string owner, std::string text) const
+	{
+		if (isQuadrantTrackedForDebug())
+		{
+			PLOG_DEBUG << "Tracking Quadrant " << getIdStr() << (text.size() > 0 ? " - " + text : "");
+		}
+	}
+
 	TerrainEdit::TerrainEdit(enum class TerrainEdit::TerrainType terrainType)
 	{
 		size = sizeof(TerrainEdit);
@@ -1870,8 +1886,16 @@ namespace TheWorld_Utils
 		return ret;
 	}
 
-	bool MeshCacheBuffer::firstMeshIdMoreRecent(std::string& firstMeshId, std::string& secondMeshId)
+	bool MeshCacheBuffer::firstMeshIdMoreRecent(std::string firstMeshId, std::string secondMeshId)
 	{
+		return firstMeshIdMoreRecentRef(firstMeshId, secondMeshId);
+	}
+		
+	bool MeshCacheBuffer::firstMeshIdMoreRecentRef(std::string& firstMeshId, std::string& secondMeshId)
+	{
+		if (firstMeshId == secondMeshId)
+			return false;
+		
 		size_t size = 0;
 		//BYTE shortBuffer[256 + 1];
 
@@ -2034,6 +2058,11 @@ namespace TheWorld_Utils
 			}
 	}
 	
+	void MeshCacheBuffer::getTerrainEdit(TerrainEdit& terrainEdit, bool workDir, bool updateLastAccessTime)
+	{
+		getMeshIdFromDisk(workDir, &terrainEdit, updateLastAccessTime);
+	}
+
 	std::string MeshCacheBuffer::getMeshIdFromDisk(bool workDir, TerrainEdit* terrainEdit, bool updateLastAccessTime)
 	{
 		//TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer getMeshIdFromCache 1") + __FUNCTION__, "ALL");
@@ -2153,7 +2182,8 @@ namespace TheWorld_Utils
 		
 	std::string MeshCacheBuffer::getCacheIdStr(void)
 	{
-		return "WORLD QUADRANT-" + m_mapName + "_ST-" + std::to_string(m_gridStepInWU) + "_SZ-" + std::to_string(m_numVerticesPerSize) + "_L-" + std::to_string(m_level) + "_X-" + std::to_string(m_lowerXGridVertex) + "_Z-" + std::to_string(m_lowerZGridVertex) + " Hash=" + meshIdToPrint(m_meshId);
+		QuadrantPos pos(m_lowerXGridVertex, m_lowerZGridVertex, m_level, int(m_numVerticesPerSize), m_gridStepInWU);
+		return "WORLD QUADRANT " + m_mapName + " " + pos.getIdStr() + " Hash=" + meshIdToPrint(m_meshId);
 	}
 
 	bool MeshCacheBuffer::refreshMapsFromDisk(size_t numVerticesPerSize, float gridStepInWU, std::string _meshId, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer)
@@ -2483,9 +2513,37 @@ namespace TheWorld_Utils
 		refreshCacheQuadrantDataFromBuffer((BYTE*)buffer.c_str(), buffer.size(), cacheQuadrantData, updateCache);
 	}
 
-	void MeshCacheBuffer::refreshInternalCacheQuadrantDataFromDisk(bool workDir, bool force, bool renewMeshId)
+	void MeshCacheBuffer::refreshInternalCacheQuadrantDataFromDisk(bool force, bool renewMeshId)
 	{
 		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshInternalCacheQuadrantDataFromDisk 1 ") + __FUNCTION__, "ALL");
+
+		if (force || !m_internalCacheQuadrantData.buffersAllocated())
+		{
+			bool workDir = true;
+
+			TheWorld_Utils::MeshCacheBuffer cacheWorkDir = *this;
+			std::string workMeshId = cacheWorkDir.getMeshIdFromDisk(true);
+			TheWorld_Utils::MeshCacheBuffer cache = *this;
+			std::string meshId = cache.getMeshIdFromDisk(false);
+			if (meshId.size() == 0)
+				workDir = true;
+			else if (workMeshId.size() == 0)
+				workDir = false;
+			else
+			{
+				if (firstMeshIdMoreRecentRef(workMeshId, meshId))
+					workDir = true;
+				else
+					workDir = false;
+			}
+
+			refreshInternalCacheQuadrantDataFromDisk(workDir, force, renewMeshId);
+		}
+	}
+		
+	void MeshCacheBuffer::refreshInternalCacheQuadrantDataFromDisk(bool workDir, bool force, bool renewMeshId)
+	{
+		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshInternalCacheQuadrantDataFromDisk 2 ") + __FUNCTION__, "ALL");
 
 		if (force || !m_internalCacheQuadrantData.buffersAllocated())
 		{
@@ -4016,7 +4074,7 @@ namespace TheWorld_Utils
 		m_meshId = meshId;
 	}
 
-	bool MeshCacheBuffer::blendQuadrant(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
+	bool MeshCacheBuffer::blendQuadrant(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase, bool renewMeshIdOnUpdate,
 		CacheQuadrantData& data,
 		CacheQuadrantData& northData,
 		CacheQuadrantData& southData,
@@ -4194,6 +4252,28 @@ namespace TheWorld_Utils
 			calcMinMaxHeight(numVerticesPerSize, southeastTerrainEdit, *southeastData.heights32Buffer);
 		}
 
+		if (renewMeshIdOnUpdate)
+		{
+			if (data.heightsUpdated)
+				data.meshId = TheWorld_Utils::MeshCacheBuffer::generateNewMeshId();	// update meshId as heights updated
+			if (northData.heightsUpdated)
+				northData.meshId = TheWorld_Utils::MeshCacheBuffer::generateNewMeshId();
+			if (southData.heightsUpdated)
+				southData.meshId = TheWorld_Utils::MeshCacheBuffer::generateNewMeshId();
+			if (westData.heightsUpdated)
+				westData.meshId = TheWorld_Utils::MeshCacheBuffer::generateNewMeshId();
+			if (eastData.heightsUpdated)
+				eastData.meshId = TheWorld_Utils::MeshCacheBuffer::generateNewMeshId();
+			if (northwestData.heightsUpdated)
+				northwestData.meshId = TheWorld_Utils::MeshCacheBuffer::generateNewMeshId();
+			if (northeastData.heightsUpdated)
+				northeastData.meshId = TheWorld_Utils::MeshCacheBuffer::generateNewMeshId();
+			if (southwestData.heightsUpdated)
+				southwestData.meshId = TheWorld_Utils::MeshCacheBuffer::generateNewMeshId();
+			if (southeastData.heightsUpdated)
+				southeastData.meshId = TheWorld_Utils::MeshCacheBuffer::generateNewMeshId();
+		}
+		
 		return updated;
 	}
 
