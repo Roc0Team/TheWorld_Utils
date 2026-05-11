@@ -1513,11 +1513,11 @@ namespace TheWorld_Utils
 		__declspec(dllexport) CacheQuadrantData* internalCacheQuadrantData(void);
 		__declspec(dllexport) void readBufferFromDisk(std::string meshId, TheWorld_Utils::MemoryBuffer& buffer, bool workDir = false, TerrainEdit* terrainEdit = nullptr, bool onlyTerrainEdit = false);
 		__declspec(dllexport) void readBufferFromDisk(std::string meshId, std::string& buffer, bool workDir = false, TerrainEdit* terrainEdit = nullptr);
-		__declspec(dllexport) std::string writeBufferToDiskCache(std::string& buffer, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* terrainEdit = nullptr) const;
+		__declspec(dllexport) std::string writeBufferToDiskCache(std::string& buffer, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* terrainEdit = nullptr);
 		__declspec(dllexport) std::string writeBufferToDiskCache2(std::string& buffer, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* terrainEdit = nullptr);
-		__declspec(dllexport) std::string writeBufferToDiskCache(TheWorld_Utils::MemoryBuffer& buffer, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* terrainEdit = nullptr) const;
+		__declspec(dllexport) std::string writeBufferToDiskCache(TheWorld_Utils::MemoryBuffer& buffer, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* terrainEdit = nullptr);
 		__declspec(dllexport) std::string writeBufferToDiskCache2(TheWorld_Utils::MemoryBuffer& buffer, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* terrainEdit = nullptr);
-		__declspec(dllexport) std::string writeBufferToDiskCache(const BYTE* buffer, const size_t bufferSize, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* terrainEdit = nullptr) const;
+		__declspec(dllexport) std::string writeBufferToDiskCache(const BYTE* buffer, const size_t bufferSize, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* terrainEdit = nullptr) ;
 		__declspec(dllexport) std::string writeBufferToDiskCache2(const BYTE* buffer, const size_t bufferSize, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* terrainEdit = nullptr);
 		__declspec(dllexport) void setDummyBuffer(std::string meshId, std::string& buffer);
 		__declspec(dllexport) void setDummyBuffer_Format0(std::string meshId, std::string& buffer);

@@ -801,8 +801,8 @@ namespace TheWorld_Utils
 		return ret;
 	}
 
-	constexpr auto QUADRANT_TRACKING_IDX_POS_X = -61;
-	constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -66;
+	constexpr auto QUADRANT_TRACKING_IDX_POS_X = -52;
+	constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -59;
 
 	bool QuadrantPos::isQuadrantTrackedForDebug(void) const
 	{
@@ -811,6 +811,7 @@ namespace TheWorld_Utils
 
 	void QuadrantPos::trackQuadrantForDebug(std::string owner, std::string text) const
 	{
+		return;
 		if (isQuadrantTrackedForDebug())
 		{
 			PLOG_DEBUG << "Tracking Quadrant " << getIdStr() << (text.size() > 0 ? " - " + text : "");
@@ -2719,7 +2720,7 @@ namespace TheWorld_Utils
 		return bufferMeshId;
 	}
 
-	std::string MeshCacheBuffer::writeBufferToDiskCache(std::string& buffer, std::string& writtenMeshId, bool renewMeshId, bool workDir, TerrainEdit* terrainEdit) const
+	std::string MeshCacheBuffer::writeBufferToDiskCache(std::string& buffer, std::string& writtenMeshId, bool renewMeshId, bool workDir, TerrainEdit* terrainEdit)
 	{
 		std::string bufferMeshId = writeBufferToDiskCache((BYTE*)buffer.c_str(), buffer.size(), writtenMeshId, renewMeshId, workDir, terrainEdit);
 		return bufferMeshId;
@@ -2732,7 +2733,7 @@ namespace TheWorld_Utils
 		return bufferMeshId;
 	}
 
-	std::string MeshCacheBuffer::writeBufferToDiskCache(TheWorld_Utils::MemoryBuffer& buffer, std::string& writtenMeshId, bool renewMeshId, bool workDir, TerrainEdit* terrainEdit) const
+	std::string MeshCacheBuffer::writeBufferToDiskCache(TheWorld_Utils::MemoryBuffer& buffer, std::string& writtenMeshId, bool renewMeshId, bool workDir, TerrainEdit* terrainEdit)
 	{
 		std::string bufferMeshId = writeBufferToDiskCache(buffer.ptr(), buffer.size(), writtenMeshId, renewMeshId, workDir, terrainEdit);
 		return bufferMeshId;
@@ -2745,7 +2746,7 @@ namespace TheWorld_Utils
 		return bufferMeshId;
 	}
 
-	std::string MeshCacheBuffer::writeBufferToDiskCache(const BYTE* buffer, const size_t bufferSize, std::string& writtenMeshId, bool renewMeshId, bool workDir, TerrainEdit* terrainEdit) const
+	std::string MeshCacheBuffer::writeBufferToDiskCache(const BYTE* buffer, const size_t bufferSize, std::string& writtenMeshId, bool renewMeshId, bool workDir, TerrainEdit* terrainEdit)
 	{
 		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer writeBufferToCache 1 ") + __FUNCTION__, "ALL");
 
@@ -2782,6 +2783,9 @@ namespace TheWorld_Utils
 			movingStreamBuffer += meshIdSize;				// bypass MeshId
 			writtenMeshId = bufferMeshId;
 		}
+
+		TheWorld_Utils::QuadrantPos pos = getQuadrantPos();
+		PLOG_VERBOSE << "Quadrant " << pos.getIdStr() << " saved to " << (workDir ? "work " : "") << "disk cache with hash[" << TheWorld_Utils::MeshCacheBuffer::meshIdToPrint1(writtenMeshId) << "]";
 
 		if (terrainEdit != nullptr)
 		{
