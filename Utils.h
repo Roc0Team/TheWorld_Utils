@@ -26,6 +26,7 @@
 #include <functional>
 #include <exception>
 #include <filesystem>
+#include <variant>
 #include <plog/Log.h>
 #include "gsl\assert"
 
@@ -33,6 +34,10 @@
 #pragma warning (disable : 26495)
 #include <Eigen/Dense>
 #pragma warning(pop)
+
+constexpr auto THEWORLD_QUADRANT_NAMEDATA_NORTHQUADSPLATMAPROW = "NorthQuadSplatmapRow";
+constexpr auto THEWORLD_QUADRANT_NAMEDATA_WESTQUADSPLATMAPROW = "WestQuadSplatmapRow";
+constexpr auto THEWORLD_QUADRANT_NAMEDATA_NORTHWESTQUADSPLATMAPTEXEL = "NorthWestQuadSplatmapTexel";
 
 #define THEWORLD_SEA_LEVEL				0.0f
 #define THEWORLD_SEA_MAX_WAVE_HEIGHT	30.0f
@@ -263,6 +268,7 @@ namespace TheWorld_Utils
 		__declspec(dllexport) MemoryBuffer(void);
 		__declspec(dllexport) MemoryBuffer(BYTE* in, size_t size);
 		__declspec(dllexport) MemoryBuffer(const MemoryBuffer&);
+		__declspec(dllexport) MemoryBuffer(const std::string&);
 		__declspec(dllexport) ~MemoryBuffer(void);
 		template <typename T> __declspec(dllexport) void init(size_t numElements)
 		{
@@ -282,7 +288,10 @@ namespace TheWorld_Utils
 				ptr[i] = element;
 			}
 		}
+		__declspec(dllexport) void getPart(MemoryBuffer& outBuffer, size_t offset, int64_t length = -1);
+
 		__declspec(dllexport) void set(BYTE* in, size_t size);
+		__declspec(dllexport) void setPart(MemoryBuffer& inBuffer, size_t offset);
 		__declspec(dllexport) void setPart(BYTE* in, size_t size, size_t offset);
 		__declspec(dllexport) void setPartOfRow(BYTE* in, size_t size, size_t row, size_t col, size_t rowSizeInBytes);	// z-based col/row expressed in bytes
 		template <typename T> __declspec(dllexport) void setPartOfRow(T* in, size_t numElements, size_t row, size_t col, size_t numElementsPerRow)
@@ -324,6 +333,8 @@ namespace TheWorld_Utils
 		__declspec(dllexport) void fromString(std::string& buffer);
 		__declspec(dllexport) void allocationSlotSize(size_t _allocationSlotSize);
 		__declspec(dllexport) void operator=(const MemoryBuffer& o);
+		__declspec(dllexport) void operator=(const std::string& o);
+		__declspec(dllexport) bool operator==(const MemoryBuffer& o) const;
 		template <typename T> __declspec(dllexport) void getBorders(size_t numElementsPerBorder, BYTE* northBorder, BYTE* southBorder, BYTE* westBorder, BYTE* eastBorder)
 		{
 			size_t borderSize = numElementsPerBorder * sizeof(T);
@@ -475,18 +486,36 @@ namespace TheWorld_Utils
 			return;
 		}
 
-		template <typename T> __declspec(dllexport) void serialize(T in, size_t& offset)
+		template <typename T> __declspec(dllexport) void serializeToBufferAndTruncate(T in, size_t& offset)
 		{
+			serializeToBuffer<T>(in, offset, true);
+		}
+
+		template <typename T> __declspec(dllexport) void serializeToBuffer(T in, size_t& offset, bool truncate)
+		{
+			if (int64_t(offset) < 0)			// to append to the end of the buffer
+				offset = size();
+			
 			reserve(offset + sizeof(T));		// to avoid memory overflow
 			size_t size = 0;
 			serializeToByteStream<T>(in, ptr() + offset, size);
-			adjustCursorAndSize(offset, size);
+			if (truncate)
+				adjustCursorAndSize(offset, size);
+			else
+				offset += size;
 		}
-		__declspec(dllexport) void serialize(BYTE* in, size_t size, size_t& offset);
-		__declspec(dllexport) void serialize(MemoryBuffer& in, size_t& offset);
-		__declspec(dllexport) void serialize(std::string& in, size_t& offset);
-
-		template <typename T> __declspec(dllexport) T deserialize(size_t& offset)
+		__declspec(dllexport) void serializeToBufferAndTruncate(BYTE* in, size_t size, size_t& offset);
+		__declspec(dllexport) void serializeToBuffer(BYTE* in, size_t size, size_t& offset, bool truncate);
+		__declspec(dllexport) void serializeToBufferAndTruncate(MemoryBuffer& in, size_t& offset);
+		__declspec(dllexport) void serializeToBuffer(MemoryBuffer& in, size_t& offset, bool truncate);
+		__declspec(dllexport) void serializeToBufferAndTruncate(std::string& in, size_t& offset);
+		__declspec(dllexport) void serializeToBuffer(std::string& in, size_t& offset, bool truncate);
+		__declspec(dllexport) void serializeStringToBufferAndTruncate(std::string& s, size_t& offset);
+		__declspec(dllexport) void serializeStringToBuffer(std::string& s, size_t& offset, bool truncate);
+		__declspec(dllexport) void serializeMemoryBufferToBufferAndTruncate(MemoryBuffer& buffer, size_t& offset);
+		__declspec(dllexport) void serializeMemoryBufferToBuffer(MemoryBuffer& buffer, size_t& offset, bool truncate);
+		
+		template <typename T> __declspec(dllexport) T deserializeFromBuffer(size_t& offset)
 		{
 			T out;
 			size_t size = 0;
@@ -494,7 +523,9 @@ namespace TheWorld_Utils
 			offset += size;
 			return out;
 		}
-		__declspec(dllexport) void deserialize(BYTE* out, size_t sieze, size_t& offset);
+		__declspec(dllexport) void deserializeFromBuffer(BYTE* out, size_t size, size_t& offset);
+		__declspec(dllexport) std::string deserializeStringFromBuffer(size_t& offset);
+		__declspec(dllexport) MemoryBuffer deserializeMemoryBufferFromBuffer(size_t& offset);
 
 	private:
 
@@ -503,6 +534,446 @@ namespace TheWorld_Utils
 		size_t m_bufferSize = 0;
 		std::string m_lastActor;
 		size_t m_allocationSlotSize = 100000;
+	};
+
+	class NamedDataBuffer
+	{
+	public:
+		typedef std::variant<std::monostate, int32_t, int64_t, size_t, float, double, std::string, MemoryBuffer> NamedDataBufferVariant;
+
+		enum class Type
+		{
+			NotSet = -1
+			, Unknown = 0
+			, Int32	= 1		// int32_t
+			, Int64	= 2		// int64_t
+			, Size = 3		// size_t
+			, Float	= 4		// float
+			, Double = 5	// double
+			, String = 6	// std::string
+			, Buffer = 7	// TheWorld_Utils::MemoryBuffer
+			, Group = 8		// TheWorld_Utils::MemoryBuffer
+		};
+
+		class NamedDataBufferData
+		{
+		public:
+			NamedDataBufferData(std::string name, enum class Type type, int32_t flags, NamedDataBufferVariant v)
+			{
+				this->m_name = name;
+				this->m_type = type;
+				this->m_v = v;
+				this->m_flags = flags;
+			}
+			NamedDataBufferData(void)
+			{
+			}
+			NamedDataBufferData(const NamedDataBufferData& o)
+			{
+				*this = o;
+			}
+
+			void operator=(const NamedDataBufferData& o)
+			{
+				this->m_name = o.m_name;
+				this->m_type = o.m_type;
+				this->m_v = o.m_v;
+				this->m_flags = o.m_flags;
+			}
+
+			bool empty(void)
+			{
+				return NamedDataBuffer::emptyVariant(m_v);
+			}
+
+			std::string name(void) const
+			{
+				return m_name;
+			}
+			int32_t flags(void) const
+			{
+				return m_flags;
+			}
+			enum class Type type(void) const
+			{
+				return m_type;
+			}
+			NamedDataBufferVariant& v(void)
+			{
+				return m_v;
+			}
+			template <typename T> T get(void)
+			{
+				return std::get<T>(m_v);
+			}
+			template <typename T> operator T() const
+			{
+				return std::get<T>(m_v);
+			}
+			//std::string toString(void) const	// useless sane as get<std::string>()
+			//{
+			//	std::string s = std::get<std::string>(m_v);
+			//	return s;
+			//}
+
+
+		private:
+			std::string m_name;
+			int32_t m_flags = 0;
+			enum class Type m_type = Type::NotSet;
+			NamedDataBufferVariant m_v;
+		};
+
+	public:
+		__declspec(dllexport) static bool emptyVariant(NamedDataBufferVariant& v);
+		template <typename T> __declspec(dllexport) static bool correctType(NamedDataBufferVariant& v)
+		{
+			return std::holds_alternative<T>(v);
+		}
+
+		__declspec(dllexport) NamedDataBuffer(void);
+		__declspec(dllexport) NamedDataBuffer(NamedDataBuffer& buffer);
+		__declspec(dllexport) NamedDataBuffer(MemoryBuffer& buffer);
+		__declspec(dllexport) ~NamedDataBuffer(void);
+
+		__declspec(dllexport) void initialize(void);
+		__declspec(dllexport) bool initialized(void) const;
+		__declspec(dllexport) void deinitialize(void);
+		__declspec(dllexport) bool deinitialized(void) const;
+		__declspec(dllexport) void free(void);
+		__declspec(dllexport) bool freed(void) const;
+		__declspec(dllexport) void resetEmpty(void);
+
+		__declspec(dllexport) size_t internalBufferSize(void) const;
+		__declspec(dllexport) size_t memoryOccupation(void) const;
+
+		__declspec(dllexport) size_t serializedSize(void);
+		__declspec(dllexport) void serialize(BYTE* ptr, size_t& size, bool preSerializationDone = false);
+		__declspec(dllexport) void serialize(MemoryBuffer& buffer);
+		__declspec(dllexport) void deserialize(BYTE* ptr, size_t& size);
+		__declspec(dllexport) void deserialize(MemoryBuffer& buffer);
+
+		__declspec(dllexport) MemoryBuffer& getInternalBuffer(void);
+
+		__declspec(dllexport) void operator=(NamedDataBuffer& o);
+		//__declspec(dllexport) bool operator==(NamedDataBuffer& o);
+
+		template <typename T> __declspec(dllexport) NamedDataBufferVariant getVariant(std::string name, int32_t& flags)
+		{
+			enum class Type type = getType<T>();
+			if (type == Type::Unknown or type == Type::NotSet or type == Type::Group)
+				throw new TheWorld_Utils::Exception(__FUNCTION__, "Unsupported type for getVariant");
+
+			T element = T();
+			bool found = false;
+			if (type == Type::Buffer or type == Type::String)
+				found = get(element, name, flags);
+			else
+				found = get<T>(element, name, flags);
+			
+			if (!found)
+				return NamedDataBufferVariant();
+			return element;
+		}
+		
+		__declspec(dllexport) NamedDataBufferVariant getVariant(std::string name, int32_t& flags)
+		{
+			int64_t offset = find(name);
+			if (offset < 0)
+				return NamedDataBufferVariant();
+
+			enum class Type type;
+			size_t lenBuffer;
+			getElementInfo(offset, name, type, lenBuffer, flags);
+			if (type == Type::Unknown or type == Type::NotSet or type == Type::Group)
+				throw new TheWorld_Utils::Exception(__FUNCTION__, "Unsupported type for getVariant");
+
+			if (type == Type::String)
+			{
+				std::string element;
+				bool found = get(element, name, flags);
+				my_assert(found);
+				return element;
+			}
+			else if (type == Type::Buffer)
+			{
+				MemoryBuffer element;
+				bool found = get(element, name, flags);
+				my_assert(found);
+				return element;
+			}
+			else if(type == Type::Int32)
+			{
+				int32_t element;
+				bool found = get(element, name, flags);
+				my_assert(found);
+				return element;
+			}
+			else if (type == Type::Int64)
+			{
+				int64_t element;
+				bool found = get(element, name, flags);
+				my_assert(found);
+				return element;
+			}
+			else if (type == Type::Size)
+			{
+				size_t element;
+				bool found = get(element, name, flags);
+				my_assert(found);
+				return element;
+			}
+			else if (type == Type::Float)
+			{
+				float element;
+				bool found = get(element, name, flags);
+				my_assert(found);
+				return element;
+			}
+			else if (type == Type::Double)
+			{
+				double element;
+				bool found = get(element, name, flags);
+				my_assert(found);
+				return element;
+			}
+			else
+				return NamedDataBufferVariant();
+		}
+
+		__declspec(dllexport) bool add(MemoryBuffer& buffer, std::string name, bool canReplace = true);
+		__declspec(dllexport) bool add(std::string& s, std::string name, bool canReplace = true);
+		template <typename T> __declspec(dllexport) bool add(T& element, std::string name, bool canReplace = true)
+		{
+			initialize();
+			
+			std::string groupName = extractFirstGroup(name);
+			if (groupName.size() > 0)
+			{
+				// the name contains a group: inefficient way to add a string to a group, but it is not expected to be used frequently, best is to create a MemoryBuffer add elements in it and then add the MemoryBuffer as group to the NamedDataBuffer
+				MemoryBuffer groupBuffer;
+				int32_t groupFlags = 0;
+				bool found = getGroup(groupBuffer, groupName, groupFlags);
+				NamedDataBuffer groupDataBuffer(groupBuffer);
+				bool added = groupDataBuffer.add<T>(element, name);
+				if (added)
+					added = addGroup(groupDataBuffer, groupName);
+				return added;
+			}
+
+			enum class Type type = getType<T>();
+			if (type == Type::Unknown or type == Type::NotSet or type == Type::Buffer or type == Type::String)
+				return false;
+			
+			bool replace = false;
+			int64_t dataOffset = -1;
+			if (exists(name, dataOffset))
+			{
+				if (canReplace)
+				{
+					replace = true;
+				}
+				else
+					return false;	
+			}
+
+			int32_t _flags = 0;	// not used atm
+			
+			if (replace)
+			{
+				size_t _offset = dataOffset + sizeof(size_t) + name.size();	// skip name length and name as they are not changing
+				m_internalBuffer->serializeToBuffer<int32_t>(_flags, _offset, false);
+				m_internalBuffer->serializeToBuffer<int32_t>(static_cast<int32_t>(type), _offset, false);	// new data type
+				size_t offset = _offset;	// saving offset pointing to data size: offset is now pointing to the data size
+				size_t oldDataSize = m_internalBuffer->deserializeFromBuffer<size_t>(_offset);	// get old data size to know how many bytes to remove from the buffer: _offset is now pointing to the data
+				size_t newDataSize = sizeof(T);
+				if (newDataSize == oldDataSize)
+				{
+					m_internalBuffer->serializeToBuffer<T>(element, _offset, false);	// replacing size and string with the new one of the same length
+				}
+				else if (newDataSize < oldDataSize)
+				{
+					m_internalBuffer->serializeToBuffer<size_t>(sizeof(T), offset, false);	// replacing new size of the buffer: after serialization offset will point to the start of the data 
+					m_internalBuffer->serializeToBuffer<T>(element, offset, false);	// replacing old data with the new one of smaller length: after serialization offset will point to the end of the new data
+					size_t sizeDiff = oldDataSize - newDataSize;
+					memmove(m_internalBuffer->ptr() + offset, m_internalBuffer->ptr() + offset + sizeDiff, m_internalBuffer->size() - (offset + sizeDiff));	// move data after the string to remove the remaining bytes of the old string
+					m_internalBuffer->adjustSize(m_internalBuffer->size() - sizeDiff);	// adjust buffer size to remove the remaining bytes at the end of the buffer
+				}
+				else	// newDataSize > oldDataSize
+				{
+					size_t sizeDiff = newDataSize - oldDataSize;
+					size_t newBufferSize = m_internalBuffer->size() + sizeDiff;
+					MemoryBuffer tempBuffer;
+					m_internalBuffer->getPart(tempBuffer, _offset + oldDataSize);	// save data after the old Data to the end of the buffer to move it later
+					m_internalBuffer->adjustSize(newBufferSize);	// adjust buffer size and move data after the string to make room for the remaining bytes of the new string
+					m_internalBuffer->serializeToBuffer<size_t>(sizeof(T), offset, false);	// replacing new size of the buffer: after serialization offset will point to the start of the data 
+					m_internalBuffer->serializeToBuffer<T>(element, offset, false);	// replacing old data with the new one of greater length: after serialization offset will point to the end of the new data
+					m_internalBuffer->setPart(tempBuffer, offset);	// move data after the old string to the end of the new string
+					my_assert(tempBuffer.size() + offset == newBufferSize);
+				}
+			}
+			else
+			{
+				size_t offset = -1;		// append to the end of the buffer
+				m_internalBuffer->serializeStringToBufferAndTruncate(name, offset);
+				m_internalBuffer->serializeToBufferAndTruncate<int32_t>(_flags, offset);
+				m_internalBuffer->serializeToBufferAndTruncate<int32_t>(static_cast<int32_t>(type), offset);
+				m_internalBuffer->serializeToBufferAndTruncate<size_t>(sizeof(T), offset);
+				m_internalBuffer->serializeToBufferAndTruncate<T>(element, offset);
+			}
+			
+			return true;
+		}
+
+		__declspec(dllexport) bool get(MemoryBuffer& buffer, std::string name, int32_t& flags);
+		__declspec(dllexport) bool get(std::string& s, std::string name, int32_t& flags);
+		template <typename T> __declspec(dllexport) bool get(T& element, std::string name, int32_t& flags)
+		{
+			if (not initialized())
+				return false;
+			
+			std::string groupName = extractFirstGroup(name);
+			if (groupName.size() > 0)
+			{
+				// the name contains a group
+				MemoryBuffer groupBuffer;
+				int32_t groupFlags = 0;
+				bool found = getGroup(groupBuffer, groupName, groupFlags);
+				if (!found)
+					return false;
+				NamedDataBuffer groupDataBuffer(groupBuffer);
+				return groupDataBuffer.get<T>(element, name, flags);
+			}
+
+			int64_t _offset = find(name);
+			if (_offset < 0)
+				return false;
+
+			size_t offset = size_t(_offset);
+			
+			std::string _name;
+			enum class Type type;
+			size_t lenBuffer;
+			getElementInfo(offset, _name, type, lenBuffer, flags);
+			
+			if (lenBuffer != sizeof(T))
+				return false;
+
+			if (!isSameType<T>(type))
+				return false;
+
+			offset = offset + sizeof(size_t) + _name.size() + sizeof(int32_t) + sizeof(int32_t) + sizeof(size_t);	// skip name length, name, flags, type info and buffer length info to get to the buffer data
+			
+			element = m_internalBuffer->deserializeFromBuffer<T>(offset);
+			
+			return true;
+		}
+
+		//template <typename T> __declspec(dllexport) const T& operator[](std::string name)
+		//{
+		//	int32_t _flags = 0;
+		//	return std::get<T>(getVariant<T>(name, _flags));
+		//}
+		__declspec(dllexport) const NamedDataBufferVariant operator[](std::string name)
+		{
+			int32_t _flags = 0;
+			return getVariant(name, _flags);
+		}
+
+		__declspec(dllexport) bool addGroup(NamedDataBuffer& buffer, std::string name, bool canReplace = true);
+		__declspec(dllexport) bool addGroup(MemoryBuffer& buffer, std::string name, bool canReplace = true);
+		__declspec(dllexport) bool getGroup(NamedDataBuffer& buffer, std::string name, int32_t& flags);
+		__declspec(dllexport) bool getGroup(MemoryBuffer& buffer, std::string name, int32_t& flags);
+
+		__declspec(dllexport) bool remove(std::string name);
+
+		__declspec(dllexport) bool exists(std::string name);
+		template <typename T> __declspec(dllexport) bool exists(std::string name)
+		{
+			int64_t offset = find<T>(name);
+			return offset >= 0;
+		}
+
+		__declspec(dllexport) void getNames(std::vector<std::string>& names);
+		__declspec(dllexport) void getValues(std::vector<NamedDataBufferData>& values);
+		__declspec(dllexport) void getValues(std::map<std::string, NamedDataBuffer::NamedDataBufferData>& values);
+
+	private:
+		__declspec(dllexport) void preSerialize(void);
+		__declspec(dllexport) void preDeserialize(void);
+		__declspec(dllexport) void attachInternalBuffer(MemoryBuffer& buffer);
+		//__declspec(dllexport) void detachInternalBuffer(MemoryBuffer& buffer);
+		__declspec(dllexport) bool exists(std::string name, int64_t& offset);
+		__declspec(dllexport) void getElementInfo(size_t offset, std::string& name, enum class Type& type, size_t& lenBuffer, int32_t& flags);
+		__declspec(dllexport) static std::string extractFirstGroup(std::string& name);
+		__declspec(dllexport) bool addMemoryBuffer(MemoryBuffer& buffer, std::string name, bool canReplace, enum class Type type);
+		__declspec(dllexport) bool getMemoryBuffer(MemoryBuffer& buffer, std::string name, enum class Type& type, int32_t& flags);
+		__declspec(dllexport) void getNames(std::vector<std::string>& names, std::vector<enum class Type>& types);
+
+		template <typename T> __declspec(dllexport) enum class Type getType(void)
+		{
+			if (std::is_same<T, int32_t>::value)
+				return Type::Int32;
+			if (std::is_same<T, int64_t>::value)
+				return Type::Int64;
+			if (std::is_same<T, size_t>::value)
+				return Type::Size;
+			if (std::is_same<T, float>::value)
+				return Type::Float;
+			if (std::is_same<T, double>::value)
+				return Type::Double;
+			if (std::is_same<T, std::string>::value)
+				return Type::String;
+			if (std::is_same<T, TheWorld_Utils::MemoryBuffer>::value)
+				return Type::Buffer;
+			return Type::Unknown;
+		}
+		
+		template <typename T> __declspec(dllexport) bool isSameType(enum class Type type)
+		{
+			if (type == Type::Unknown || type == Type::NotSet)
+				return false;
+			if (type == Type::Int32 && std::is_same<T, int32_t>::value)
+				return true;
+			if (type == Type::Int64 && std::is_same<T, int64_t>::value)
+				return true;
+			if (type == Type::Size && std::is_same<T, size_t>::value)
+				return true;
+			if (type == Type::Float && std::is_same<T, float>::value)
+				return true;
+			if (type == Type::Double && std::is_same<T, double>::value)
+				return true;
+			if (type == Type::String && std::is_same<T, std::string>::value)
+				return true;
+			if (type == Type::Buffer && std::is_same<T, TheWorld_Utils::MemoryBuffer>::value)
+				return true;
+			if (type == Type::Group && std::is_same<T, TheWorld_Utils::MemoryBuffer>::value)
+				return true;
+			return false;
+		}
+
+		__declspec(dllexport) int64_t find(std::string name);
+		template <typename T> __declspec(dllexport) int64_t find(std::string name)
+		{
+			int64_t offset = find(name);
+			if (offset < 0)
+				return offset;
+
+			std::string _name;
+			enum class Type type;
+			size_t lenBuffer;
+			int32_t flags;
+			getElementInfo(size_t(offset), _name, type, lenBuffer, flags);
+			
+			if (isSameType<T>(type))
+				return size_t(offset);
+			
+			return -1;
+		}
+
+	private:
+		// adding data requires uodate of preSerialize/preDeserialize methods to include the new data in the serialization and deserialization process inside internal buffer as hidden datas (es: starting with "__")
+		TheWorld_Utils::MemoryBuffer* m_internalBuffer = nullptr;
 	};
 
 	class NoiseValues
@@ -1379,7 +1850,7 @@ namespace TheWorld_Utils
 				splatmapBuffer = new TheWorld_Utils::MemoryBuffer();
 				colormapBuffer = new TheWorld_Utils::MemoryBuffer();
 				globalmapBuffer = new TheWorld_Utils::MemoryBuffer();
-				//m_terrainDataPtr = (TheWorld_Utils::TerrainEdit*)terrainEditValues->ptr();
+				namedDataBuffer = new TheWorld_Utils::NamedDataBuffer();
 			}
 			void releaseBuffers()
 			{
@@ -1388,7 +1859,6 @@ namespace TheWorld_Utils
 					m_allocated = false;
 					delete(terrainEditValues);
 					terrainEditValues = nullptr;
-					//m_terrainDataPtr = nullptr;
 					delete(heights16Buffer);
 					heights16Buffer = nullptr;
 					delete(heights32Buffer);
@@ -1401,6 +1871,8 @@ namespace TheWorld_Utils
 					colormapBuffer = nullptr;
 					delete(globalmapBuffer);
 					globalmapBuffer = nullptr;
+					delete(namedDataBuffer);
+					namedDataBuffer = nullptr;
 				}
 			}
 			bool buffersAllocated(void) const
@@ -1411,16 +1883,12 @@ namespace TheWorld_Utils
 			{
 				if (terrainEditValues == nullptr)
 				{
-					//m_terrainDataPtr = nullptr;
 					return nullptr;
 				}
 				else
 				{
-					//m_terrainDataPtr = (TheWorld_Utils::TerrainEdit*)terrainEditValues->ptr();
 					return (TheWorld_Utils::TerrainEdit*)terrainEditValues->ptr();
 				}
-				
-				//return m_terrainDataPtr;
 			}
 
 		public:
@@ -1434,6 +1902,7 @@ namespace TheWorld_Utils
 			TheWorld_Utils::MemoryBuffer* splatmapBuffer = nullptr;
 			TheWorld_Utils::MemoryBuffer* colormapBuffer = nullptr;
 			TheWorld_Utils::MemoryBuffer* globalmapBuffer = nullptr;
+			TheWorld_Utils::NamedDataBuffer* namedDataBuffer = nullptr;
 			bool heightsUpdated = false;
 			bool normalsUpdated = false;
 			bool texturesUpdated = false;
@@ -1446,8 +1915,6 @@ namespace TheWorld_Utils
 
 		private:
 			bool m_allocated = false;
-			//TheWorld_Utils::TerrainEdit m_terrainData;
-			//TheWorld_Utils::TerrainEdit* m_terrainDataPtr = nullptr;
 		};
 
 	public:
@@ -1473,8 +1940,9 @@ namespace TheWorld_Utils
 		bool operator<(const MeshCacheBuffer& c) const;
 		bool operator==(const MeshCacheBuffer& c) const;
 
-		__declspec(dllexport) static void calcNormal(TheWorld_Utils::MemoryBuffer& heightmap, size_t numVerticesPerSize, float gridStepInWU, size_t index, float& normalX, float& normalY, float& normalZ);
-		
+		__declspec(dllexport) static void calcNormal(TheWorld_Utils::MemoryBuffer& heightmap, size_t index, size_t numVerticesPerSize, float gridStepInWU, float& normalX, float& normalY, float& normalZ, float& h);
+		__declspec(dllexport) static struct TheWorld_Utils::_RGBA calcSplat(TheWorld_Utils::MemoryBuffer& heightmap, size_t index, size_t numVerticesPerSize, float gridStepInWU, TerrainEdit* terrainEdit);
+
 		__declspec(dllexport) static uint16_t halfFromFloat(float f);
 		__declspec(dllexport) static uint16_t halfFromFloat(uint32_t f);
 		__declspec(dllexport) static uint32_t halfToFloat(uint16_t f);
@@ -1501,10 +1969,10 @@ namespace TheWorld_Utils
 		__declspec(dllexport) static void clearWorkCacheDir(std::string cacheDir, std::string mapName, float gridStepInWU, size_t numVerticesPerSize, int level);
 		__declspec(dllexport) std::string getMeshIdStr(void);
 		__declspec(dllexport) std::string getCacheIdStr(void);
-		__declspec(dllexport) bool refreshMapsFromDisk(size_t numVerticesPerSize, float gridStepInWU, std::string meshId, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitde, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer);
-		__declspec(dllexport) void refreshMapsFromBuffer(const BYTE* buffer, const size_t bufferSize, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitde, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, bool updateCache);
-		__declspec(dllexport) void refreshMapsFromBuffer(TheWorld_Utils::MemoryBuffer& buffer, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitde, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, bool updateCache);
-		__declspec(dllexport) void refreshMapsFromBuffer(std::string& buffer, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitde, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, bool updateCache);
+		__declspec(dllexport) bool refreshMapsFromDisk(size_t numVerticesPerSize, float gridStepInWU, std::string meshId, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitde, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer);
+		__declspec(dllexport) void refreshMapsFromBuffer(const BYTE* buffer, const size_t bufferSize, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitde, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache);
+		__declspec(dllexport) void refreshMapsFromBuffer(TheWorld_Utils::MemoryBuffer& buffer, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitde, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache);
+		__declspec(dllexport) void refreshMapsFromBuffer(std::string& buffer, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitde, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache);
 		__declspec(dllexport) void refreshCacheQuadrantDataFromBuffer(const BYTE* buffer, const size_t bufferSize, CacheQuadrantData& cacheQuadrantData, bool updateCache);
 		__declspec(dllexport) void refreshCacheQuadrantDataFromBuffer(TheWorld_Utils::MemoryBuffer& buffer, CacheQuadrantData& cacheQuadrantData, bool updateCache);
 		__declspec(dllexport) void refreshCacheQuadrantDataFromBuffer(std::string& buffer, CacheQuadrantData& cacheQuadrantData, bool updateCache);
@@ -1522,7 +1990,6 @@ namespace TheWorld_Utils
 		__declspec(dllexport) void setDummyBuffer(std::string meshId, std::string& buffer);
 		__declspec(dllexport) void setDummyBuffer_Format0(std::string meshId, std::string& buffer);
 		__declspec(dllexport) void setDummyBuffer_Format1(std::string meshId, std::string& buffer);
-		__declspec(dllexport) void setBufferFromCacheQuadrantData_Format0(size_t numVerticesPerSize, CacheQuadrantData& cacheQuadrantData, TheWorld_Utils::MemoryBuffer& buffer);
 		__declspec(dllexport) void setBufferFromCacheQuadrantData_Format1(size_t numVerticesPerSize, CacheQuadrantData& cacheQuadrantData, TheWorld_Utils::MemoryBuffer& buffer);
 		__declspec(dllexport) void setBufferFromCacheQuadrantData(size_t numVerticesPerSize, CacheQuadrantData& cacheQuadrantData, TheWorld_Utils::MemoryBuffer& buffer);
 		__declspec(dllexport) void setBufferFromCacheQuadrantData(size_t numVerticesPerSize, CacheQuadrantData& cacheQuadrantData, std::string& buffer);

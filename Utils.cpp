@@ -25,6 +25,7 @@
 #include <chrono>
 #include <sstream>
 #include <format>
+#include <type_traits>
 
 #include <plog/Initializers/RollingFileInitializer.h>
 //#include <Eigen/Dense>
@@ -1412,6 +1413,11 @@ namespace TheWorld_Utils
 		*this = o;
 	}
 
+	MemoryBuffer::MemoryBuffer(const std::string& in)
+	{
+		set((BYTE*)in.c_str(), in.size());
+	}
+
 	MemoryBuffer::~MemoryBuffer(void)
 	{
 		clear("destructor");
@@ -1421,7 +1427,19 @@ namespace TheWorld_Utils
 	{
 		set(o.m_ptr, o.m_size);
 	}
-	
+
+	void MemoryBuffer::operator=(const std::string& o)
+	{
+		set((BYTE*)o.c_str(), o.size());
+	}
+
+	bool MemoryBuffer::operator==(const MemoryBuffer& o) const
+	{
+		if (m_size != o.m_size)
+			return false;
+		return memcmp(m_ptr, o.m_ptr, m_size) == 0;
+	}
+
 	void MemoryBuffer::allocationSlotSize(size_t _allocationSlotSize)
 	{
 		m_allocationSlotSize = _allocationSlotSize;
@@ -1441,11 +1459,25 @@ namespace TheWorld_Utils
 		set((BYTE*)buffer.c_str(), buffer.size());
 	}
 
+	void MemoryBuffer::getPart(MemoryBuffer& outBuffer, size_t offset, int64_t length)
+	{
+		if (length < 0)						// from start + offset to the end of the buffer
+			length = size() - offset;
+		if (length > int64_t(size()) - int64_t(offset))		// to avoid memory overflow
+			length = int64_t(size()) - int64_t(offset);
+		outBuffer.set(ptr() + offset, length);
+	}
+	
 	void MemoryBuffer::set(BYTE* in, size_t size)
 	{
 		reserve(size);
 		memcpy(m_ptr, in, size);
 		adjustSize(size);
+	}
+
+	void MemoryBuffer::setPart(MemoryBuffer& inBuffer, size_t offset)
+	{
+		setPart(inBuffer.ptr(), inBuffer.size(), offset);
 	}
 
 	void MemoryBuffer::setPart(BYTE* in, size_t size, size_t offset)
@@ -1561,29 +1593,788 @@ namespace TheWorld_Utils
 		v.assign((uint16_t*)m_ptr, (uint16_t*)m_ptr + numElements);
 	}
 
-	void MemoryBuffer::serialize(BYTE* in, size_t size, size_t& offset)
+	void MemoryBuffer::serializeToBufferAndTruncate(BYTE* in, size_t size, size_t& offset)
 	{
-		reserve(offset + size);		// to avoid memory overflow
-		memcpy(ptr() + offset, in, size);
-		adjustCursorAndSize(offset, size);
+		serializeToBuffer(in, size, offset, true);
 	}
 
-	void MemoryBuffer::serialize(MemoryBuffer& in, size_t& offset)
+	void MemoryBuffer::serializeToBuffer(BYTE* in, size_t _size, size_t& offset, bool truncate)
 	{
-		serialize(in.ptr(), in.size(), offset);
+		if (int64_t(offset) < 0)			// to append to the end of the buffer
+			offset = size();
+
+		reserve(offset + _size);		// to avoid memory overflow
+		memcpy(ptr() + offset, in, _size);
+		if (truncate)
+			adjustCursorAndSize(offset, _size);
+		else
+			offset += _size;
 	}
 
-	void MemoryBuffer::serialize(std::string& in, size_t& offset)
+	void MemoryBuffer::serializeToBufferAndTruncate(MemoryBuffer& in, size_t& offset)
 	{
-		serialize((BYTE*)in.c_str(), in.size(), offset);
+		serializeToBuffer(in, offset, true);
 	}
 
-	void MemoryBuffer::deserialize(BYTE* out, size_t _size, size_t& offset)
+	void MemoryBuffer::serializeToBuffer(MemoryBuffer& in, size_t& offset, bool truncate)
+	{
+		serializeToBuffer<size_t>(in.size(), offset, truncate);
+		serializeToBuffer(in.ptr(), in.size(), offset, truncate);
+	}
+
+	void MemoryBuffer::serializeToBufferAndTruncate(std::string& in, size_t& offset)
+	{
+		serializeToBuffer(in, offset, true);
+	}
+
+	void MemoryBuffer::serializeToBuffer(std::string& in, size_t& offset, bool truncate)
+	{
+		serializeToBuffer<size_t>(in.size(), offset, truncate);
+		serializeToBuffer((BYTE*)in.c_str(), in.size(), offset, truncate);
+	}
+
+	void MemoryBuffer::serializeStringToBufferAndTruncate(std::string& s, size_t& offset)
+	{
+		serializeStringToBuffer(s, offset, true);
+	}
+
+	void MemoryBuffer::serializeStringToBuffer(std::string& s, size_t& offset, bool truncate)
+	{
+		serializeToBuffer(s, offset, truncate);
+	}
+
+	std::string MemoryBuffer::deserializeStringFromBuffer(size_t& offset)
+	{
+		std::string out;
+		size_t stringLength = deserializeFromBuffer<size_t>(offset);
+		out = std::string((char*)(ptr() + offset), stringLength);
+		offset += stringLength;
+		return out;
+	}
+
+	void MemoryBuffer::serializeMemoryBufferToBufferAndTruncate(MemoryBuffer& buffer, size_t& offset)
+	{
+		serializeMemoryBufferToBuffer(buffer, offset, true);
+	}
+
+	void MemoryBuffer::serializeMemoryBufferToBuffer(MemoryBuffer& buffer, size_t& offset, bool truncate)
+	{
+		serializeToBuffer(buffer, offset, truncate);
+	}
+
+	MemoryBuffer MemoryBuffer::deserializeMemoryBufferFromBuffer(size_t& offset)
+	{
+		MemoryBuffer out;
+		size_t bufferSize = deserializeFromBuffer<size_t>(offset);
+		out.set(ptr() + offset, bufferSize);
+		offset += bufferSize;
+		return out;
+	}
+
+	void MemoryBuffer::deserializeFromBuffer(BYTE* out, size_t _size, size_t& offset)
 	{
 		my_assert(offset + _size <= size());
 		memcpy(out, ptr() + offset, _size);
 		offset += _size;
 	}
+
+	NamedDataBuffer::NamedDataBuffer(void)
+	{
+	}
+	
+	NamedDataBuffer::NamedDataBuffer(NamedDataBuffer& buffer)
+	{
+		*this = buffer;
+	}
+
+	NamedDataBuffer::NamedDataBuffer(MemoryBuffer& buffer)
+	{
+		attachInternalBuffer(buffer);
+	}
+
+	NamedDataBuffer::~NamedDataBuffer(void)
+	{
+	}
+
+	void NamedDataBuffer::initialize(void)
+	{
+		if (not initialized())
+			m_internalBuffer = new MemoryBuffer();
+	}
+
+	bool NamedDataBuffer::initialized(void) const
+	{
+		return m_internalBuffer != nullptr;
+	}
+
+	void NamedDataBuffer::deinitialize(void)
+	{
+		if (initialized())
+		{
+			delete m_internalBuffer;
+			m_internalBuffer = nullptr;
+		}
+	}
+	
+	bool NamedDataBuffer::deinitialized(void) const
+	{
+		return not initialized();
+	}
+
+	void NamedDataBuffer::free(void)
+	{
+		deinitialize();
+	}
+
+	bool NamedDataBuffer::freed(void) const
+	{
+		return deinitialized();
+	}
+
+	void NamedDataBuffer::resetEmpty(void)
+	{
+		deinitialize();
+		initialize();
+	}
+
+	size_t NamedDataBuffer::internalBufferSize(void) const
+	{
+		if (initialized())
+			return m_internalBuffer->size();
+		else
+			return 0;
+	}
+
+	size_t NamedDataBuffer::memoryOccupation(void) const
+	{
+		if (initialized())
+			return m_internalBuffer->reserved();
+		else
+			return 0;
+	}
+
+	size_t NamedDataBuffer::serializedSize(void)
+	{
+		initialize();
+		preSerialize();
+		return sizeof(size_t) + m_internalBuffer->size();
+	}
+
+	void NamedDataBuffer::preSerialize(void)
+	{
+		// insert min internal buffer instance variables
+		initialize();
+	}
+
+	void NamedDataBuffer::preDeserialize(void)
+	{
+		// set instance variables reading them from internal buffer
+		initialize();
+	}
+
+	void NamedDataBuffer::serialize(BYTE* ptr, size_t& offset, bool preSerializationDone)
+	{
+		initialize();
+		if (!preSerializationDone)
+			preSerialize();
+		TheWorld_Utils::serializeToByteStream<size_t>(m_internalBuffer->size(), ptr, offset);
+		memcpy(ptr + offset, m_internalBuffer->ptr(), m_internalBuffer->size());
+		offset += m_internalBuffer->size();
+	}
+
+	void NamedDataBuffer::serialize(MemoryBuffer& buffer)
+	{
+		initialize();
+		size_t needeBufferSize = serializedSize();
+		buffer.reserve(needeBufferSize);
+		buffer.adjustSize(needeBufferSize);
+		size_t offset = 0;
+		serialize(buffer.ptr(), offset, true);
+		my_assert(offset == needeBufferSize);
+	}
+
+	void NamedDataBuffer::deserialize(BYTE* ptr, size_t& offset)
+	{
+		initialize();
+		preDeserialize();
+		size_t internalBufferSize = TheWorld_Utils::deserializeFromByteStream<size_t>(ptr, offset);
+		m_internalBuffer->set(ptr + offset, internalBufferSize);
+		offset += internalBufferSize;
+	}
+
+	void NamedDataBuffer::deserialize(MemoryBuffer& buffer)
+	{
+		initialize();
+		size_t offset;
+		deserialize(buffer.ptr(), offset);
+	}
+
+	void NamedDataBuffer::attachInternalBuffer(MemoryBuffer& buffer)
+	{
+		initialize();
+		preDeserialize();
+		*m_internalBuffer = buffer;
+	}
+
+	//void NamedDataBuffer::detachInternalBuffer(MemoryBuffer& buffer)
+	//{
+	//	initialize();
+	//	buffer = getInternalBuffer();
+	//	clear();
+	//}
+	
+	MemoryBuffer& NamedDataBuffer::getInternalBuffer(void)
+	{
+		initialize();
+		preSerialize();
+		return *m_internalBuffer;
+	}
+
+	void NamedDataBuffer::operator=(NamedDataBuffer& o)
+	{
+		initialize();
+		attachInternalBuffer(o.getInternalBuffer());
+	}
+
+	//bool NamedDataBuffer::operator==(NamedDataBuffer& o)
+	//{
+	//	if (initialized() != o.initialized())
+	//		return false;
+
+	//	if (not initialized())
+	//		return true;		// both not initialized, so they are equal
+	//	
+	//	return getInternalBuffer() == o.getInternalBuffer();	// both initialized and internal buffers are equal (WRONG: we should put data in the same order to compare buffer as sequences of bytes)
+	//}
+
+	bool NamedDataBuffer::add(MemoryBuffer& buffer, std::string name, bool canReplace)
+	{
+		initialize();
+		return addMemoryBuffer(buffer, name, canReplace, NamedDataBuffer::Type::Buffer);
+	}
+
+	bool NamedDataBuffer::add(std::string& s, std::string name, bool canReplace)
+	{
+		initialize();
+
+		std::string groupName = extractFirstGroup(name);
+		if (groupName.size() > 0)
+		{
+			// the name contains a group: inefficient way to add a string to a group, but it is not expected to be used frequently, best is to create a MemoryBuffer add elements in it and then add the MemoryBuffer as group to the NamedDataBuffer
+			MemoryBuffer groupBuffer;
+			int32_t groupFlags = 0;
+			bool found = getGroup(groupBuffer, groupName, groupFlags);
+			NamedDataBuffer groupDataBuffer(groupBuffer);
+			bool added = groupDataBuffer.add(s, name);
+			if (added)
+				added = addGroup(groupDataBuffer, groupName);
+			return added;
+		}
+
+		bool replace = false;
+		int64_t dataOffset = -1;
+		if (exists(name, dataOffset))
+		{
+			if (canReplace)
+			{
+				replace = true;
+			}
+			else
+				return false;
+		}
+
+		int32_t _flags = 0;	// not used atm
+
+		if (replace)
+		{
+			size_t _offset = dataOffset + sizeof(size_t) + name.size();	// skip name length and name as they are not changing
+			m_internalBuffer->serializeToBuffer<int32_t>(_flags, _offset, false);
+			m_internalBuffer->serializeToBuffer<int32_t>(static_cast<int32_t>(NamedDataBuffer::Type::String), _offset, false);	// new data type
+			size_t offset = _offset;	// saving offset pointing to data size: offset is now pointing to the data size
+			size_t oldDataSize = m_internalBuffer->deserializeFromBuffer<size_t>(_offset);	// get old data size to know how many bytes to remove from the buffer: _offset is now pointing to the data
+			size_t newDataSize = s.size();
+			if (newDataSize == oldDataSize)
+			{
+				m_internalBuffer->serializeToBuffer(s, offset, false);	// replacing size and string with the new one of the same length
+			}
+			else if (newDataSize < oldDataSize)
+			{
+				m_internalBuffer->serializeToBuffer(s, offset, false);	// replacing size and string with the new one of smaller length: now offset point to the end of the new string
+				size_t sizeDiff = oldDataSize - newDataSize;
+				memmove(m_internalBuffer->ptr() + offset, m_internalBuffer->ptr() + offset + sizeDiff, m_internalBuffer->size() - (offset + sizeDiff));	// move data after the string to remove the remaining bytes of the old string
+				m_internalBuffer->adjustSize(m_internalBuffer->size() - sizeDiff);	// adjust buffer size to remove the remaining bytes at the end of the buffer
+			}
+			else	// newDataSize > oldDataSize
+			{
+				size_t sizeDiff = newDataSize - oldDataSize;
+				size_t newBufferSize = m_internalBuffer->size() + sizeDiff;
+				MemoryBuffer tempBuffer;
+				m_internalBuffer->getPart(tempBuffer, _offset + oldDataSize);	// save data after the old Data to the end of the buffer to move it later
+				m_internalBuffer->adjustSize(newBufferSize);	// adjust buffer size and move data after the string to make room for the remaining bytes of the new string
+				m_internalBuffer->serializeToBuffer(s, offset, false);	// replacing string
+				m_internalBuffer->setPart(tempBuffer, offset);	// move data after the old string to the end of the new string
+				my_assert(tempBuffer.size() + offset == newBufferSize);
+			}
+		}
+		else
+		{
+			size_t offset = -1;		// append to the end of the buffer
+			m_internalBuffer->serializeStringToBufferAndTruncate(name, offset);
+			m_internalBuffer->serializeToBufferAndTruncate<int32_t>(_flags, offset);
+			m_internalBuffer->serializeToBufferAndTruncate<int32_t>(static_cast<int32_t>(NamedDataBuffer::Type::String), offset);
+			m_internalBuffer->serializeToBufferAndTruncate(s, offset);
+		}
+
+		return true;
+	}
+
+	bool NamedDataBuffer::addMemoryBuffer(MemoryBuffer& buffer, std::string name, bool canReplace, enum class Type type)
+	{
+		initialize();
+
+		std::string groupName = extractFirstGroup(name);
+		if (groupName.size() > 0)
+		{
+			// the name contains a group: inefficient way to add a string to a group, but it is not expected to be used frequently, best is to create a MemoryBuffer add elements in it and then add the MemoryBuffer as group to the NamedDataBuffer
+			MemoryBuffer groupBuffer;
+			int32_t groupFlags = 0;
+			bool found = getGroup(groupBuffer, groupName, groupFlags);
+			NamedDataBuffer groupDataBuffer(groupBuffer);
+			bool added = groupDataBuffer.add(buffer, name);
+			if (added)
+				added = addGroup(groupDataBuffer, groupName);
+			return added;
+		}
+		
+		my_assert(type == NamedDataBuffer::Type::Buffer or type == NamedDataBuffer::Type::Group);
+		
+		bool replace = false;
+		int64_t dataOffset = -1;
+		if (exists(name, dataOffset))
+		{
+			if (canReplace)
+			{
+				replace = true;
+			}
+			else
+				return false;
+		}
+
+		int32_t _flags = 0;	// not used atm
+
+		if (replace)
+		{
+			size_t _offset = dataOffset + sizeof(size_t) + name.size();	// skip name length and name as they are not changing
+			m_internalBuffer->serializeToBuffer<int32_t>(_flags, _offset, false);	// new data type
+			m_internalBuffer->serializeToBuffer<int32_t>(static_cast<int32_t>(type), _offset, false);	// new data type
+			size_t offset = _offset;	// saving offset pointing to data size: offset is now pointing to the data size
+			size_t oldDataSize = m_internalBuffer->deserializeFromBuffer<size_t>(_offset);	// get old data size to know how many bytes to remove from the buffer: _offset is now pointing to the data
+			size_t newDataSize = buffer.size();
+			if (newDataSize == oldDataSize)
+			{
+				m_internalBuffer->serializeToBuffer(buffer, offset, false);	// replacing size and string with the new one of the same length
+			}
+			else if (newDataSize < oldDataSize)
+			{
+				m_internalBuffer->serializeToBuffer(buffer, offset, false);	// replacing size and string with the new one of smaller length: now offset point to the end of the new string
+				size_t sizeDiff = oldDataSize - newDataSize;
+				memmove(m_internalBuffer->ptr() + offset, m_internalBuffer->ptr() + offset + sizeDiff, m_internalBuffer->size() - (offset + sizeDiff));	// move data after the string to remove the remaining bytes of the old string
+				m_internalBuffer->adjustSize(m_internalBuffer->size() - sizeDiff);	// adjust buffer size to remove the remaining bytes at the end of the buffer
+			}
+			else	// newDataSize > oldDataSize
+			{
+				size_t sizeDiff = newDataSize - oldDataSize;
+				size_t newBufferSize = m_internalBuffer->size() + sizeDiff;
+				MemoryBuffer tempBuffer;
+				m_internalBuffer->getPart(tempBuffer, _offset + oldDataSize);	// save data after the old Data to the end of the buffer to move it later
+				m_internalBuffer->adjustSize(newBufferSize);	// adjust buffer size and move data after the string to make room for the remaining bytes of the new string
+				m_internalBuffer->serializeToBuffer(buffer, offset, false);	// replacing string
+				m_internalBuffer->setPart(tempBuffer, offset);	// move data after the old string to the end of the new string
+				my_assert(tempBuffer.size() + offset == newBufferSize);
+			}
+		}
+		else
+		{
+			size_t offset = -1;		// append to the end of the buffer
+			m_internalBuffer->serializeStringToBufferAndTruncate(name, offset);
+			m_internalBuffer->serializeToBufferAndTruncate<int32_t>(_flags, offset);
+			m_internalBuffer->serializeToBufferAndTruncate<int32_t>(static_cast<int32_t>(type), offset);
+			m_internalBuffer->serializeToBufferAndTruncate(buffer, offset);
+		}
+		
+		return true;
+	}
+
+	bool NamedDataBuffer::getMemoryBuffer(MemoryBuffer& buffer, std::string name, enum class Type& type, int32_t& flags)
+	{
+		initialize();
+
+		int64_t _offset = find(name);
+		if (_offset < 0)
+			return false;
+
+		size_t offset = size_t(_offset);
+
+		std::string _name;
+		size_t lenBuffer;
+		getElementInfo(offset, _name, type, lenBuffer, flags);
+
+		if (!isSameType<MemoryBuffer>(type))
+			return false;
+
+		offset = offset + sizeof(size_t) + _name.size() + sizeof(int32_t) + sizeof(int32_t);	// skip name length, name, flags and type info
+
+		buffer = m_internalBuffer->deserializeMemoryBufferFromBuffer(offset);
+
+		return true;
+	}
+
+	bool NamedDataBuffer::addGroup(NamedDataBuffer& buffer, std::string name, bool canReplace)
+	{
+		initialize();
+		return addGroup(buffer.getInternalBuffer(), name, canReplace);
+	}
+
+	bool NamedDataBuffer::addGroup(MemoryBuffer& buffer, std::string name, bool canReplace)
+	{
+		initialize();
+		return addMemoryBuffer(buffer, name, canReplace, NamedDataBuffer::Type::Group);
+	}
+		
+	bool NamedDataBuffer::getGroup(NamedDataBuffer& buffer, std::string name, int32_t& flags)
+	{
+		initialize();
+		return getGroup(buffer.getInternalBuffer(), name, flags);
+	}
+
+	bool NamedDataBuffer::getGroup(MemoryBuffer& buffer, std::string name, int32_t& flags)
+	{
+		if (not initialized())
+			return false;
+
+		std::string groupName = extractFirstGroup(name);
+		if (groupName.size() > 0)
+		{
+			// the name contains a group
+			MemoryBuffer groupBuffer;
+			int32_t groupFlags = 0;
+			bool found = getGroup(groupBuffer, groupName, groupFlags);
+			if (!found)
+				return false;
+			NamedDataBuffer groupDataBuffer(groupBuffer);
+			return groupDataBuffer.getGroup(buffer, name, flags);
+		}
+
+		enum class Type type;
+		bool found = getMemoryBuffer(buffer, name, type, flags);
+		if (found and type == Type::Group)
+			return true;
+		else
+		{
+			buffer.clear("get failed");
+			return false;
+		}
+	}
+		
+	bool NamedDataBuffer::get(MemoryBuffer& buffer, std::string name, int32_t& flags)
+	{
+		if (not initialized())
+			return false;
+		
+		std::string groupName = extractFirstGroup(name);
+		if (groupName.size() > 0)
+		{
+			// the name contains a group
+			MemoryBuffer groupBuffer;
+			int32_t groupFlags = 0;
+			bool found = getGroup(groupBuffer, groupName, groupFlags);
+			if (!found)
+				return false;
+			NamedDataBuffer groupDataBuffer(groupBuffer);
+			return groupDataBuffer.get(buffer, name, flags);
+		}
+
+		enum class Type type;
+		bool found = getMemoryBuffer(buffer, name, type, flags);
+		if (found and type == Type::Buffer)
+			return true;
+		else
+		{
+			buffer.clear("get failed");
+			return false;
+		}
+	}
+
+	bool NamedDataBuffer::get(std::string& s, std::string name, int32_t& flags)
+	{
+		if (not initialized())
+			return false;
+
+		std::string groupName = extractFirstGroup(name);
+		if (groupName.size() > 0)
+		{
+			// the name contains a group
+			MemoryBuffer groupBuffer;
+			int32_t groupFlags = 0;
+			bool found = getGroup(groupBuffer, groupName, groupFlags);
+			if (!found)
+				return false;
+			NamedDataBuffer groupDataBuffer(groupBuffer);
+			return groupDataBuffer.get(s, name, flags);
+		}
+
+		int64_t _offset = find(name);
+		if (_offset < 0)
+			return false;
+
+		size_t offset = size_t(_offset);
+
+		std::string _name = name;
+		enum class Type type;
+		size_t lenBuffer;
+		getElementInfo(offset, _name, type, lenBuffer, flags);
+
+		if (!isSameType<std::string>(type))
+			return false;
+
+		offset = offset + sizeof(size_t) + _name.size() + sizeof(int32_t) + sizeof(int32_t);	// skip name length, name, flags and type info
+
+		s = m_internalBuffer->deserializeStringFromBuffer(offset);
+
+		return true;
+	}
+
+	int64_t NamedDataBuffer::find(std::string name)
+	{
+		// if found return the offset of the element in internal buffer, otherwise return -1
+
+		if (not initialized())
+			return false;
+
+		if (m_internalBuffer->size() == 0)
+			return -1;
+
+		size_t offset = 0;	// starting offset for search
+		while (true)
+		{
+			size_t _offset = offset;
+			std::string _name = m_internalBuffer->deserializeStringFromBuffer(offset);
+			if (_name == name)
+			{
+				return _offset;
+			}
+			//enum class Type type = static_cast<enum class Type>(m_internalBuffer->deserialize<int32_t>(offset));		// skip the type of the element
+			offset += sizeof(int32_t);																		// skip flags
+			offset += sizeof(int32_t);																		// skip the type of the element
+			size_t lenBuffer = m_internalBuffer->deserializeFromBuffer<size_t>(offset);						// read the length of the buffer of the element
+			offset += lenBuffer;																			// skip the buffer of the element
+
+			if (offset >= m_internalBuffer->size())
+				return -1;
+		}
+	}
+	void NamedDataBuffer::getNames(std::vector<std::string>& names, std::vector<enum class Type>& types)
+	{
+		names.clear();
+		types.clear();
+
+		if (not initialized())
+			return;
+
+		size_t offset = 0;
+		while (offset < m_internalBuffer->size())
+		{
+			std::string name = m_internalBuffer->deserializeStringFromBuffer(offset);
+			int32_t flags = m_internalBuffer->deserializeFromBuffer<int32_t>(offset);
+			enum class Type type = static_cast<enum class Type>(m_internalBuffer->deserializeFromBuffer<int32_t>(offset));
+			if (type == Type::Group)
+			{
+				MemoryBuffer groupBuffer = m_internalBuffer->deserializeMemoryBufferFromBuffer(offset); // read the buffer of the element as group buffer
+				NamedDataBuffer groupDataBuffer(groupBuffer); // read the buffer of the element as group buffer
+				std::vector<std::string> groupDataBufferNames;
+				std::vector<enum class Type> groupDataBufferTypes;
+				groupDataBuffer.getNames(groupDataBufferNames, groupDataBufferTypes); // recursively get names in the group and add them to the list of names
+				for (auto& nameInGroup : groupDataBufferNames)
+				{
+					nameInGroup = nameInGroup.insert(0, "."); // add the separator for group
+					nameInGroup = nameInGroup.insert(0, name); // add the group name as prefix
+				}
+				names.insert(names.end(), groupDataBufferNames.begin(), groupDataBufferNames.end());
+				types.insert(types.end(), groupDataBufferTypes.begin(), groupDataBufferTypes.end());
+			}
+			else
+			{
+				names.push_back(name);
+				types.push_back(type);
+				size_t lenBuffer = m_internalBuffer->deserializeFromBuffer<size_t>(offset); // read the length of the buffer of the element
+				offset += lenBuffer; // skip the buffer of the element
+			}
+		}
+	
+		my_assert(names.size() == types.size());
+	}
+
+	void NamedDataBuffer::getNames(std::vector<std::string>& names)
+	{
+		std::vector<enum class Type> types;
+		getNames(names, types);
+	}
+
+	void NamedDataBuffer::getValues(std::vector<NamedDataBuffer::NamedDataBufferData>& values)
+	{
+		values.clear();
+
+		if (not initialized())
+			return;
+		
+		std::vector<std::string> names;
+		std::vector<enum class Type> types;
+		getNames(names, types);
+
+		for (int idx = 0; idx < names.size(); idx++)
+		{
+			enum class Type type = types[idx];
+			NamedDataBufferVariant v;
+			int32_t flags = 0;
+			if (type != Type::NotSet && type != Type::Unknown && type != Type::Group)
+			{
+				switch (type)
+				{
+					case Type::Int32:
+						v = getVariant<int32_t>(names[idx], flags);
+						break;
+					case Type::Int64:
+						v = getVariant<int64_t>(names[idx], flags);
+						break;
+					case Type::Size:
+						v = getVariant<size_t>(names[idx], flags);
+						break;
+					case Type::Float:
+						v = getVariant<float>(names[idx], flags);
+						break;
+					case Type::Double:
+						v = getVariant<double>(names[idx], flags);
+						break;
+					case Type::String:
+						v = getVariant<std::string>(names[idx], flags);
+						break;
+					case Type::Buffer:
+						v = getVariant<MemoryBuffer>(names[idx], flags);
+						break;
+				}
+			}
+			NamedDataBufferData value(names[idx], type, flags, v);
+			values.push_back(value);
+		}
+	}
+
+	void NamedDataBuffer::getValues(std::map<std::string, NamedDataBuffer::NamedDataBufferData>& values)
+	{
+		values.clear();
+
+		if (not initialized())
+			return;
+
+		std::vector<std::string> names;
+		std::vector<enum class Type> types;
+		getNames(names, types);
+
+		for (int idx = 0; idx < names.size(); idx++)
+		{
+			enum class Type type = types[idx];
+			NamedDataBufferVariant v;
+			int32_t flags = 0;
+			if (type != Type::NotSet && type != Type::Unknown && type != Type::Group)
+			{
+				switch (type)
+				{
+				case Type::Int32:
+					v = getVariant<int32_t>(names[idx], flags);
+					break;
+				case Type::Int64:
+					v = getVariant<int64_t>(names[idx], flags);
+					break;
+				case Type::Size:
+					v = getVariant<size_t>(names[idx], flags);
+					break;
+				case Type::Float:
+					v = getVariant<float>(names[idx], flags);
+					break;
+				case Type::Double:
+					v = getVariant<double>(names[idx], flags);
+					break;
+				case Type::String:
+					v = getVariant<std::string>(names[idx], flags);
+					break;
+				case Type::Buffer:
+					v = getVariant<MemoryBuffer>(names[idx], flags);
+					break;
+				}
+			}
+			NamedDataBufferData value(names[idx], type, flags, v);
+			values[names[idx]] = value;
+		}
+	}
+
+	void NamedDataBuffer::getElementInfo(size_t offset, std::string& name, enum class Type& type, size_t& lenBuffer, int32_t& flags)
+	{
+		name = m_internalBuffer->deserializeStringFromBuffer(offset);
+		flags = m_internalBuffer->deserializeFromBuffer<int32_t>(offset);
+		type = static_cast<enum class Type>(m_internalBuffer->deserializeFromBuffer<int32_t>(offset));
+		lenBuffer = m_internalBuffer->deserializeFromBuffer<size_t>(offset);
+	}
+
+	std::string NamedDataBuffer::extractFirstGroup(std::string& name)
+	{
+		size_t pos = name.find_first_of(".");
+		if (pos == std::string::npos)
+			return "";
+		else
+		{
+			std::string group = name.substr(0, pos);
+			name = name.substr(pos + 1);
+			return group;
+		}
+	}
+
+	bool NamedDataBuffer::remove(std::string name)
+	{
+		int64_t _offset = find(name);
+		if (_offset < 0)
+			return false;
+
+		size_t offset = size_t(_offset);
+
+		std::string _name;
+		enum class Type type;
+		size_t lenBuffer;
+		int32_t flags;
+		getElementInfo(offset, _name, type, lenBuffer, flags);
+
+		size_t totalSizeElement = sizeof(size_t) + _name.size() + sizeof(int32_t) + sizeof(int32_t) + sizeof(size_t) + lenBuffer;
+		memcpy(m_internalBuffer->ptr() + offset, m_internalBuffer->ptr() + offset + totalSizeElement, m_internalBuffer->size() - (offset + totalSizeElement));
+		m_internalBuffer->adjustSize(m_internalBuffer->size() - totalSizeElement);
+
+		return true;
+	}
+
+	bool NamedDataBuffer::exists(std::string name)
+	{
+		int64_t offset = -1;
+		return exists(name, offset);
+	}
+
+	bool NamedDataBuffer::exists(std::string name, int64_t& offset)
+	{
+		offset = find(name);
+		return offset >= 0;
+	}
+
+	bool NamedDataBuffer::emptyVariant(NamedDataBufferVariant& v)
+	{
+		return std::holds_alternative<std::monostate>(v);
+	}
+
 
 	void Utils::plogInit(plog::Severity sev, plog::IAppender* appender)
 	{
@@ -2187,7 +2978,7 @@ namespace TheWorld_Utils
 		return "WORLD QUADRANT " + m_mapName + " " + pos.getIdStr() + " Hash=" + meshIdToPrint(m_meshId);
 	}
 
-	bool MeshCacheBuffer::refreshMapsFromDisk(size_t numVerticesPerSize, float gridStepInWU, std::string _meshId, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer)
+	bool MeshCacheBuffer::refreshMapsFromDisk(size_t numVerticesPerSize, float gridStepInWU, std::string _meshId, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer)
 	{
 		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromDisk 1 ") + __FUNCTION__, "ALL");
 
@@ -2218,7 +3009,7 @@ namespace TheWorld_Utils
 			{
 				TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromDisk 1.3 ") + __FUNCTION__, "refreshMapsFromBuffer");
 
-				refreshMapsFromBuffer(tempBuffer, _meshId, terrainEditValues, minAltitude, maxAltitude, float16HeigthsBuffer, float32HeigthsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, false);
+				refreshMapsFromBuffer(tempBuffer, _meshId, terrainEditValues, minAltitude, maxAltitude, float16HeigthsBuffer, float32HeigthsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, namedDataBuffer, false);
 			}
 
 			empty = true;
@@ -2227,7 +3018,7 @@ namespace TheWorld_Utils
 		{
 			TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromDisk 1.4  ") + __FUNCTION__, "refreshMapsFromBuffer");
 			std::string meshIdFromBuffer;
-			refreshMapsFromBuffer(buffer, meshIdFromBuffer, terrainEditValues, minAltitude, maxAltitude, float16HeigthsBuffer, float32HeigthsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, false);
+			refreshMapsFromBuffer(buffer, meshIdFromBuffer, terrainEditValues, minAltitude, maxAltitude, float16HeigthsBuffer, float32HeigthsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, namedDataBuffer, false);
 			//assert(_meshId.size() == 0 || meshIdFromBuffer == _meshId);
 			if (_meshId.size() > 0 && meshIdFromBuffer != _meshId)
 			{
@@ -2239,7 +3030,7 @@ namespace TheWorld_Utils
 		return empty;
 	}
 
-	void MeshCacheBuffer::refreshMapsFromBuffer(const BYTE* buffer, const size_t bufferSize, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, bool updateCache)
+	void MeshCacheBuffer::refreshMapsFromBuffer(const BYTE* buffer, const size_t bufferSize, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache)
 	{
 		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromBuffer 1 ") + __FUNCTION__, "ALL");
 
@@ -2471,6 +3262,15 @@ namespace TheWorld_Utils
 				}
 			}
 
+			if (movingStreamBuffer + sizeof(size_t) <= endOfBuffer)
+			{
+				namedDataBuffer.deserialize((BYTE*)movingStreamBuffer, size);
+			}
+			else
+			{
+				namedDataBuffer.resetEmpty();
+			}
+
 			if (updateCache)
 			{
 				std::string meshId;
@@ -2486,22 +3286,23 @@ namespace TheWorld_Utils
 			splatmapBuffer.clear(__FUNCTION__);
 			colormapBuffer.clear(__FUNCTION__);
 			globalmapBuffer.clear(__FUNCTION__);
+			namedDataBuffer.resetEmpty();
 		}
 	}
 
-	void MeshCacheBuffer::refreshMapsFromBuffer(TheWorld_Utils::MemoryBuffer& buffer, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, bool updateCache)
+	void MeshCacheBuffer::refreshMapsFromBuffer(TheWorld_Utils::MemoryBuffer& buffer, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache)
 	{
-		refreshMapsFromBuffer(buffer.ptr(), buffer.size(), meshIdFromBuffer, terrainEditValues, minAltitude, maxAltitude, float16HeigthsBuffer, float32HeigthsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, updateCache);
+		refreshMapsFromBuffer(buffer.ptr(), buffer.size(), meshIdFromBuffer, terrainEditValues, minAltitude, maxAltitude, float16HeigthsBuffer, float32HeigthsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, namedDataBuffer, updateCache);
 	}
 
-	void MeshCacheBuffer::refreshMapsFromBuffer(std::string& buffer, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, bool updateCache)
+	void MeshCacheBuffer::refreshMapsFromBuffer(std::string& buffer, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache)
 	{
-		refreshMapsFromBuffer((BYTE*)buffer.c_str(), buffer.size(), meshIdFromBuffer, terrainEditValues, minAltitude, maxAltitude, float16HeigthsBuffer, float32HeigthsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, updateCache);
+		refreshMapsFromBuffer((BYTE*)buffer.c_str(), buffer.size(), meshIdFromBuffer, terrainEditValues, minAltitude, maxAltitude, float16HeigthsBuffer, float32HeigthsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, namedDataBuffer, updateCache);
 	}
 
 	void MeshCacheBuffer::refreshCacheQuadrantDataFromBuffer(const BYTE* buffer, const size_t bufferSize, CacheQuadrantData& cacheQuadrantData, bool updateCache)
 	{
-		refreshMapsFromBuffer(buffer, bufferSize, cacheQuadrantData.meshId, *cacheQuadrantData.terrainEditValues, cacheQuadrantData.minHeight, cacheQuadrantData.maxHeight, *cacheQuadrantData.heights16Buffer, *cacheQuadrantData.heights32Buffer, *cacheQuadrantData.normalsBuffer, *cacheQuadrantData.splatmapBuffer, *cacheQuadrantData.colormapBuffer, *cacheQuadrantData.globalmapBuffer, updateCache);
+		refreshMapsFromBuffer(buffer, bufferSize, cacheQuadrantData.meshId, *cacheQuadrantData.terrainEditValues, cacheQuadrantData.minHeight, cacheQuadrantData.maxHeight, *cacheQuadrantData.heights16Buffer, *cacheQuadrantData.heights32Buffer, *cacheQuadrantData.normalsBuffer, *cacheQuadrantData.splatmapBuffer, *cacheQuadrantData.colormapBuffer, *cacheQuadrantData.globalmapBuffer, *cacheQuadrantData.namedDataBuffer, updateCache);
 	}
 
 	void MeshCacheBuffer::refreshCacheQuadrantDataFromBuffer(TheWorld_Utils::MemoryBuffer& buffer, CacheQuadrantData& cacheQuadrantData, bool updateCache)
@@ -3302,7 +4103,7 @@ namespace TheWorld_Utils
 		if (TheWorld_Utils::MeshCacheBuffer::cacheQuadrantFormat1())
 			setBufferFromCacheQuadrantData_Format1(numVerticesPerSize, cacheQuadrantData, buffer);
 		else
-			setBufferFromCacheQuadrantData_Format0(numVerticesPerSize, cacheQuadrantData, buffer);
+			throw(GDN_TheWorld_Exception(__FUNCTION__, "Unsupported cache quadrant format"));
 	}
 	
 	void MeshCacheBuffer::setBufferFromCacheQuadrantData_Format1(size_t numVerticesPerSize, CacheQuadrantData& cacheQuadrantData, TheWorld_Utils::MemoryBuffer& buffer)
@@ -3385,6 +4186,7 @@ namespace TheWorld_Utils
 		size_t splatmapSize = numSplatmapVertices > 0 ? numSplatmapVertices * sizeof(TheWorld_Utils::_RGBA) : 0;
 		size_t colormapSize = numColormapVertices > 0 ? numColormapVertices * sizeof(TheWorld_Utils::_RGBA) : 0;
 		size_t globalmapSize = cacheQuadrantData.globalmapBuffer == nullptr ? 0 : cacheQuadrantData.globalmapBuffer->size();
+		size_t namedDataBufferSerializedSize = cacheQuadrantData.namedDataBuffer == nullptr ? 0 : cacheQuadrantData.namedDataBuffer->serializedSize();
 
 		// Forcing not to save 32 heights and normals in the buffer to save memory, cache disk space and bandwidth (they must be generated on the fly by heights 16 and normals directly by the shader)
 		float32HeightmapSize = 0;	// for now we don't want to use float32 heights in cache quadrant buffers, we will generate them on the fly when needed (we want to save memory and bandwidth)
@@ -3403,7 +4205,8 @@ namespace TheWorld_Utils
 			+ sizeof(size_t) + normalmapSize
 			+ sizeof(size_t) + splatmapSize
 			+ sizeof(size_t) + colormapSize
-			+ sizeof(size_t) + globalmapSize;
+			+ sizeof(size_t) + globalmapSize
+			+ namedDataBufferSerializedSize;
 
 		buffer.reserve(streamBufferSize);
 		BYTE* _streamBuffer = buffer.ptr();
@@ -3512,294 +4315,14 @@ namespace TheWorld_Utils
 			_streamBuffer += globalmapSize;
 		}
 
-		assert(_streamBuffer - buffer.ptr() == streamBufferSize);
-		buffer.adjustSize(streamBufferSize);
-	}
-
-	void MeshCacheBuffer::setBufferFromCacheQuadrantData_Format0(size_t numVerticesPerSize, CacheQuadrantData& cacheQuadrantData, TheWorld_Utils::MemoryBuffer& buffer)
-	{
-		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer setBufferFromCacheQuadrantData_Format0 1 ") + __FUNCTION__, "ALL");
-
-		size_t size = 0;
-
-		size_t numHeights16 = cacheQuadrantData.heights16Buffer != nullptr ? cacheQuadrantData.heights16Buffer->size() / sizeof(uint16_t) : 0;
-		my_assert(cacheQuadrantData.heights16Buffer == nullptr || cacheQuadrantData.heights16Buffer->size() == numHeights16 * sizeof(uint16_t));
-		size_t numHeights32 = cacheQuadrantData.heights32Buffer != nullptr ? cacheQuadrantData.heights32Buffer->size() / sizeof(float) : 0;
-		my_assert(cacheQuadrantData.heights32Buffer == nullptr || cacheQuadrantData.heights32Buffer->size() == numHeights32 * sizeof(float));
-		size_t numNormals = cacheQuadrantData.normalsBuffer != nullptr ? cacheQuadrantData.normalsBuffer->size() / sizeof(TheWorld_Utils::_RGB) : 0;
-		my_assert(cacheQuadrantData.normalsBuffer == nullptr || cacheQuadrantData.normalsBuffer->size() == numNormals * sizeof(TheWorld_Utils::_RGB));
-		size_t numSplatmapVertices = cacheQuadrantData.splatmapBuffer != nullptr ? cacheQuadrantData.splatmapBuffer->size() / sizeof(TheWorld_Utils::_RGBA) : 0;
-		my_assert(cacheQuadrantData.splatmapBuffer == nullptr || cacheQuadrantData.splatmapBuffer->size() == numSplatmapVertices * sizeof(TheWorld_Utils::_RGBA));
-		size_t numColormapVertices = cacheQuadrantData.colormapBuffer != nullptr ? cacheQuadrantData.colormapBuffer->size() / sizeof(TheWorld_Utils::_RGBA) : 0;
-		my_assert(cacheQuadrantData.colormapBuffer == nullptr || cacheQuadrantData.colormapBuffer->size() == numColormapVertices * sizeof(TheWorld_Utils::_RGBA));
-		//size_t numGlobalmapVertices = cacheQuadrantData.globalmapBuffer != nullptr ? cacheQuadrantData.globalmapBuffer->size() / sizeof(TheWorld_Utils::_RGB) : 0;
-		//my_assert(cacheQuadrantData.globalmapBuffer == nullptr || cacheQuadrantData.globalmapBuffer->size() == numGlobalmapVertices * sizeof(TheWorld_Utils::_RGB));
-
-		my_assert(numHeights16 == numHeights32);
-		my_assert(numHeights16 == 0 || numHeights16 == numVerticesPerSize * numVerticesPerSize);
-		my_assert(numNormals == 0 || numNormals == numVerticesPerSize * numVerticesPerSize);
-		my_assert(numSplatmapVertices == 0 || numSplatmapVertices == numVerticesPerSize * numVerticesPerSize);
-		my_assert(numColormapVertices == 0 || numColormapVertices == numVerticesPerSize * numVerticesPerSize);
-		//my_assert(numGlobalmapVertices == 0 || numGlobalmapVertices == numVerticesPerSize * numVerticesPerSize);
-
-		static std::recursive_mutex s_mtxEmptyBuffer;
-		static TheWorld_Utils::MemoryBuffer s_emptyFloat16HeightsBuffer;
-		TheWorld_Utils::MemoryBuffer* _float16HeightsBuffer = cacheQuadrantData.heights16Buffer;
-		static TheWorld_Utils::MemoryBuffer s_emptyFloat32HeightsBuffer;
-		TheWorld_Utils::MemoryBuffer* _float32HeightsBuffer = cacheQuadrantData.heights32Buffer;
-		static TheWorld_Utils::MemoryBuffer s_emptyNormalsBuffer;
-		TheWorld_Utils::MemoryBuffer* _normalsBuffer = cacheQuadrantData.normalsBuffer;
-		static TheWorld_Utils::MemoryBuffer s_emptySplatmapBuffer;
-		TheWorld_Utils::MemoryBuffer* _splatmapBuffer = cacheQuadrantData.splatmapBuffer;
-
-		if (numHeights16 == 0)
+		if (namedDataBufferSerializedSize > 0)
 		{
-			TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer setBufferFromCacheQuadrantData_Format0 1.1 ") + __FUNCTION__, "gen empty quadrants heights");
+			TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer setBufferFromCacheQuadrantData_Format1 1.5 ") + __FUNCTION__, "serialize named data buffer");
 
-			_float16HeightsBuffer = &s_emptyFloat16HeightsBuffer;
-			_float32HeightsBuffer = &s_emptyFloat32HeightsBuffer;
-
-			numHeights32 = numHeights16 = numVerticesPerSize * numVerticesPerSize;
-
-			{
-				std::lock_guard<std::recursive_mutex> lock(s_mtxEmptyBuffer);
-
-				size_t float16HeightsBufferSize = numVerticesPerSize * numVerticesPerSize * sizeof(uint16_t);
-				size_t float32HeightsBufferSize = numVerticesPerSize * numVerticesPerSize * sizeof(float);
-
-				if (s_emptyFloat16HeightsBuffer.size() == 0 || s_emptyFloat32HeightsBuffer.size() == 0)
-				{
-					s_emptyFloat16HeightsBuffer.reserve(float16HeightsBufferSize);
-					uint16_t* float16HeightsBufferPtr = (uint16_t*)s_emptyFloat16HeightsBuffer.ptr();
-					s_emptyFloat32HeightsBuffer.reserve(float32HeightsBufferSize);
-					float* float32HeightsBufferPtr = (float*)s_emptyFloat32HeightsBuffer.ptr();
-
-					TheWorld_Utils::FLOAT_32 f(EMPTY_QUADRANTS_TERRAIN_HEIGHT);
-					uint16_t emptyHalf = half_from_float(f.u32);
-					{		// first impl.
-						for (size_t z = 0; z < numVerticesPerSize; z++)
-							for (size_t x = 0; x < numVerticesPerSize; x++)
-							{
-								*float16HeightsBufferPtr = emptyHalf;
-								float16HeightsBufferPtr++;
-								*float32HeightsBufferPtr = EMPTY_QUADRANTS_TERRAIN_HEIGHT;
-								float32HeightsBufferPtr++;
-							}
-					}
-
-					assert((BYTE*)float16HeightsBufferPtr - s_emptyFloat16HeightsBuffer.ptr() == float16HeightsBufferSize);
-					s_emptyFloat16HeightsBuffer.adjustSize(float16HeightsBufferSize);
-					assert((BYTE*)float32HeightsBufferPtr - s_emptyFloat32HeightsBuffer.ptr() == float32HeightsBufferSize);
-					s_emptyFloat32HeightsBuffer.adjustSize(float32HeightsBufferSize);
-				}
-				else
-				{
-					assert(float16HeightsBufferSize == _float16HeightsBuffer->size());
-					assert(float32HeightsBufferSize == _float32HeightsBuffer->size());
-				}
-
-				//// useless as texture are filled in ShaderTerrainData::resetMaterialParams if they are empty
-				//_flatNormalsBuffer = &s_flatNormalsBuffer;
-				//numNormals = numVerticesPerSize * numVerticesPerSize;
-				//size_t floatNormalsBufferSize = numVerticesPerSize * numVerticesPerSize * sizeof(struct TheWorld_Utils::_RGB);
-				//if (s_flatNormalsBuffer.size() == 0)
-				//{
-				//	s_flatNormalsBuffer.reserve(floatNormalsBufferSize);
-				//	struct TheWorld_Utils::_RGB* _normalBufferPtr = (struct TheWorld_Utils::_RGB*)s_flatNormalsBuffer.ptr();
-
-				//	Eigen::Vector3d normal(0.0f, 1.0f, 0.0f);
-				//	//float nx = float(normal.x());		// DEBUG ONLY
-				//	//float ny = float(normal.y());		// DEBUG ONLY
-				//	//float nz = float(normal.z());		// DEBUG ONLY
-				//	Eigen::Vector3d packedNormal = packNormal(normal);
-				//	//float pnx = float(packedNormal.x());		// DEBUG ONLY
-				//	//float pny = float(packedNormal.y());		// DEBUG ONLY
-				//	//float pnz = float(packedNormal.z());		// DEBUG ONLY
-				//	struct TheWorld_Utils::_RGB flatBufferNormal;
-				//	flatBufferNormal.r = (BYTE)(packedNormal.x() * 255);
-				//	flatBufferNormal.g = (BYTE)(packedNormal.y() * 255);
-				//	flatBufferNormal.b = (BYTE)(packedNormal.z() * 255);
-				//	for (size_t z = 0; z < numVerticesPerSize; z++)
-				//		for (size_t x = 0; x < numVerticesPerSize; x++)
-				//		{
-				//			*_normalBufferPtr = flatBufferNormal;
-				//			_normalBufferPtr++;
-				//		}
-
-				//	assert((BYTE*)_normalBufferPtr - s_flatNormalsBuffer.ptr() == floatNormalsBufferSize);
-				//	s_flatNormalsBuffer.adjustSize(floatNormalsBufferSize);
-				//}
-				//else
-				//{
-				//	assert(floatNormalsBufferSize == s_flatNormalsBuffer.size());
-				//}
-
-				//// useless as texture are filled in ShaderTerrainData::resetMaterialParams if they are empty
-				//_flatSplatmapBuffer = &s_flatSplatmapBuffer;
-				//numSplatmapVertices = numVerticesPerSize * numVerticesPerSize;
-				//size_t floatSplatmapBufferSize = numVerticesPerSize * numVerticesPerSize * sizeof(struct TheWorld_Utils::_RGBA);
-				//if (s_flatSplatmapBuffer.size() == 0)
-				//{
-				//	s_flatSplatmapBuffer.reserve(floatSplatmapBufferSize);
-				//	struct TheWorld_Utils::_RGBA* _splatmapBufferPtr = (struct TheWorld_Utils::_RGBA*)s_flatSplatmapBuffer.ptr();
-
-				//	struct TheWorld_Utils::_RGBA flatBufferSplatmap;	flatBufferSplatmap.r = 255;	flatBufferSplatmap.g = 0;	flatBufferSplatmap.b = 0;	flatBufferSplatmap.a = 0;
-				//	for (size_t z = 0; z < numVerticesPerSize; z++)
-				//		for (size_t x = 0; x < numVerticesPerSize; x++)
-				//		{
-				//			*_splatmapBufferPtr = flatBufferSplatmap;
-				//			_splatmapBufferPtr++;
-				//		}
-
-				//	assert((BYTE*)_splatmapBufferPtr - s_flatSplatmapBuffer.ptr() == floatSplatmapBufferSize);
-				//	s_flatSplatmapBuffer.adjustSize(floatSplatmapBufferSize);
-				//}
-				//else
-				//{
-				//	assert(floatSplatmapBufferSize == s_flatSplatmapBuffer.size());
-				//}
-			}
-		}
-
-		size_t float16HeightmapSize = numHeights16 * sizeof(uint16_t);
-		size_t float32HeightmapSize = numHeights32 * sizeof(float);
-		size_t normalmapSize = numNormals > 0 ? numNormals * sizeof(TheWorld_Utils::_RGB) : sizeof(TheWorld_Utils::_RGB);
-		size_t splatmapSize = numSplatmapVertices > 0 ? numSplatmapVertices * sizeof(TheWorld_Utils::_RGBA) : sizeof(TheWorld_Utils::_RGBA);
-		size_t colormapSize = numColormapVertices > 0 ? numColormapVertices * sizeof(TheWorld_Utils::_RGBA) : sizeof(TheWorld_Utils::_RGBA);
-		//size_t globalmapSize = numGlobalmapVertices > 0 ? numGlobalmapVertices * sizeof(TheWorld_Utils::_RGB) : sizeof(TheWorld_Utils::_RGB);
-		size_t globalmapSize = cacheQuadrantData.globalmapBuffer == nullptr ? sizeof(TheWorld_Utils::_RGB) : cacheQuadrantData.globalmapBuffer->size();
-
-		size_t terrainEditValueSize = cacheQuadrantData.terrainEditValues == nullptr ? 0 : cacheQuadrantData.terrainEditValues->size();
-		size_t streamBufferSize = 1 /* buffer format "0"/"1" */
-			+ sizeof(size_t) + cacheQuadrantData.meshId.length()
-			+ sizeof(size_t) + terrainEditValueSize
-			+ sizeof(size_t); /* numheights */
-		if (numHeights16 > 0)
-		{
-			streamBufferSize = streamBufferSize
-				+ sizeof(float) /*min_altitude*/
-				+ sizeof(float) /*max_altitude*/
-				+ float16HeightmapSize
-				+ float32HeightmapSize
-				+ normalmapSize
-				+ splatmapSize
-				+ colormapSize
-				+ globalmapSize;
-		}
-
-		buffer.reserve(streamBufferSize);
-		BYTE* _streamBuffer = buffer.ptr();
-
-		{
-			TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer setBufferFromCacheQuadrantData_Format0 1.2 ") + __FUNCTION__, "copy meshId/edit values");
-
-			memcpy(_streamBuffer, "0", 1);
-			_streamBuffer++;
-
-			TheWorld_Utils::serializeToByteStream<size_t>(cacheQuadrantData.meshId.length(), _streamBuffer, size);
+			cacheQuadrantData.namedDataBuffer->serialize(_streamBuffer, size);
 			_streamBuffer += size;
-
-			memcpy(_streamBuffer, cacheQuadrantData.meshId.c_str(), cacheQuadrantData.meshId.length());
-			_streamBuffer += cacheQuadrantData.meshId.length();
-
-			TheWorld_Utils::serializeToByteStream<size_t>(terrainEditValueSize, _streamBuffer, size);
-			_streamBuffer += size;
-
-			if (terrainEditValueSize > 0)
-			{
-				TerrainEdit terrainData;
-				terrainData.deserialize(*cacheQuadrantData.terrainEditValues);
-				if (numHeights16 > 0 && terrainData.terrainType == TerrainEdit::TerrainType::empty)
-					terrainData.heightsNeedRegen = false;
-				//memcpy(_streamBuffer, cacheQuadrantData.terrainEditValues->ptr(), terrainEditValueSize);
-				memcpy(_streamBuffer, &terrainData, terrainEditValueSize);
-				_streamBuffer += terrainEditValueSize;
-				cacheQuadrantData.minHeight = terrainData.minHeight;
-				cacheQuadrantData.maxHeight = terrainData.maxHeight;
-			}
 		}
-
-		size = 0;
-		TheWorld_Utils::serializeToByteStream<size_t>(numHeights16, _streamBuffer, size);
-		_streamBuffer += size;
-
-		if (numHeights16 > 0)
-		{
-			TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer setBufferFromCacheQuadrantData_Format0 1.3 ") + __FUNCTION__, "copy heights");
-
-			TheWorld_Utils::serializeToByteStream<float>(cacheQuadrantData.minHeight, _streamBuffer, size);
-			_streamBuffer += size;
-
-			TheWorld_Utils::serializeToByteStream<float>(cacheQuadrantData.maxHeight, _streamBuffer, size);
-			_streamBuffer += size;
-
-			memcpy(_streamBuffer, _float16HeightsBuffer->ptr(), float16HeightmapSize);
-			_streamBuffer += float16HeightmapSize;
-
-			memcpy(_streamBuffer, _float32HeightsBuffer->ptr(), float32HeightmapSize);
-			_streamBuffer += float32HeightmapSize;
-		}
-
-		if (numNormals > 0)
-		{
-			TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer setBufferFromCacheQuadrantData_Format0 1.4 ") + __FUNCTION__, "copy normals");
-
-			memcpy(_streamBuffer, _normalsBuffer->ptr(), normalmapSize);
-			_streamBuffer += normalmapSize;
-		}
-		else
-		{
-			struct TheWorld_Utils::_RGB rgb(0, 0, 0);
-			rgb.r = rgb.g = rgb.b = 0;
-			memcpy(_streamBuffer, (BYTE*)&rgb, sizeof(struct TheWorld_Utils::_RGB));
-			_streamBuffer += sizeof(struct TheWorld_Utils::_RGB);
-		}
-
-		if (numSplatmapVertices > 0)
-		{
-			TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer setBufferFromCacheQuadrantData_Format0 1.4 ") + __FUNCTION__, "copy splatmap");
-
-			memcpy(_streamBuffer, _splatmapBuffer->ptr(), splatmapSize);
-			_streamBuffer += splatmapSize;
-		}
-		else
-		{
-			struct TheWorld_Utils::_RGBA rgba(0, 0, 0, 0);
-			rgba.r = rgba.g = rgba.b = rgba.a = 0;
-			memcpy(_streamBuffer, (BYTE*)&rgba, sizeof(struct TheWorld_Utils::_RGBA));
-			_streamBuffer += sizeof(struct TheWorld_Utils::_RGBA);
-		}
-
-		if (numColormapVertices > 0)
-		{
-			TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer setBufferFromCacheQuadrantData_Format0 1.4 ") + __FUNCTION__, "copy colormap");
-
-			memcpy(_streamBuffer, cacheQuadrantData.colormapBuffer->ptr(), colormapSize);
-			_streamBuffer += colormapSize;
-		}
-		else
-		{
-			struct TheWorld_Utils::_RGBA rgba;
-			rgba.r = rgba.g = rgba.b = rgba.a = 0;
-			memcpy(_streamBuffer, (BYTE*)&rgba, sizeof(struct TheWorld_Utils::_RGBA));
-			_streamBuffer += sizeof(struct TheWorld_Utils::_RGBA);
-		}
-
-		if (globalmapSize > sizeof(TheWorld_Utils::_RGB))
-		{
-			TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer setBufferFromCacheQuadrantData_Format0 1.4 ") + __FUNCTION__, "copy globalmap");
-
-			memcpy(_streamBuffer, cacheQuadrantData.globalmapBuffer->ptr(), globalmapSize);
-			_streamBuffer += globalmapSize;
-		}
-		else
-		{
-			struct TheWorld_Utils::_RGB rgb;
-			rgb.r = rgb.g = rgb.b = 0;
-			memcpy(_streamBuffer, (BYTE*)&rgb, sizeof(struct TheWorld_Utils::_RGB));
-			_streamBuffer += sizeof(struct TheWorld_Utils::_RGB);
-		}
-
+		
 		assert(_streamBuffer - buffer.ptr() == streamBufferSize);
 		buffer.adjustSize(streamBufferSize);
 	}
@@ -3847,58 +4370,116 @@ namespace TheWorld_Utils
 		setBufferFromCacheQuadrantData(numVerticesPerSize, cacheQuadrantData, buffer);
 	}
 
-	void MeshCacheBuffer::calcNormal(TheWorld_Utils::MemoryBuffer& heightmap, size_t numVerticesPerSize, float gridStepInWU, size_t index, float& normalX, float& normalY, float& normalZ)
+	struct TheWorld_Utils::_RGBA MeshCacheBuffer::calcSplat(TheWorld_Utils::MemoryBuffer& heightmap, size_t index, size_t numVerticesPerSize, float gridStepInWU, TerrainEdit* terrainEdit)
+	{
+		float normalX, normalY, normalZ, h;
+		TheWorld_Utils::MeshCacheBuffer::calcNormal(heightmap, index, numVerticesPerSize, gridStepInWU, normalX, normalY, normalZ, h);
+		Eigen::Vector3d normal = Eigen::Vector3d(double(normalX), double(normalY), double(normalZ));
+
+		Eigen::Vector3d up(0.0f, 1.0f, 0.0f);
+
+		// component on up direction of the normal (it is the y component of the normal if up is classic up == 0, 1, 0) - It ranges from 0=vertical terrain to 1=flat terrain
+		float upComponent = float(normal.dot(up));
+
+		// (1.0f - upComponent) ranges from 0=flat terrain to 1=vertical terrain so slope ranges from 0-slopeFlatFactor=flat terrain to slopeVerticalFactor-slopeFlatFactor=vertical terrain
+		float slope = (terrainEdit->extraValues.slopeVerticalFactor * (1.0f - upComponent)) - terrainEdit->extraValues.slopeFlatFactor;
+
+		// amounts range from 0.0f to 1.0f
+		float rocksAmount = TheWorld_Utils::Utils::clamp<float>(slope, 0.0f, 1.0f);								// rocksAmount is max when slope is greater than 1 (vertical enough) and is null when slope is less than 0 (flat enough), otherwise it grows with the slope (if slope between 0 and 1)
+		float dirtAmount = TheWorld_Utils::Utils::clamp<float>(rocksAmount * terrainEdit->extraValues.dirtOnRocksFactor, 0.0f, 1.0f);	// dirt grows on rocks
+		float highElevationAmount = terrainEdit->extraValues.highElevationFactor * ((h - terrainEdit->minHeight) / (terrainEdit->maxHeight - terrainEdit->minHeight)) - terrainEdit->extraValues.lowElevationFactor;		// ranges from -lowElevationFactor to highElevationFactor-lowElevationFactor
+		highElevationAmount = TheWorld_Utils::Utils::clamp<float>(highElevationAmount, 0.0f, 1.0f);				// highElevationAmount is capped from 0 and 1
+		float lowElevationAmount = 1.0f - highElevationAmount;													// lowElevationAmount is the complement of highElevationAmount in range 0/1
+
+		//if (rocksAmount == 0.0f)
+		//	rocksAmount = 0.0f;
+
+		struct TheWorld_Utils::_RGBA rgba;
+
+		float r, g, b, a;
+		if (terrainEdit->extraValues.splatMapMode == 1)
+		{
+			r = lowElevationAmount;
+			r = std::lerp(r, 0.0f, highElevationAmount);	// with higher priority: if highElevationAmount=0 r is unchanged, if highElevationAmount==>1 r==>0 (highElevationAmount can lower lowElevationAmount)
+			r = std::lerp(r, 0.0f, dirtAmount);				// with higher priority: if dirtAmount=0 r is unchanged, if dirtAmount==>1 r==>0 (dirtAmount can lower lowElevationAmount)
+			r = std::lerp(r, 0.0f, rocksAmount);			// with higher priority: if rocksAmount=0 r is unchanged, if rocksAmount==>1 r==>0 (rocksAmount can lower lowElevationAmount)
+
+			g = highElevationAmount;
+			g = std::lerp(g, 0.0f, dirtAmount);				// with higher priority: if dirtAmount=0 g is unchanged, if dirtAmount==>1 g==>0 (dirtAmount can lower highElevationAmount)
+			g = std::lerp(g, 0.0f, rocksAmount);			// with higher priority: if rocksAmount=0 g is unchanged, if rocksAmount==>1 g==>0 (rocksAmount can lower highElevationAmount)
+
+			b = dirtAmount;
+			b = std::lerp(b, 0.0f, rocksAmount);			// with higher priority: if rocksAmount=0 b is unchanged, if rocksAmount==>1 b==>0 (rocksAmount can lower dirtAmount)
+
+			a = rocksAmount;
+		}
+		else
+		{
+			a = rocksAmount;
+			a = std::lerp(a, 0.0f, dirtAmount);
+			a = std::lerp(a, 0.0f, highElevationAmount);
+			a = std::lerp(a, 0.0f, lowElevationAmount);
+
+			b = dirtAmount;
+			b = std::lerp(b, 0.0f, highElevationAmount);
+			b = std::lerp(b, 0.0f, lowElevationAmount);
+
+			g = highElevationAmount;
+			g = std::lerp(g, 0.0f, lowElevationAmount);
+
+			r = lowElevationAmount;
+		}
+
+		rgba.r = BYTE(r * 255);
+		rgba.g = BYTE(g * 255);
+		rgba.b = BYTE(b * 255);
+		rgba.a = BYTE(a * 255);
+
+		return rgba;
+	}
+
+	void MeshCacheBuffer::calcNormal(TheWorld_Utils::MemoryBuffer& heightmap, size_t index, size_t numVerticesPerSize, float gridStepInWU, float& normalX, float& normalY, float& normalZ, float& h)
 	{
 		size_t posX = TheWorld_Utils::MemoryBuffer::getPosXFromIndex(index, numVerticesPerSize);		// 0-based pos X in heightmap
 		size_t posZ = TheWorld_Utils::MemoryBuffer::getPosYFromIndex(index, numVerticesPerSize);		// 0-based pos Z in heightmap
 
-		float h = heightmap.get_at<float>(index);
+		h = heightmap.get_at<float>(index);
+
+		Eigen::Vector3d normal;
 
 		if (posX < numVerticesPerSize - 1 and posZ < numVerticesPerSize - 1)
 		{
 			// we are far from right and bottom border we can fetch left and bottom heights
 			float h_right = heightmap.get_at<float>(index + 1);
 			float h_bottom = heightmap.get_at<float>(index + numVerticesPerSize);
-			Eigen::Vector3d normal(h - h_right, gridStepInWU, h - h_bottom);
-			normal.normalize();
-			normalX = (float)normal.x();
-			normalY = (float)normal.y();	
-			normalZ = (float)normal.z();
+			normal = Eigen::Vector3d(h - h_right, gridStepInWU, h - h_bottom);
 		}
 		else if (posX < numVerticesPerSize - 1 and posZ == numVerticesPerSize - 1)
 		{
 			// we are on the bottom border but not on the the right border
 			float h_right = heightmap.get_at<float>(index + 1);
 			float h_top = heightmap.get_at<float>(index - numVerticesPerSize);
-			Eigen::Vector3d normal(h - h_top, gridStepInWU, h - h_right);
-			normal.normalize();
-			normalX = (float)normal.x();
-			normalY = (float)normal.y();
-			normalZ = (float)normal.z();
+			normal = Eigen::Vector3d(h - h_top, gridStepInWU, h - h_right);
 		}
 		else if (posX == numVerticesPerSize - 1 and posZ < numVerticesPerSize - 1)
 		{
 			// we are on the right border but not on the bottom border
 			float h_left = heightmap.get_at<float>(index - 1);
 			float h_bottom = heightmap.get_at<float>(index + numVerticesPerSize);
-			Eigen::Vector3d normal(h - h_bottom, gridStepInWU, h - h_left);
-			normal.normalize();
-			normalX = (float)normal.x();
-			normalY = (float)normal.y();
-			normalZ = (float)normal.z();
+			normal = Eigen::Vector3d(h - h_bottom, gridStepInWU, h - h_left);
 		}
 		else
 		{
 			// we are on the right / bottom vertex
 			float h_left = heightmap.get_at<float>(index - 1);
 			float h_top = heightmap.get_at<float>(index - numVerticesPerSize);
-			Eigen::Vector3d normal(h - h_left, gridStepInWU, h - h_top);
-			normal.normalize();
-			normalX = (float)normal.x();
-			normalY = (float)normal.y();
-			normalZ = (float)normal.z();
+			normal = Eigen::Vector3d(h - h_left, gridStepInWU, h - h_top);
 		}
 
+		normal.normalize();
+		normalX = (float)normal.x();
+		normalY = (float)normal.y();
+		normalZ = (float)normal.z();
 	}
 	
 	uint16_t MeshCacheBuffer::halfFromFloat(float _f)
