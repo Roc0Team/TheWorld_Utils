@@ -1305,13 +1305,13 @@ namespace TheWorld_Utils
 		rocksTexName = extraValues.rocksTexName_a;
 	}
 
-	//void TerrainEdit::getNorthGroundTextures(std::string& lowElevationTexName, std::string& highElevationTexName, std::string& dirtTexName, std::string& rocksTexName) const
-	//{
-	//	lowElevationTexName = extraValues1.northGroundTextures.lowElevationTexName_r;
-	//	highElevationTexName = extraValues1.northGroundTextures.highElevationTexName_g;
-	//	dirtTexName = extraValues1.northGroundTextures.dirtTexName_b;
-	//	rocksTexName = extraValues1.northGroundTextures.rocksTexName_a;
-	//}
+	void TerrainEdit::getNorthGroundTextures(std::string& lowElevationTexName, std::string& highElevationTexName, std::string& dirtTexName, std::string& rocksTexName) const
+	{
+		lowElevationTexName = extraValues1.northGroundTextures.lowElevationTexName_r;
+		highElevationTexName = extraValues1.northGroundTextures.highElevationTexName_g;
+		dirtTexName = extraValues1.northGroundTextures.dirtTexName_b;
+		rocksTexName = extraValues1.northGroundTextures.rocksTexName_a;
+	}
 
 	void TerrainEdit::setNorthGroundTextures(std::string lowElevationTexName, std::string highElevationTexName, std::string dirtTexName, std::string rocksTexName)
 	{
@@ -1321,13 +1321,13 @@ namespace TheWorld_Utils
 		strcpy_s(extraValues1.northGroundTextures.rocksTexName_a, sizeof(extraValues1.northGroundTextures.rocksTexName_a), rocksTexName.c_str());
 	}
 
-	//void TerrainEdit::getWestGroundTextures(std::string& lowElevationTexName, std::string& highElevationTexName, std::string& dirtTexName, std::string& rocksTexName) const
-	//{
-	//	lowElevationTexName = extraValues1.westGroundTextures.lowElevationTexName_r;
-	//	highElevationTexName = extraValues1.westGroundTextures.highElevationTexName_g;
-	//	dirtTexName = extraValues1.westGroundTextures.dirtTexName_b;
-	//	rocksTexName = extraValues1.westGroundTextures.rocksTexName_a;
-	//}
+	void TerrainEdit::getWestGroundTextures(std::string& lowElevationTexName, std::string& highElevationTexName, std::string& dirtTexName, std::string& rocksTexName) const
+	{
+		lowElevationTexName = extraValues1.westGroundTextures.lowElevationTexName_r;
+		highElevationTexName = extraValues1.westGroundTextures.highElevationTexName_g;
+		dirtTexName = extraValues1.westGroundTextures.dirtTexName_b;
+		rocksTexName = extraValues1.westGroundTextures.rocksTexName_a;
+	}
 
 	void TerrainEdit::setWestGroundTextures(std::string lowElevationTexName, std::string highElevationTexName, std::string dirtTexName, std::string rocksTexName)
 	{
@@ -1337,13 +1337,13 @@ namespace TheWorld_Utils
 		strcpy_s(extraValues1.westGroundTextures.rocksTexName_a, sizeof(extraValues1.westGroundTextures.rocksTexName_a), rocksTexName.c_str());
 	}
 
-	//void TerrainEdit::getNorthwestGroundTextures(std::string& lowElevationTexName, std::string& highElevationTexName, std::string& dirtTexName, std::string& rocksTexName) const
-	//{
-	//	lowElevationTexName = extraValues1.northwestGroundTextures.lowElevationTexName_r;
-	//	highElevationTexName = extraValues1.northwestGroundTextures.highElevationTexName_g;
-	//	dirtTexName = extraValues1.northwestGroundTextures.dirtTexName_b;
-	//	rocksTexName = extraValues1.northwestGroundTextures.rocksTexName_a;
-	//}
+	void TerrainEdit::getNorthwestGroundTextures(std::string& lowElevationTexName, std::string& highElevationTexName, std::string& dirtTexName, std::string& rocksTexName) const
+	{
+		lowElevationTexName = extraValues1.northwestGroundTextures.lowElevationTexName_r;
+		highElevationTexName = extraValues1.northwestGroundTextures.highElevationTexName_g;
+		dirtTexName = extraValues1.northwestGroundTextures.dirtTexName_b;
+		rocksTexName = extraValues1.northwestGroundTextures.rocksTexName_a;
+	}
 
 	void TerrainEdit::setNorthwestGroundTextures(std::string lowElevationTexName, std::string highElevationTexName, std::string dirtTexName, std::string rocksTexName)
 	{

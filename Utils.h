@@ -1674,11 +1674,11 @@ namespace TheWorld_Utils
 		//__declspec(dllexport) bool detectSeaInQuadrant(void);
 		__declspec(dllexport) bool canContainSea(void) const;
 		__declspec(dllexport) void getGroundTextures(std::string& lowElevationTexName, std::string& highElevationTexName, std::string& dirtTexName, std::string& rocksTexName) const;
-		//__declspec(dllexport) void getNorthGroundTextures(std::string& lowElevationTexName, std::string& highElevationTexName, std::string& dirtTexName, std::string& rocksTexName) const;
+		__declspec(dllexport) void getNorthGroundTextures(std::string& lowElevationTexName, std::string& highElevationTexName, std::string& dirtTexName, std::string& rocksTexName) const;
 		__declspec(dllexport) void setNorthGroundTextures(std::string lowElevationTexName, std::string highElevationTexName, std::string dirtTexName, std::string rocksTexName);
-		//__declspec(dllexport) void getWestGroundTextures(std::string& lowElevationTexName, std::string& highElevationTexName, std::string& dirtTexName, std::string& rocksTexName) const;
+		__declspec(dllexport) void getWestGroundTextures(std::string& lowElevationTexName, std::string& highElevationTexName, std::string& dirtTexName, std::string& rocksTexName) const;
 		__declspec(dllexport) void setWestGroundTextures(std::string lowElevationTexName, std::string highElevationTexName, std::string dirtTexName, std::string rocksTexName);
-		//__declspec(dllexport) void getNorthwestGroundTextures(std::string& lowElevationTexName, std::string& highElevationTexName, std::string& dirtTexName, std::string& rocksTexName) const;
+		__declspec(dllexport) void getNorthwestGroundTextures(std::string& lowElevationTexName, std::string& highElevationTexName, std::string& dirtTexName, std::string& rocksTexName) const;
 		__declspec(dllexport) void setNorthwestGroundTextures(std::string lowElevationTexName, std::string highElevationTexName, std::string dirtTexName, std::string rocksTexName);
 		void splatmapNeedRegen(bool b)
 		{
