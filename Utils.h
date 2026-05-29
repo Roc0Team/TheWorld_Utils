@@ -1595,6 +1595,11 @@ namespace TheWorld_Utils
 
 		NoiseValues noise;
 
+		constexpr static float THEWORLD_SPLATMAP_HIGH_ELEVATION_FACTOR = 4.0f;
+		constexpr static float THEWORLD_SPLATMAP_LOW_ELEVATION_FACTOR = 2.0f;
+		constexpr static float THEWORLD_SPLATMAP_MIN_HEIGHT = 0.0f;
+		constexpr static float THEWORLD_SPLATMAP_MAX_HEIGHT = 2000.0f;
+
 		struct
 		{
 			char lowElevationTexName_r[51] = "";
@@ -1604,8 +1609,8 @@ namespace TheWorld_Utils
 			float slopeVerticalFactor = 4.0f;
 			float slopeFlatFactor = 1.0f;
 			float dirtOnRocksFactor = 2.0f;
-			float highElevationFactor = 4.0f;
-			float lowElevationFactor = 2.0f;
+			float highElevationFactor_not_used = THEWORLD_SPLATMAP_HIGH_ELEVATION_FACTOR;
+			float lowElevationFactor_not_used = THEWORLD_SPLATMAP_LOW_ELEVATION_FACTOR;
 			size_t splatMapMode = 1;
 			float amplitudeBlendFactor = THEWORLD_DEFAULT_AMPLITUDE_BLEND_FACTOR;
 			float postGenerateElevation = 0;

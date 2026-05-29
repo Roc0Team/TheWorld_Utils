@@ -912,7 +912,9 @@ namespace TheWorld_Utils
 			return false;
 		if (extraValues.dirtOnRocksFactor != o.extraValues.dirtOnRocksFactor)
 			return false;
-		if (extraValues.lowElevationFactor != o.extraValues.lowElevationFactor)
+		if (extraValues.lowElevationFactor_not_used != o.extraValues.lowElevationFactor_not_used)
+			return false;
+		if (extraValues.highElevationFactor_not_used != o.extraValues.highElevationFactor_not_used)
 			return false;
 		if (extraValues.splatMapMode != o.extraValues.splatMapMode)
 			return false;
@@ -4387,7 +4389,10 @@ namespace TheWorld_Utils
 		// amounts range from 0.0f to 1.0f
 		float rocksAmount = TheWorld_Utils::Utils::clamp<float>(slope, 0.0f, 1.0f);								// rocksAmount is max when slope is greater than 1 (vertical enough) and is null when slope is less than 0 (flat enough), otherwise it grows with the slope (if slope between 0 and 1)
 		float dirtAmount = TheWorld_Utils::Utils::clamp<float>(rocksAmount * terrainEdit->extraValues.dirtOnRocksFactor, 0.0f, 1.0f);	// dirt grows on rocks
-		float highElevationAmount = terrainEdit->extraValues.highElevationFactor * ((h - terrainEdit->minHeight) / (terrainEdit->maxHeight - terrainEdit->minHeight)) - terrainEdit->extraValues.lowElevationFactor;		// ranges from -lowElevationFactor to highElevationFactor-lowElevationFactor
+		//float highElevationAmount = terrainEdit->extraValues.highElevationFactor * ((h - terrainEdit->minHeight) / (terrainEdit->maxHeight - terrainEdit->minHeight)) - terrainEdit->extraValues.lowElevationFactor;		// ranges from -lowElevationFactor to highElevationFactor-lowElevationFactor
+		float highElevationAmount = 
+			TheWorld_Utils::TerrainEdit::THEWORLD_SPLATMAP_HIGH_ELEVATION_FACTOR * ((h - TheWorld_Utils::TerrainEdit::THEWORLD_SPLATMAP_MIN_HEIGHT) / (TheWorld_Utils::TerrainEdit::THEWORLD_SPLATMAP_MAX_HEIGHT - TheWorld_Utils::TerrainEdit::THEWORLD_SPLATMAP_MIN_HEIGHT))
+			- TheWorld_Utils::TerrainEdit::THEWORLD_SPLATMAP_LOW_ELEVATION_FACTOR;		// ranges from -lowElevationFactor to highElevationFactor-lowElevationFactor
 		highElevationAmount = TheWorld_Utils::Utils::clamp<float>(highElevationAmount, 0.0f, 1.0f);				// highElevationAmount is capped from 0 and 1
 		float lowElevationAmount = 1.0f - highElevationAmount;													// lowElevationAmount is the complement of highElevationAmount in range 0/1
 
