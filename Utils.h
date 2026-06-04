@@ -56,6 +56,8 @@ constexpr auto THEWORLD_QUADRANT_NAMEDATA_NORTHWESTQUADSPLATMAPTEXEL = "NorthWes
 #define Vector3Y godot::Vector3(0, 1, 0)
 #define Vector3Z godot::Vector3(0, 0, 1)
 
+#define TRACK_QUADRANT_FOR_DEBUG(text, hash) trackQuadrantForDebug(__FUNCTION__, text, hash)
+
 namespace TheWorld_Utils
 {
 	template <typename T>
@@ -1303,7 +1305,7 @@ namespace TheWorld_Utils
 		}
 
 		_declspec(dllexport) bool isQuadrantTrackedForDebug(void) const;
-		_declspec(dllexport) void trackQuadrantForDebug(std::string owner, std::string text) const;
+		_declspec(dllexport) void trackQuadrantForDebug(std::string owner, std::string text, std::string hash) const;
 
 		std::string getName(void) const
 		{
@@ -1974,13 +1976,13 @@ namespace TheWorld_Utils
 		__declspec(dllexport) static void clearWorkCacheDir(std::string cacheDir, std::string mapName, float gridStepInWU, size_t numVerticesPerSize, int level);
 		__declspec(dllexport) std::string getMeshIdStr(void);
 		__declspec(dllexport) std::string getCacheIdStr(void);
-		__declspec(dllexport) bool refreshMapsFromDisk(size_t numVerticesPerSize, float gridStepInWU, std::string meshId, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitde, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer);
-		__declspec(dllexport) void refreshMapsFromBuffer(const BYTE* buffer, const size_t bufferSize, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitde, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache);
-		__declspec(dllexport) void refreshMapsFromBuffer(TheWorld_Utils::MemoryBuffer& buffer, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitde, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache);
-		__declspec(dllexport) void refreshMapsFromBuffer(std::string& buffer, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitde, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache);
-		__declspec(dllexport) void refreshCacheQuadrantDataFromBuffer(const BYTE* buffer, const size_t bufferSize, CacheQuadrantData& cacheQuadrantData, bool updateCache);
-		__declspec(dllexport) void refreshCacheQuadrantDataFromBuffer(TheWorld_Utils::MemoryBuffer& buffer, CacheQuadrantData& cacheQuadrantData, bool updateCache);
-		__declspec(dllexport) void refreshCacheQuadrantDataFromBuffer(std::string& buffer, CacheQuadrantData& cacheQuadrantData, bool updateCache);
+		__declspec(dllexport) bool refreshMapsFromDisk(size_t numVerticesPerSize, float gridStepInWU, std::string meshId, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitde, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool overrideEmptyMaps);
+		__declspec(dllexport) void refreshMapsFromBuffer(const BYTE* buffer, const size_t bufferSize, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitde, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache, bool overrideEmptyMaps);
+		__declspec(dllexport) void refreshMapsFromBuffer(TheWorld_Utils::MemoryBuffer& buffer, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitde, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache, bool overrideEmptyMaps);
+		__declspec(dllexport) void refreshMapsFromBuffer(std::string& buffer, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitde, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache, bool overrideEmptyMaps);
+		__declspec(dllexport) void refreshCacheQuadrantDataFromBuffer(const BYTE* buffer, const size_t bufferSize, CacheQuadrantData& cacheQuadrantData, bool updateCache, bool overrideEmptyMaps);
+		__declspec(dllexport) void refreshCacheQuadrantDataFromBuffer(TheWorld_Utils::MemoryBuffer& buffer, CacheQuadrantData& cacheQuadrantData, bool updateCache, bool overrideEmptyMaps);
+		__declspec(dllexport) void refreshCacheQuadrantDataFromBuffer(std::string& buffer, CacheQuadrantData& cacheQuadrantData, bool updateCache, bool overrideEmptyMaps);
 		__declspec(dllexport) void refreshInternalCacheQuadrantDataFromDisk(bool force, bool renewMeshId);
 		__declspec(dllexport) void refreshInternalCacheQuadrantDataFromDisk(bool workDir, bool force, bool renewMeshId);
 		__declspec(dllexport) CacheQuadrantData* internalCacheQuadrantData(void);

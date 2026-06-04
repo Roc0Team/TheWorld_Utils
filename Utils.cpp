@@ -802,20 +802,20 @@ namespace TheWorld_Utils
 		return ret;
 	}
 
-	constexpr auto QUADRANT_TRACKING_IDX_POS_X = -52;
-	constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -59;
+	constexpr auto QUADRANT_TRACKING_IDX_POS_X = -65;
+	constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -62;
 
 	bool QuadrantPos::isQuadrantTrackedForDebug(void) const
 	{
 		return (isInitialized() and m_quadrantPosX == QUADRANT_TRACKING_IDX_POS_X and m_quadrantPosZ == QUADRANT_TRACKING_IDX_POS_Z);
 	}
 
-	void QuadrantPos::trackQuadrantForDebug(std::string owner, std::string text) const
+	void QuadrantPos::trackQuadrantForDebug(std::string owner, std::string text, std::string hash) const
 	{
-		return;
+		//return;
 		if (isQuadrantTrackedForDebug())
 		{
-			PLOG_DEBUG << "Tracking Quadrant " << getIdStr() << (text.size() > 0 ? " - " + text : "");
+			PLOG_DEBUG << "[" << owner << "] TRACKING QUADRANT " << getIdStr() << (text.size() > 0 ? " - " + text : "") << (hash.size() > 0 ? " - Hash=" + TheWorld_Utils::MeshCacheBuffer::meshIdToPrint(hash) : "");
 		}
 	}
 
@@ -851,7 +851,7 @@ namespace TheWorld_Utils
 		//memset(extraValues.highElevationTexName_g, 0, sizeof(extraValues.highElevationTexName_g));
 		//memset(extraValues.dirtTexName_b, 0, sizeof(extraValues.dirtTexName_b));
 		//memset(extraValues.rocksTexName_a, 0, sizeof(extraValues.rocksTexName_a));
-		m_splatmapNeedRegen = true;
+		splatmapNeedRegen(true);
 		colormapNeedRegen = true;
 		globalmapNeedRegen = true;
 
@@ -2980,7 +2980,7 @@ namespace TheWorld_Utils
 		return "WORLD QUADRANT " + m_mapName + " " + pos.getIdStr() + " Hash=" + meshIdToPrint(m_meshId);
 	}
 
-	bool MeshCacheBuffer::refreshMapsFromDisk(size_t numVerticesPerSize, float gridStepInWU, std::string _meshId, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer)
+	bool MeshCacheBuffer::refreshMapsFromDisk(size_t numVerticesPerSize, float gridStepInWU, std::string _meshId, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool overrideEmptyMaps)
 	{
 		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromDisk 1 ") + __FUNCTION__, "ALL");
 
@@ -3011,7 +3011,7 @@ namespace TheWorld_Utils
 			{
 				TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromDisk 1.3 ") + __FUNCTION__, "refreshMapsFromBuffer");
 
-				refreshMapsFromBuffer(tempBuffer, _meshId, terrainEditValues, minAltitude, maxAltitude, float16HeigthsBuffer, float32HeigthsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, namedDataBuffer, false);
+				refreshMapsFromBuffer(tempBuffer, _meshId, terrainEditValues, minAltitude, maxAltitude, float16HeigthsBuffer, float32HeigthsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, namedDataBuffer, false, overrideEmptyMaps);
 			}
 
 			empty = true;
@@ -3020,7 +3020,7 @@ namespace TheWorld_Utils
 		{
 			TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromDisk 1.4  ") + __FUNCTION__, "refreshMapsFromBuffer");
 			std::string meshIdFromBuffer;
-			refreshMapsFromBuffer(buffer, meshIdFromBuffer, terrainEditValues, minAltitude, maxAltitude, float16HeigthsBuffer, float32HeigthsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, namedDataBuffer, false);
+			refreshMapsFromBuffer(buffer, meshIdFromBuffer, terrainEditValues, minAltitude, maxAltitude, float16HeigthsBuffer, float32HeigthsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, namedDataBuffer, false, overrideEmptyMaps);
 			//assert(_meshId.size() == 0 || meshIdFromBuffer == _meshId);
 			if (_meshId.size() > 0 && meshIdFromBuffer != _meshId)
 			{
@@ -3032,7 +3032,7 @@ namespace TheWorld_Utils
 		return empty;
 	}
 
-	void MeshCacheBuffer::refreshMapsFromBuffer(const BYTE* buffer, const size_t bufferSize, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache)
+	void MeshCacheBuffer::refreshMapsFromBuffer(const BYTE* buffer, const size_t bufferSize, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache, bool overrideEmptyMaps)
 	{
 		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromBuffer 1 ") + __FUNCTION__, "ALL");
 
@@ -3096,7 +3096,10 @@ namespace TheWorld_Utils
 				movingStreamBuffer += size;
 				my_assert(float16HeightMapSize == vectSize * uint16_t_size);
 			}
-			float16HeigthsBuffer.set((BYTE*)movingStreamBuffer, float16HeightMapSize);
+			if (overrideEmptyMaps or float16HeigthsBuffer.empty())
+			{
+				float16HeigthsBuffer.set((BYTE*)movingStreamBuffer, float16HeightMapSize);
+			}
 			movingStreamBuffer += float16HeightMapSize;
 
 			size_t float32HeightMapSize = vectSize * float_size;
@@ -3130,11 +3133,13 @@ namespace TheWorld_Utils
 				movingStreamBuffer += size;
 				if (normalMapSize == 0)
 				{
-					normalsBuffer.clear(__FUNCTION__);
+					if (overrideEmptyMaps)
+						normalsBuffer.clear(__FUNCTION__);
 				}
 				else
 				{
-					normalsBuffer.set((BYTE*)movingStreamBuffer, normalMapSize);
+					if (overrideEmptyMaps or normalsBuffer.empty())
+						normalsBuffer.set((BYTE*)movingStreamBuffer, normalMapSize);
 					movingStreamBuffer += normalMapSize;
 				}
 			}
@@ -3143,12 +3148,14 @@ namespace TheWorld_Utils
 				struct TheWorld_Utils::_RGB* rgb = (struct TheWorld_Utils::_RGB*)movingStreamBuffer;
 				if (rgb->r == 0 && rgb->g == 0 && rgb->b == 0)
 				{
-					normalsBuffer.clear(__FUNCTION__);
+					if (overrideEmptyMaps)
+						normalsBuffer.clear(__FUNCTION__);
 					movingStreamBuffer += sizeof(struct TheWorld_Utils::_RGB);
 				}
 				else
 				{
-					normalsBuffer.set((BYTE*)movingStreamBuffer, normalMapSize);
+					if (overrideEmptyMaps or normalsBuffer.empty())
+						normalsBuffer.set((BYTE*)movingStreamBuffer, normalMapSize);
 					movingStreamBuffer += normalMapSize;
 				}
 			}
@@ -3160,11 +3167,13 @@ namespace TheWorld_Utils
 				movingStreamBuffer += size;
 				if (splatmapMapSize == 0)
 				{
-					splatmapBuffer.clear(__FUNCTION__);
+					if (overrideEmptyMaps)
+						splatmapBuffer.clear(__FUNCTION__);
 				}
 				else
 				{
-					splatmapBuffer.set((BYTE*)movingStreamBuffer, splatmapMapSize);
+					if (overrideEmptyMaps or splatmapBuffer.empty())
+						splatmapBuffer.set((BYTE*)movingStreamBuffer, splatmapMapSize);
 					movingStreamBuffer += splatmapMapSize;
 				}
 			}
@@ -3175,18 +3184,21 @@ namespace TheWorld_Utils
 					struct TheWorld_Utils::_RGBA* rgba = (struct TheWorld_Utils::_RGBA*)movingStreamBuffer;
 					if (rgba->r == 0 && rgba->g == 0 && rgba->b == 0 && rgba->a == 0)
 					{
-						splatmapBuffer.clear(__FUNCTION__);
+						if (overrideEmptyMaps)
+							splatmapBuffer.clear(__FUNCTION__);
 						movingStreamBuffer += sizeof(struct TheWorld_Utils::_RGBA);
 					}
 					else
 					{
-						splatmapBuffer.set((BYTE*)movingStreamBuffer, splatmapMapSize);
+						if (overrideEmptyMaps or splatmapBuffer.empty())
+							splatmapBuffer.set((BYTE*)movingStreamBuffer, splatmapMapSize);
 						movingStreamBuffer += splatmapMapSize;
 					}
 				}
 				else
 				{
-					splatmapBuffer.clear(__FUNCTION__);
+					if (overrideEmptyMaps)
+						splatmapBuffer.clear(__FUNCTION__);
 				}
 			}
 			
@@ -3197,11 +3209,13 @@ namespace TheWorld_Utils
 				movingStreamBuffer += size;
 				if (colormapMapSize == 0)
 				{
-					colormapBuffer.clear(__FUNCTION__);
+					if (overrideEmptyMaps)
+						colormapBuffer.clear(__FUNCTION__);
 				}
 				else
 				{
-					colormapBuffer.set((BYTE*)movingStreamBuffer, colormapMapSize);
+					if (overrideEmptyMaps or colormapBuffer.empty())
+						colormapBuffer.set((BYTE*)movingStreamBuffer, colormapMapSize);
 					movingStreamBuffer += colormapMapSize;
 				}
 			}
@@ -3212,18 +3226,21 @@ namespace TheWorld_Utils
 					struct TheWorld_Utils::_RGBA* rgba = (struct TheWorld_Utils::_RGBA*)movingStreamBuffer;
 					if ((rgba->r == 0 && rgba->g == 0 && rgba->b == 0 && rgba->a == 0) /* || (rgba->r == 255 && rgba->g == 255 && rgba->b == 255 && rgba->a == 255)*/)
 					{
-						colormapBuffer.clear(__FUNCTION__);
+						if (overrideEmptyMaps)
+							colormapBuffer.clear(__FUNCTION__);
 						movingStreamBuffer += sizeof(struct TheWorld_Utils::_RGBA);
 					}
 					else
 					{
-						colormapBuffer.set((BYTE*)movingStreamBuffer, colormapMapSize);
+						if (overrideEmptyMaps or colormapBuffer.empty())
+							colormapBuffer.set((BYTE*)movingStreamBuffer, colormapMapSize);
 						movingStreamBuffer += colormapMapSize;
 					}
 				}
 				else
 				{
-					colormapBuffer.clear(__FUNCTION__);
+					if (overrideEmptyMaps)
+						colormapBuffer.clear(__FUNCTION__);
 				}
 			}
 
@@ -3234,11 +3251,13 @@ namespace TheWorld_Utils
 				movingStreamBuffer += size;
 				if (globalmapMapSize == 0)
 				{
-					globalmapBuffer.clear(__FUNCTION__);
+					if (overrideEmptyMaps)
+						globalmapBuffer.clear(__FUNCTION__);
 				}
 				else
 				{
-					globalmapBuffer.set((BYTE*)movingStreamBuffer, globalmapMapSize);
+					if (overrideEmptyMaps or globalmapBuffer.empty())
+						globalmapBuffer.set((BYTE*)movingStreamBuffer, globalmapMapSize);
 					movingStreamBuffer += globalmapMapSize;
 				}
 			}
@@ -3249,28 +3268,33 @@ namespace TheWorld_Utils
 					struct TheWorld_Utils::_RGB* rgb = (struct TheWorld_Utils::_RGB*)movingStreamBuffer;
 					if ((rgb->r == 0 && rgb->g == 0 && rgb->b == 0) /* || (rgb->r == 255 && rgb->g == 255 && rgb->b == 255)*/)
 					{
-						globalmapBuffer.clear(__FUNCTION__);
+						if (overrideEmptyMaps)
+							globalmapBuffer.clear(__FUNCTION__);
 						movingStreamBuffer += sizeof(struct TheWorld_Utils::_RGB);
 					}
 					else
 					{
-						globalmapBuffer.set((BYTE*)movingStreamBuffer, globalmapMapSize);
+						if (overrideEmptyMaps or globalmapBuffer.empty())
+							globalmapBuffer.set((BYTE*)movingStreamBuffer, globalmapMapSize);
 						movingStreamBuffer += globalmapMapSize;
 					}
 				}
 				else
 				{
-					globalmapBuffer.clear(__FUNCTION__);
+					if (overrideEmptyMaps)
+						globalmapBuffer.clear(__FUNCTION__);
 				}
 			}
 
 			if (movingStreamBuffer + sizeof(size_t) <= endOfBuffer)
 			{
-				namedDataBuffer.deserialize((BYTE*)movingStreamBuffer, size);
+				if (overrideEmptyMaps or namedDataBuffer.freed())
+					namedDataBuffer.deserialize((BYTE*)movingStreamBuffer, size);
 			}
 			else
 			{
-				namedDataBuffer.resetEmpty();
+				if (overrideEmptyMaps or namedDataBuffer.freed())
+					namedDataBuffer.resetEmpty();
 			}
 
 			if (updateCache)
@@ -3282,39 +3306,42 @@ namespace TheWorld_Utils
 		else
 		{
 			minAltitude = maxAltitude = 0;
-			float16HeigthsBuffer.clear(__FUNCTION__);
-			float32HeigthsBuffer.clear(__FUNCTION__);
-			normalsBuffer.clear(__FUNCTION__);
-			splatmapBuffer.clear(__FUNCTION__);
-			colormapBuffer.clear(__FUNCTION__);
-			globalmapBuffer.clear(__FUNCTION__);
-			namedDataBuffer.resetEmpty();
+			if (overrideEmptyMaps)
+			{
+				float16HeigthsBuffer.clear(__FUNCTION__);
+				float32HeigthsBuffer.clear(__FUNCTION__);
+				normalsBuffer.clear(__FUNCTION__);
+				splatmapBuffer.clear(__FUNCTION__);
+				colormapBuffer.clear(__FUNCTION__);
+				globalmapBuffer.clear(__FUNCTION__);
+				namedDataBuffer.resetEmpty();
+			}
 		}
 	}
 
-	void MeshCacheBuffer::refreshMapsFromBuffer(TheWorld_Utils::MemoryBuffer& buffer, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache)
+	void MeshCacheBuffer::refreshMapsFromBuffer(TheWorld_Utils::MemoryBuffer& buffer, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache, bool overrideEmptyMaps)
 	{
-		refreshMapsFromBuffer(buffer.ptr(), buffer.size(), meshIdFromBuffer, terrainEditValues, minAltitude, maxAltitude, float16HeigthsBuffer, float32HeigthsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, namedDataBuffer, updateCache);
+		refreshMapsFromBuffer(buffer.ptr(), buffer.size(), meshIdFromBuffer, terrainEditValues, minAltitude, maxAltitude, float16HeigthsBuffer, float32HeigthsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, namedDataBuffer, updateCache, overrideEmptyMaps);
 	}
 
-	void MeshCacheBuffer::refreshMapsFromBuffer(std::string& buffer, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache)
+	void MeshCacheBuffer::refreshMapsFromBuffer(std::string& buffer, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache, bool overrideEmptyMaps)
 	{
-		refreshMapsFromBuffer((BYTE*)buffer.c_str(), buffer.size(), meshIdFromBuffer, terrainEditValues, minAltitude, maxAltitude, float16HeigthsBuffer, float32HeigthsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, namedDataBuffer, updateCache);
+		refreshMapsFromBuffer((BYTE*)buffer.c_str(), buffer.size(), meshIdFromBuffer, terrainEditValues, minAltitude, maxAltitude, float16HeigthsBuffer, float32HeigthsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, namedDataBuffer, updateCache, overrideEmptyMaps);
 	}
 
-	void MeshCacheBuffer::refreshCacheQuadrantDataFromBuffer(const BYTE* buffer, const size_t bufferSize, CacheQuadrantData& cacheQuadrantData, bool updateCache)
+	void MeshCacheBuffer::refreshCacheQuadrantDataFromBuffer(const BYTE* buffer, const size_t bufferSize, CacheQuadrantData& cacheQuadrantData, bool updateCache, bool overrideEmptyMaps)
 	{
-		refreshMapsFromBuffer(buffer, bufferSize, cacheQuadrantData.meshId, *cacheQuadrantData.terrainEditValues, cacheQuadrantData.minHeight, cacheQuadrantData.maxHeight, *cacheQuadrantData.heights16Buffer, *cacheQuadrantData.heights32Buffer, *cacheQuadrantData.normalsBuffer, *cacheQuadrantData.splatmapBuffer, *cacheQuadrantData.colormapBuffer, *cacheQuadrantData.globalmapBuffer, *cacheQuadrantData.namedDataBuffer, updateCache);
+		refreshMapsFromBuffer(buffer, bufferSize, cacheQuadrantData.meshId, *cacheQuadrantData.terrainEditValues, cacheQuadrantData.minHeight, cacheQuadrantData.maxHeight, *cacheQuadrantData.heights16Buffer, *cacheQuadrantData.heights32Buffer, *cacheQuadrantData.normalsBuffer, *cacheQuadrantData.splatmapBuffer, *cacheQuadrantData.colormapBuffer, *cacheQuadrantData.globalmapBuffer, *cacheQuadrantData.namedDataBuffer, updateCache, overrideEmptyMaps);
 	}
 
-	void MeshCacheBuffer::refreshCacheQuadrantDataFromBuffer(TheWorld_Utils::MemoryBuffer& buffer, CacheQuadrantData& cacheQuadrantData, bool updateCache)
+	void MeshCacheBuffer::refreshCacheQuadrantDataFromBuffer(TheWorld_Utils::MemoryBuffer& buffer, CacheQuadrantData& cacheQuadrantData, bool updateCache, bool overrideEmptyMaps)
 	{
-		refreshCacheQuadrantDataFromBuffer(buffer.ptr(), buffer.size(), cacheQuadrantData, updateCache);
+		refreshCacheQuadrantDataFromBuffer(buffer.ptr(), buffer.size(), cacheQuadrantData, updateCache, overrideEmptyMaps);
 	}
 
-	void MeshCacheBuffer::refreshCacheQuadrantDataFromBuffer(std::string& buffer, CacheQuadrantData& cacheQuadrantData, bool updateCache)
+	void MeshCacheBuffer::refreshCacheQuadrantDataFromBuffer(std::string& buffer, CacheQuadrantData& cacheQuadrantData, bool updateCache, bool overrideEmptyMaps)
 	{
-		refreshCacheQuadrantDataFromBuffer((BYTE*)buffer.c_str(), buffer.size(), cacheQuadrantData, updateCache);
+		refreshCacheQuadrantDataFromBuffer((BYTE*)buffer.c_str(), buffer.size(), cacheQuadrantData, updateCache, overrideEmptyMaps);
 	}
 
 	void MeshCacheBuffer::refreshInternalCacheQuadrantDataFromDisk(bool force, bool renewMeshId)
@@ -3361,7 +3388,7 @@ namespace TheWorld_Utils
 				setEmptyBuffer(getNumVerticesPerSize(), meshid, buffer);
 				renewed = true;
 			}
-			refreshCacheQuadrantDataFromBuffer(buffer, m_internalCacheQuadrantData, false);
+			refreshCacheQuadrantDataFromBuffer(buffer, m_internalCacheQuadrantData, false, true);
 			if (renewMeshId && !renewed)
 			{
 				m_internalCacheQuadrantData.meshId = generateNewMeshId();
