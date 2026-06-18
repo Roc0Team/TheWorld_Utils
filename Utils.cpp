@@ -802,8 +802,8 @@ namespace TheWorld_Utils
 		return ret;
 	}
 
-	constexpr auto QUADRANT_TRACKING_IDX_POS_X = -62;
-	constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -67;
+	constexpr auto QUADRANT_TRACKING_IDX_POS_X = -68;
+	constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -69;
 
 	bool QuadrantPos::isQuadrantTrackedForDebug(void) const
 	{
@@ -3716,6 +3716,11 @@ namespace TheWorld_Utils
 
 		bool adjustHeights = true;
 		
+		static std::recursive_mutex s_mtxFlatBuffer;
+		static std::vector<float> s_vectFlatGridHeights;
+		static std::recursive_mutex s_mtxEmptyBuffer;
+		static std::vector<float> s_vectEmptyGridHeights;
+
 		if (terrainEdit->terrainType == TheWorld_Utils::TerrainEdit::TerrainType::flat)
 		{
 			//TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer generateHeights 1.2 ") + __FUNCTION__, "Generate flat Heights");
@@ -3731,15 +3736,25 @@ namespace TheWorld_Utils
 			terrainEdit->northSideZMinus.minHeight = FLAT_QUADRANTS_TERRAIN_HEIGHT;
 			terrainEdit->northSideZMinus.maxHeight = FLAT_QUADRANTS_TERRAIN_HEIGHT;
 
-			float altitude = FLAT_QUADRANTS_TERRAIN_HEIGHT;
-			size_t maxIndex = numVerticesPerSize - 1;
-			size_t idx = 0;
-			for (int z = 0; z < numVerticesPerSize; z++)
-				for (int x = 0; x < numVerticesPerSize; x++)
+			{
+				std::lock_guard<std::recursive_mutex> lock(s_mtxFlatBuffer);
+				if (s_vectFlatGridHeights.empty())
 				{
-					vectGridHeights[idx] = altitude;
-					idx++;
+					s_vectFlatGridHeights.clear();
+					s_vectFlatGridHeights.resize(numVerticesPerSize * numVerticesPerSize);
+					float altitude = FLAT_QUADRANTS_TERRAIN_HEIGHT;
+					size_t idx = 0;
+					for (int z = 0; z < numVerticesPerSize; z++)
+						for (int x = 0; x < numVerticesPerSize; x++)
+						{
+							s_vectFlatGridHeights[idx] = altitude;
+							idx++;
+						}
 				}
+			}
+
+			vectGridHeights = s_vectFlatGridHeights;
+			adjustHeights = false;
 		}
 		else if (terrainEdit->terrainType == TheWorld_Utils::TerrainEdit::TerrainType::empty)
 		{
@@ -3753,6 +3768,25 @@ namespace TheWorld_Utils
 			terrainEdit->southSideZPlus.maxHeight = EMPTY_QUADRANTS_TERRAIN_HEIGHT;
 			terrainEdit->northSideZMinus.minHeight = EMPTY_QUADRANTS_TERRAIN_HEIGHT;
 			terrainEdit->northSideZMinus.maxHeight = EMPTY_QUADRANTS_TERRAIN_HEIGHT;
+			
+			{
+				std::lock_guard<std::recursive_mutex> lock(s_mtxEmptyBuffer);
+				if (s_vectEmptyGridHeights.empty())
+				{
+					s_vectEmptyGridHeights.clear();
+					s_vectEmptyGridHeights.resize(numVerticesPerSize * numVerticesPerSize);
+					float altitude = EMPTY_QUADRANTS_TERRAIN_HEIGHT;
+					size_t idx = 0;
+					for (int z = 0; z < numVerticesPerSize; z++)
+						for (int x = 0; x < numVerticesPerSize; x++)
+						{
+							s_vectEmptyGridHeights[idx] = altitude;
+							idx++;
+						}
+				}
+			}
+
+			vectGridHeights = s_vectEmptyGridHeights;
 			adjustHeights = false;
 		}
 		else
