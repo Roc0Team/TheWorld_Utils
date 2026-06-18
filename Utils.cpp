@@ -802,8 +802,8 @@ namespace TheWorld_Utils
 		return ret;
 	}
 
-	constexpr auto QUADRANT_TRACKING_IDX_POS_X = -65;
-	constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -62;
+	constexpr auto QUADRANT_TRACKING_IDX_POS_X = -62;
+	constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -67;
 
 	bool QuadrantPos::isQuadrantTrackedForDebug(void) const
 	{
@@ -812,7 +812,9 @@ namespace TheWorld_Utils
 
 	void QuadrantPos::trackQuadrantForDebug(std::string owner, std::string text, std::string hash) const
 	{
-		//return;
+#ifndef _DEBUG
+		return;
+#endif	
 		if (isQuadrantTrackedForDebug())
 		{
 			PLOG_DEBUG << "[" << owner << "] TRACKING QUADRANT " << getIdStr() << (text.size() > 0 ? " - " + text : "") << (hash.size() > 0 ? " - Hash=" + TheWorld_Utils::MeshCacheBuffer::meshIdToPrint(hash) : "");
@@ -823,7 +825,7 @@ namespace TheWorld_Utils
 	{
 		size = sizeof(TerrainEdit);
 		needUploadToServer = false;
-		normalsNeedRegen = true;
+		//normalsNeedRegen(true);
 
 		minHeight = 0;
 		maxHeight = 0;
@@ -851,9 +853,9 @@ namespace TheWorld_Utils
 		//memset(extraValues.highElevationTexName_g, 0, sizeof(extraValues.highElevationTexName_g));
 		//memset(extraValues.dirtTexName_b, 0, sizeof(extraValues.dirtTexName_b));
 		//memset(extraValues.rocksTexName_a, 0, sizeof(extraValues.rocksTexName_a));
-		splatmapNeedRegen(true);
-		colormapNeedRegen = true;
-		globalmapNeedRegen = true;
+		//splatmapNeedRegen(true);
+		//colormapNeedRegen(true);
+		globalmapNeedRegen(true);
 
 		memset(extraValues1.filler1, -1, sizeof(extraValues1.filler1));
 		memset(extraValues1.filler2, '-', sizeof(extraValues1.filler2));
@@ -866,8 +868,8 @@ namespace TheWorld_Utils
 			return false;
 		if (needUploadToServer != o.needUploadToServer)
 			return false;
-		if (normalsNeedRegen != o.normalsNeedRegen)
-			return false;
+		//if (m_normalsNeedRegen_notUsed != o.m_normalsNeedRegen_notUsed)
+		//	return false;
 		if (terrainType != o.terrainType)
 			return false;
 		if (minHeight != o.minHeight)
@@ -900,11 +902,11 @@ namespace TheWorld_Utils
 			return false;
 		if (strcmp(extraValues.rocksTexName_a, o.extraValues.rocksTexName_a) != 0)
 			return false;
-		if (m_splatmapNeedRegen != o.m_splatmapNeedRegen)
-			return false;
-		if (colormapNeedRegen != o.colormapNeedRegen)
-			return false;
-		if (globalmapNeedRegen != o.globalmapNeedRegen)
+		//if (m_splatmapNeedRegen_notUsed != o.m_splatmapNeedRegen_notUsed)
+		//	return false;
+		//if (m_colormapNeedRegen_notUsed != o.m_colormapNeedRegen_notUsed)
+		//	return false;
+		if (m_globalmapNeedRegen != o.m_globalmapNeedRegen)
 			return false;
 		if (extraValues.slopeVerticalFactor != o.extraValues.slopeVerticalFactor)
 			return false;
@@ -932,7 +934,7 @@ namespace TheWorld_Utils
 			return false;
 		if (extraValues.maxRandomBendingExtension != o.extraValues.maxRandomBendingExtension)
 			return false;
-		if (heightsNeedRegen != o.heightsNeedRegen)
+		if (m_heightsNeedRegen != o.m_heightsNeedRegen)
 			return false;
 		if (extraValues.seaInfoSet != o.extraValues.seaInfoSet)
 			return false;
@@ -2765,8 +2767,8 @@ namespace TheWorld_Utils
 		if (firstTime == std::chrono::system_clock::time_point())
 			return false;
 
-		if (firstTime == secondTime)
-			return true;
+		if (firstTime == secondTime)	// useless to compare, because we have PREVIOUSLY checked if meshids are equal
+			return false;
 
 		if (firstTime > secondTime)
 			return true;
@@ -3032,14 +3034,17 @@ namespace TheWorld_Utils
 		return empty;
 	}
 
-	void MeshCacheBuffer::refreshMapsFromBuffer(const BYTE* buffer, const size_t bufferSize, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache, bool overrideEmptyMaps)
+	bool MeshCacheBuffer::refreshMapsFromBuffer(const BYTE* buffer, const size_t bufferSize, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache, bool overrideEmptyMaps)
 	{
 		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromBuffer 1 ") + __FUNCTION__, "ALL");
 
+		bool dummyBuffer = false;
+		
 		if (bufferSize == 0)
 		{
 			meshIdFromBuffer.clear();
-			return;
+			dummyBuffer = true;
+			return dummyBuffer;
 		}
 
 		size_t uint16_t_size = sizeof(uint16_t);	// the size of an half ==> float_16
@@ -3117,8 +3122,17 @@ namespace TheWorld_Utils
 				float32HeigthsBuffer.adjustSize(float32HeightMapSize);
 				float* pFloat32 = (float*)float32HeigthsBuffer.ptr();
 				uint16_t* pFloat16 = (uint16_t*)float16HeigthsBuffer.ptr();
+				size_t numVerticesPerSize = (size_t)sqrt((double)vectSize);
 				for (int i = 0; i < vectSize; i++)
+				{
+					// DEBUG
+					if (i == numVerticesPerSize * (numVerticesPerSize - 1) and getQuadrantPos().isQuadrantTrackedForDebug())	// first index of last row of the quadrant
+					{
+						TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromBuffer 1.1 ") + __FUNCTION__, "dummy");
+					}
+					// DEBUG
 					pFloat32[i] = TheWorld_Utils::MeshCacheBuffer::halfToFloat_1(pFloat16[i]);
+				}
 			}
 			else
 			{
@@ -3305,6 +3319,7 @@ namespace TheWorld_Utils
 		}
 		else
 		{
+			dummyBuffer = true;
 			minAltitude = maxAltitude = 0;
 			if (overrideEmptyMaps)
 			{
@@ -3317,37 +3332,50 @@ namespace TheWorld_Utils
 				namedDataBuffer.resetEmpty();
 			}
 		}
+
+		return dummyBuffer;
 	}
 
-	void MeshCacheBuffer::refreshMapsFromBuffer(TheWorld_Utils::MemoryBuffer& buffer, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache, bool overrideEmptyMaps)
+	bool MeshCacheBuffer::refreshMapsFromBuffer(TheWorld_Utils::MemoryBuffer& buffer, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache, bool overrideEmptyMaps)
 	{
-		refreshMapsFromBuffer(buffer.ptr(), buffer.size(), meshIdFromBuffer, terrainEditValues, minAltitude, maxAltitude, float16HeigthsBuffer, float32HeigthsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, namedDataBuffer, updateCache, overrideEmptyMaps);
+		return refreshMapsFromBuffer(buffer.ptr(), buffer.size(), meshIdFromBuffer, terrainEditValues, minAltitude, maxAltitude, float16HeigthsBuffer, float32HeigthsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, namedDataBuffer, updateCache, overrideEmptyMaps);
 	}
 
-	void MeshCacheBuffer::refreshMapsFromBuffer(std::string& buffer, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache, bool overrideEmptyMaps)
+	bool MeshCacheBuffer::refreshMapsFromBuffer(std::string& buffer, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache, bool overrideEmptyMaps)
 	{
-		refreshMapsFromBuffer((BYTE*)buffer.c_str(), buffer.size(), meshIdFromBuffer, terrainEditValues, minAltitude, maxAltitude, float16HeigthsBuffer, float32HeigthsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, namedDataBuffer, updateCache, overrideEmptyMaps);
+		return refreshMapsFromBuffer((BYTE*)buffer.c_str(), buffer.size(), meshIdFromBuffer, terrainEditValues, minAltitude, maxAltitude, float16HeigthsBuffer, float32HeigthsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, namedDataBuffer, updateCache, overrideEmptyMaps);
 	}
 
-	void MeshCacheBuffer::refreshCacheQuadrantDataFromBuffer(const BYTE* buffer, const size_t bufferSize, CacheQuadrantData& cacheQuadrantData, bool updateCache, bool overrideEmptyMaps)
+	bool MeshCacheBuffer::refreshCacheQuadrantDataFromBuffer(const BYTE* buffer, const size_t bufferSize, CacheQuadrantData& cacheQuadrantData, bool updateCache, bool overrideEmptyMaps)
 	{
-		refreshMapsFromBuffer(buffer, bufferSize, cacheQuadrantData.meshId, *cacheQuadrantData.terrainEditValues, cacheQuadrantData.minHeight, cacheQuadrantData.maxHeight, *cacheQuadrantData.heights16Buffer, *cacheQuadrantData.heights32Buffer, *cacheQuadrantData.normalsBuffer, *cacheQuadrantData.splatmapBuffer, *cacheQuadrantData.colormapBuffer, *cacheQuadrantData.globalmapBuffer, *cacheQuadrantData.namedDataBuffer, updateCache, overrideEmptyMaps);
+		return refreshMapsFromBuffer(buffer, bufferSize, cacheQuadrantData.meshId, *cacheQuadrantData.terrainEditValues, cacheQuadrantData.minHeight, cacheQuadrantData.maxHeight, *cacheQuadrantData.heights16Buffer, *cacheQuadrantData.heights32Buffer, *cacheQuadrantData.normalsBuffer, *cacheQuadrantData.splatmapBuffer, *cacheQuadrantData.colormapBuffer, *cacheQuadrantData.globalmapBuffer, *cacheQuadrantData.namedDataBuffer, updateCache, overrideEmptyMaps);
 	}
 
-	void MeshCacheBuffer::refreshCacheQuadrantDataFromBuffer(TheWorld_Utils::MemoryBuffer& buffer, CacheQuadrantData& cacheQuadrantData, bool updateCache, bool overrideEmptyMaps)
+	bool MeshCacheBuffer::refreshCacheQuadrantDataFromBuffer(TheWorld_Utils::MemoryBuffer& buffer, CacheQuadrantData& cacheQuadrantData, bool updateCache, bool overrideEmptyMaps)
 	{
-		refreshCacheQuadrantDataFromBuffer(buffer.ptr(), buffer.size(), cacheQuadrantData, updateCache, overrideEmptyMaps);
+		return refreshCacheQuadrantDataFromBuffer(buffer.ptr(), buffer.size(), cacheQuadrantData, updateCache, overrideEmptyMaps);
 	}
 
-	void MeshCacheBuffer::refreshCacheQuadrantDataFromBuffer(std::string& buffer, CacheQuadrantData& cacheQuadrantData, bool updateCache, bool overrideEmptyMaps)
+	bool MeshCacheBuffer::refreshCacheQuadrantDataFromBuffer(std::string& buffer, CacheQuadrantData& cacheQuadrantData, bool updateCache, bool overrideEmptyMaps)
 	{
-		refreshCacheQuadrantDataFromBuffer((BYTE*)buffer.c_str(), buffer.size(), cacheQuadrantData, updateCache, overrideEmptyMaps);
+		return refreshCacheQuadrantDataFromBuffer((BYTE*)buffer.c_str(), buffer.size(), cacheQuadrantData, updateCache, overrideEmptyMaps);
 	}
 
-	void MeshCacheBuffer::refreshInternalCacheQuadrantDataFromDisk(bool force, bool renewMeshId)
+	void MeshCacheBuffer::refreshInternalCacheQuadrantDataFromBuffer(std::string& buffer, bool force)
+	{
+		if (force || !m_internalCacheQuadrantData.buffersAllocated())
+		{
+			m_internalCacheQuadrantData.allocateBuffers(); 
+			refreshCacheQuadrantDataFromBuffer(buffer, m_internalCacheQuadrantData, false, true);
+		}
+	}
+
+	bool MeshCacheBuffer::refreshInternalCacheQuadrantDataFromDisk(bool force, bool renewMeshId)
 	{
 		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshInternalCacheQuadrantDataFromDisk 1 ") + __FUNCTION__, "ALL");
 
+		bool refreshed = false;
+		
 		if (force || !m_internalCacheQuadrantData.buffersAllocated())
 		{
 			bool workDir = true;
@@ -3368,18 +3396,25 @@ namespace TheWorld_Utils
 					workDir = false;
 			}
 
-			refreshInternalCacheQuadrantDataFromDisk(workDir, force, renewMeshId);
+			refreshed = refreshInternalCacheQuadrantDataFromDisk(workDir, force, renewMeshId);
 		}
+
+		return refreshed;
 	}
 		
-	void MeshCacheBuffer::refreshInternalCacheQuadrantDataFromDisk(bool workDir, bool force, bool renewMeshId)
+	bool MeshCacheBuffer::refreshInternalCacheQuadrantDataFromDisk(bool workDir, bool force, bool renewMeshId)
 	{
 		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshInternalCacheQuadrantDataFromDisk 2 ") + __FUNCTION__, "ALL");
 
+		bool refreshed = false;
+
 		if (force || !m_internalCacheQuadrantData.buffersAllocated())
 		{
+			refreshed = true;
+
 			std::string buffer;
-			readBufferFromDisk(m_meshId, buffer, workDir);
+			TerrainEdit terr;
+			readBufferFromDisk(m_meshId, buffer, workDir, &terr);
 			m_internalCacheQuadrantData.allocateBuffers();
 			bool renewed = false;
 			if (m_meshId.length() == 0 || buffer.length() == 0)
@@ -3396,6 +3431,8 @@ namespace TheWorld_Utils
 			}
 			//m_internalCacheQuadrantData.terrainData()->deserialize(*m_internalCacheQuadrantData.terrainEditValues);
 		}
+
+		return refreshed;
 	}
 
 	MeshCacheBuffer::CacheQuadrantData* MeshCacheBuffer::internalCacheQuadrantData(void)
@@ -4259,8 +4296,8 @@ namespace TheWorld_Utils
 			{
 				TerrainEdit terrainData;
 				terrainData.deserialize(*cacheQuadrantData.terrainEditValues);
-				if (numHeights16 > 0 && terrainData.terrainType == TerrainEdit::TerrainType::empty)
-					terrainData.heightsNeedRegen = false;
+				//if (numHeights16 > 0 && terrainData.terrainType == TerrainEdit::TerrainType::empty)
+				//	terrainData.heightsNeedRegen(false);	// OCCHIO !!! Prevent from regenerating heights when we have a cache quadrant with type empty
 				//memcpy(_streamBuffer, cacheQuadrantData.terrainEditValues->ptr(), terrainEditValueSize);
 				memcpy(_streamBuffer, &terrainData, terrainEditValueSize);
 				_streamBuffer += terrainEditValueSize;
@@ -4374,11 +4411,11 @@ namespace TheWorld_Utils
 		//BYTE shortBuffer[256 + 1];	size_t size = 0;
 		//TheWorld_Utils::serializeToByteStream<size_t>(sizeof(size_t), shortBuffer, size);
 		TheWorld_Utils::TerrainEdit terrainEdit;
-		terrainEdit.heightsNeedRegen = true;
-		terrainEdit.normalsNeedRegen = true;
-		terrainEdit.splatmapNeedRegen(true);
-		terrainEdit.globalmapNeedRegen = true;
-		terrainEdit.colormapNeedRegen = true;
+		terrainEdit.heightsNeedRegen(true);
+		//terrainEdit.normalsNeedRegen(true);
+		//terrainEdit.splatmapNeedRegen(true);
+		terrainEdit.globalmapNeedRegen(true);
+		//terrainEdit.colormapNeedRegen(true);
 		TheWorld_Utils::MemoryBuffer terrainEditValuesBuffer((BYTE*)&terrainEdit, terrainEdit.size);
 		cacheQuadrantData.minHeight = 0.0f;
 		cacheQuadrantData.maxHeight = 0.0f;
@@ -4538,15 +4575,17 @@ namespace TheWorld_Utils
 		return f.f32;
 	}
 
-	void MeshCacheBuffer::setDummyBuffer(std::string meshId, std::string& buffer)
+	void MeshCacheBuffer::setDummyBuffer(std::string meshId, std::string& buffer, TheWorld_Utils::TerrainEdit* terrainEdit)
 	{
 		if (TheWorld_Utils::MeshCacheBuffer::cacheQuadrantFormat1())
-			setDummyBuffer_Format1(meshId, buffer);
+			setDummyBuffer_Format1(meshId, buffer, terrainEdit);
 		else
-			setDummyBuffer_Format0(meshId, buffer);
+			throw(GDN_TheWorld_Exception(__FUNCTION__, "Unsupported cache quadrant format"));
+		//else
+		//	setDummyBuffer_Format0(meshId, buffer, terrainEdit);
 	}
 
-	void MeshCacheBuffer::setDummyBuffer_Format1(std::string meshId, std::string& buffer)
+	void MeshCacheBuffer::setDummyBuffer_Format1(std::string meshId, std::string& buffer, TheWorld_Utils::TerrainEdit* terrainEdit)
 	{
 		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer setDummyBuffer_Format1 1 ") + __FUNCTION__, "ALL");
 
@@ -4554,10 +4593,12 @@ namespace TheWorld_Utils
 
 		size_t vectSize = 0;
 		size_t terrainEditValuesBufferSize = 0, float16HeightmapSize = 0, float32HeightmapSize = 0, normalmapSize = 0, splatmapSize = 0, colormapSize = 0, globalmapSize = 0;
+		if (terrainEdit != nullptr)
+			terrainEditValuesBufferSize = terrainEdit->size;
 		float min_altitude = 0.0f, max_altitude = 0.0f;
 		size_t streamBufferSize = 1 /* buffer format "0"/"1" */
 			+ sizeof(size_t) + meshId.length()
-			+ sizeof(size_t)	// terrain edit values buffer size = 0
+			+ sizeof(size_t) + terrainEditValuesBufferSize	// terrain edit values buffer
 			+ sizeof(size_t)	// vect size = 0
 			+ sizeof(float)		// min altitude
 			+ sizeof(float)		// max altitude
@@ -4592,6 +4633,12 @@ namespace TheWorld_Utils
 
 			TheWorld_Utils::serializeToByteStream<size_t>(terrainEditValuesBufferSize, _streamBuffer, size);
 			_streamBuffer += size;
+
+			if (terrainEditValuesBufferSize > 0)
+			{
+				memcpy(_streamBuffer, terrainEdit, terrainEditValuesBufferSize);
+				_streamBuffer += terrainEditValuesBufferSize;
+			}
 		}
 
 		TheWorld_Utils::serializeToByteStream<size_t>(vectSize, _streamBuffer, size);
@@ -4691,7 +4738,7 @@ namespace TheWorld_Utils
 		m_meshId = meshId;
 	}
 
-	bool MeshCacheBuffer::blendQuadrant(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase, bool renewMeshIdOnUpdate,
+	bool MeshCacheBuffer::blendQuadrant(TheWorld_Utils::QuadrantPos pos, bool lastPhase, bool renewMeshIdOnUpdate,
 		CacheQuadrantData& data,
 		CacheQuadrantData& northData,
 		CacheQuadrantData& southData,
@@ -4704,6 +4751,9 @@ namespace TheWorld_Utils
 	{
 		bool updated = false;
 
+		size_t numVerticesPerSize = pos.getNumVerticesPerSize();
+		float gridStepInWU = pos.getGridStepInWU();
+
 		//if (!terrainEdit->northSideZMinus.needBlend && !terrainEdit->southSideZPlus.needBlend && !terrainEdit->eastSideXPlus.needBlend && !terrainEdit->westSideXMinus.needBlend)
 		//	return updated;
 		
@@ -4712,7 +4762,7 @@ namespace TheWorld_Utils
 		//	W	D	E
 		//
 		//	SW	S	SE
-		if (blendQuadrantOnNorthSide(numVerticesPerSize, gridStepInWU, lastPhase, data, northData, southData, westData, eastData, northwestData, northeastData, southwestData, southeastData))
+		if (blendQuadrantOnNorthSide(pos, lastPhase, data, northData, southData, westData, eastData, northwestData, northeastData, southwestData, southeastData))
 			updated = true;
 
 		//	NW	N	NE
@@ -4720,7 +4770,7 @@ namespace TheWorld_Utils
 		//	W	D	E
 		//		-
 		//	SW	S	SE
-		if (blendQuadrantOnSouthSide(numVerticesPerSize, gridStepInWU, lastPhase, data, northData, southData, westData, eastData, northwestData, northeastData, southwestData, southeastData))
+		if (blendQuadrantOnSouthSide(pos, lastPhase, data, northData, southData, westData, eastData, northwestData, northeastData, southwestData, southeastData))
 			updated = true;
 
 		//	NW	N	NE
@@ -4728,7 +4778,7 @@ namespace TheWorld_Utils
 		//	W	|D	E
 		//		
 		//	SW	S	SE
-		if (blendQuadrantOnWestSide(numVerticesPerSize, gridStepInWU, lastPhase, data, northData, southData, westData, eastData, northwestData, northeastData, southwestData, southeastData))
+		if (blendQuadrantOnWestSide(pos, lastPhase, data, northData, southData, westData, eastData, northwestData, northeastData, southwestData, southeastData))
 			updated = true;
 
 		//	NW	N	NE
@@ -4736,7 +4786,7 @@ namespace TheWorld_Utils
 		//	W	D|	E
 		//		
 		//	SW	S	SE
-		if (blendQuadrantOnEastSide(numVerticesPerSize, gridStepInWU, lastPhase, data, northData, southData, westData, eastData, northwestData, northeastData, southwestData, southeastData))
+		if (blendQuadrantOnEastSide(pos, lastPhase, data, northData, southData, westData, eastData, northwestData, northeastData, southwestData, southeastData))
 			updated = true;
 
 		CacheQuadrantData emptyData;
@@ -4746,7 +4796,7 @@ namespace TheWorld_Utils
 		//	W	D	E
 		//		
 		//	SW	S	SE
-		if (blendQuadrantOnWestSide(numVerticesPerSize, gridStepInWU, lastPhase, northData,
+		if (blendQuadrantOnWestSide(pos, lastPhase, northData,
 			emptyData /*N*/, data /*S*/, northwestData /*W*/, northeastData /*E*/, emptyData /*NW*/, emptyData /*NE*/, westData /*SW*/, eastData /*SE*/))
 			updated = true;
 		//	NW	N|	NE
@@ -4754,7 +4804,7 @@ namespace TheWorld_Utils
 		//	W	D	E
 		//		
 		//	SW	S	SE
-		if (blendQuadrantOnEastSide(numVerticesPerSize, gridStepInWU, lastPhase, northData,
+		if (blendQuadrantOnEastSide(pos, lastPhase, northData,
 			emptyData /*N*/, data /*S*/, northwestData /*W*/, northeastData /*E*/, emptyData /*NW*/, emptyData /*NE*/, westData /*SW*/, eastData /*SE*/))
 			updated = true;
 
@@ -4763,7 +4813,7 @@ namespace TheWorld_Utils
 		//	W	D	E
 		//		
 		//	SW	|S	SE
-		if (blendQuadrantOnWestSide(numVerticesPerSize, gridStepInWU, lastPhase, southData,
+		if (blendQuadrantOnWestSide(pos, lastPhase, southData,
 			data /*N*/, emptyData /*S*/, southwestData /*W*/, southeastData /*E*/, westData /*NW*/, eastData /*NE*/, emptyData /*SW*/, emptyData /*SE*/))
 			updated = true;
 		//	NW	N	NE
@@ -4771,7 +4821,7 @@ namespace TheWorld_Utils
 		//	W	D	E
 		//		
 		//	SW	S|	SE
-		if (blendQuadrantOnEastSide(numVerticesPerSize, gridStepInWU, lastPhase, southData,
+		if (blendQuadrantOnEastSide(pos, lastPhase, southData,
 			data /*N*/, emptyData /*S*/, southwestData /*W*/, southeastData /*E*/, westData /*NW*/, eastData /*NE*/, emptyData /*SW*/, emptyData /*SE*/))
 			updated = true;
 
@@ -4780,7 +4830,7 @@ namespace TheWorld_Utils
 		//	W	D	E
 		//		
 		//	SW	S	SE
-		if (blendQuadrantOnNorthSide(numVerticesPerSize, gridStepInWU, lastPhase, westData,
+		if (blendQuadrantOnNorthSide(pos, lastPhase, westData,
 			northwestData /*N*/, southwestData /*S*/, emptyData /*W*/, data /*E*/, emptyData /*NW*/, northData /*NE*/, emptyData /*SW*/, southData /*SE*/))
 			updated = true;
 		//	NW	N	NE
@@ -4788,7 +4838,7 @@ namespace TheWorld_Utils
 		//	W	D	E
 		//	-	
 		//	SW	S	SE
-		if (blendQuadrantOnSouthSide(numVerticesPerSize, gridStepInWU, lastPhase, westData,
+		if (blendQuadrantOnSouthSide(pos, lastPhase, westData,
 			northwestData /*N*/, southwestData /*S*/, emptyData /*W*/, data /*E*/, emptyData /*NW*/, northData /*NE*/, emptyData /*SW*/, southData /*SE*/))
 			updated = true;
 
@@ -4797,7 +4847,7 @@ namespace TheWorld_Utils
 		//	W	D	E
 		//		
 		//	SW	S	SE
-		if (blendQuadrantOnNorthSide(numVerticesPerSize, gridStepInWU, lastPhase, eastData,
+		if (blendQuadrantOnNorthSide(pos, lastPhase, eastData,
 			northeastData /*N*/, southeastData /*S*/, data /*W*/, emptyData /*E*/, northData /*NW*/, emptyData /*NE*/, southData /*SW*/, emptyData /*SE*/))
 			updated = true;
 		//	NW	N	NE
@@ -4805,13 +4855,13 @@ namespace TheWorld_Utils
 		//	W	D	E
 		//			-
 		//	SW	S	SE
-		if (blendQuadrantOnSouthSide(numVerticesPerSize, gridStepInWU, lastPhase, eastData,
+		if (blendQuadrantOnSouthSide(pos, lastPhase, eastData,
 			northeastData /*N*/, southeastData /*S*/, data /*W*/, emptyData /*E*/, northData /*NW*/, emptyData /*NE*/, southData /*SW*/, emptyData /*SE*/))
 			updated = true;
 
 		if (lastPhase)
 		{
-			if (blendBorders(numVerticesPerSize, gridStepInWU, lastPhase, data, northData, southData, westData, eastData, northwestData, northeastData, southwestData, southeastData))
+			if (blendBorders(pos, lastPhase, data, northData, southData, westData, eastData, northwestData, northeastData, southwestData, southeastData))
 				updated = true;
 		}
 
@@ -4894,7 +4944,7 @@ namespace TheWorld_Utils
 		return updated;
 	}
 
-	bool MeshCacheBuffer::blendBorders(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
+	bool MeshCacheBuffer::blendBorders(TheWorld_Utils::QuadrantPos& pos, bool lastPhase,
 		CacheQuadrantData& currentData,
 		CacheQuadrantData& northData,
 		CacheQuadrantData& southData,
@@ -4906,6 +4956,8 @@ namespace TheWorld_Utils
 		CacheQuadrantData& southeastData)
 	{
 		bool updated = false;
+
+		size_t numVerticesPerSize = pos.getNumVerticesPerSize();
 
 		if (currentData.heights32Buffer == nullptr || currentData.heights32Buffer->size() == 0
 			|| currentData.heights16Buffer == nullptr || currentData.heights16Buffer->size() == 0)
@@ -4972,6 +5024,17 @@ namespace TheWorld_Utils
 				size_t border2X = idx;				size_t border2Z = 0;
 				size_t nearBorder2X = idx;			size_t nearBorder2Z = 1;
 
+				// DEBUG
+				if (pos.isQuadrantTrackedForDebug())
+				{
+					uint16_t southBorderH1_half = data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize);
+					uint16_t northBorderOfSouthDataBorderH2_half = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize);
+					float southBorderH1 = data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize);
+					float northBorderOfSouthDataBorderH2 = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize);
+					float xxx = southBorderH1;
+				}
+				// DEBUG
+
 				float nearBorderH1 = data1heights32Buffer->_deprecated_get_at_ref<float>(nearBorder1X, nearBorder1Z, numVerticesPerSize);
 				float nearBorderH2 = data2heights32Buffer->_deprecated_get_at_ref<float>(nearBorder2X, nearBorder2Z, numVerticesPerSize);
 				float borderH1 = data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize);
@@ -4984,6 +5047,17 @@ namespace TheWorld_Utils
 					uint16_t half = half_from_float(f.u32);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
 					data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
+
+					// DEBUG
+					if (pos.isQuadrantTrackedForDebug())
+					{
+						uint16_t southBorderH1_half = data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize);
+						uint16_t northBorderOfSouthDataBorderH2_half = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize);
+						float southBorderH1 = data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize);
+						float northBorderOfSouthDataBorderH2 = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize);
+						float xxx = southBorderH1;
+					}
+					// DEBUG
 				}
 			}
 
@@ -5521,7 +5595,7 @@ namespace TheWorld_Utils
 		}
 	}
 
-	bool MeshCacheBuffer::blendQuadrantOnNorthSide(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
+	bool MeshCacheBuffer::blendQuadrantOnNorthSide(TheWorld_Utils::QuadrantPos& pos, bool lastPhase,
 		CacheQuadrantData& data,
 		CacheQuadrantData& northData,
 		CacheQuadrantData& southData,
@@ -5564,6 +5638,8 @@ namespace TheWorld_Utils
 		//TerrainEdit* southeastTerrainEdit = nullptr;
 		//if (southeastData.terrainEditValues != nullptr)
 		//	southeastTerrainEdit = (TerrainEdit*)southeastData.terrainEditValues->ptr();
+
+		size_t numVerticesPerSize = pos.getNumVerticesPerSize();
 
 		size_t maxIndex = numVerticesPerSize - 1;
 
@@ -5679,7 +5755,7 @@ namespace TheWorld_Utils
 		return updated;
 	}
 
-	bool MeshCacheBuffer::blendQuadrantOnSouthSide(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
+	bool MeshCacheBuffer::blendQuadrantOnSouthSide(TheWorld_Utils::QuadrantPos& pos, bool lastPhase,
 		CacheQuadrantData& data,
 		CacheQuadrantData& northData,
 		CacheQuadrantData& southData,
@@ -5722,6 +5798,8 @@ namespace TheWorld_Utils
 		TerrainEdit* southeastTerrainEdit = nullptr;
 		if (southeastData.terrainEditValues != nullptr)
 			southeastTerrainEdit = (TerrainEdit*)southeastData.terrainEditValues->ptr();
+
+		size_t numVerticesPerSize = pos.getNumVerticesPerSize();
 
 		size_t maxIndex = numVerticesPerSize - 1;
 
@@ -5835,7 +5913,7 @@ namespace TheWorld_Utils
 		return updated;
 	}
 
-	bool MeshCacheBuffer::blendQuadrantOnWestSide(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
+	bool MeshCacheBuffer::blendQuadrantOnWestSide(TheWorld_Utils::QuadrantPos& pos, bool lastPhase,
 		CacheQuadrantData& data,
 		CacheQuadrantData& northData,
 		CacheQuadrantData& southData,
@@ -5878,6 +5956,8 @@ namespace TheWorld_Utils
 		//TerrainEdit* southeastTerrainEdit = nullptr;
 		//if (southeastData.terrainEditValues != nullptr)
 		//	southeastTerrainEdit = (TerrainEdit*)southeastData.terrainEditValues->ptr();
+
+		size_t numVerticesPerSize = pos.getNumVerticesPerSize();
 
 		size_t maxIndex = numVerticesPerSize - 1;
 
@@ -5990,7 +6070,7 @@ namespace TheWorld_Utils
 		return updated;
 	}
 
-	bool MeshCacheBuffer::blendQuadrantOnEastSide(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
+	bool MeshCacheBuffer::blendQuadrantOnEastSide(TheWorld_Utils::QuadrantPos& pos, bool lastPhase,
 		CacheQuadrantData& data,
 		CacheQuadrantData& northData,
 		CacheQuadrantData& southData,
@@ -6033,6 +6113,8 @@ namespace TheWorld_Utils
 		TerrainEdit* southeastTerrainEdit = nullptr;
 		if (southeastData.terrainEditValues != nullptr)
 			southeastTerrainEdit = (TerrainEdit*)southeastData.terrainEditValues->ptr();
+
+		size_t numVerticesPerSize = pos.getNumVerticesPerSize();
 
 		size_t maxIndex = numVerticesPerSize - 1;
 

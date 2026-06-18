@@ -39,6 +39,8 @@ constexpr auto THEWORLD_QUADRANT_NAMEDATA_NORTHQUADSPLATMAPROW = "NorthQuadSplat
 constexpr auto THEWORLD_QUADRANT_NAMEDATA_WESTQUADSPLATMAPROW = "WestQuadSplatmapRow";
 constexpr auto THEWORLD_QUADRANT_NAMEDATA_NORTHWESTQUADSPLATMAPTEXEL = "NorthWestQuadSplatmapTexel";
 
+constexpr auto THEWORLD_QUADRANT_DISTANCE_FOR_BLENDING = 2;
+
 #define THEWORLD_SEA_LEVEL				0.0f
 #define THEWORLD_SEA_MAX_WAVE_HEIGHT	30.0f
 #define EMPTY_QUADRANTS_TERRAIN_HEIGHT	-500.0f
@@ -337,22 +339,91 @@ namespace TheWorld_Utils
 		__declspec(dllexport) void operator=(const MemoryBuffer& o);
 		__declspec(dllexport) void operator=(const std::string& o);
 		__declspec(dllexport) bool operator==(const MemoryBuffer& o) const;
+		template <typename T> __declspec(dllexport) void getNorthBorder(size_t numElementsPerBorder, MemoryBuffer& border)
+		{
+			size_t borderSize = numElementsPerBorder * sizeof(T);
+			border.set(ptr(), borderSize);
+		}
+		template <typename T> __declspec(dllexport) void getNorthBorder(size_t numElementsPerBorder, BYTE* border)
+		{
+			size_t borderSize = numElementsPerBorder * sizeof(T);
+			memcpy(border, ptr(), borderSize);
+		}
+		template <typename T> __declspec(dllexport) void getSouthBorder(size_t numElementsPerBorder, MemoryBuffer& border)
+		{
+			size_t borderSize = numElementsPerBorder * sizeof(T);
+			BYTE* offset = ptr() + borderSize * (numElementsPerBorder - 1);
+			border.set(offset, borderSize);
+		}
+		template <typename T> __declspec(dllexport) void getSouthBorder(size_t numElementsPerBorder, BYTE* border)
+		{
+			size_t borderSize = numElementsPerBorder * sizeof(T);
+			BYTE* offset = ptr() + borderSize * (numElementsPerBorder - 1);
+			memcpy(border, offset, borderSize);
+		}
+		template <typename T> __declspec(dllexport) void getWestBorder(size_t numElementsPerBorder, MemoryBuffer& border)
+		{
+			size_t borderSize = numElementsPerBorder * sizeof(T);
+			border.reserve(borderSize);
+			border.adjustSize(borderSize);
+			for (int idx = 0; idx < numElementsPerBorder; idx++)
+			{
+				T* element = get_at_ptr<T>(idx, 0, numElementsPerBorder);
+				border.set_at_ref<T>(*element, idx, 0, numElementsPerBorder);
+			}
+		}
+		template <typename T> __declspec(dllexport) void getWestBorder(size_t numElementsPerBorder, BYTE* border)
+		{
+			size_t borderSize = numElementsPerBorder * sizeof(T);
+			T* westBorderCursor = (T*)border;
+			for (int idx = 0; idx < numElementsPerBorder; idx++)
+			{
+				T* element = get_at_ptr<T>(idx, 0, numElementsPerBorder);
+				*westBorderCursor = *element;
+				westBorderCursor++;
+			}
+		}
+		template <typename T> __declspec(dllexport) void getEastBorder(size_t numElementsPerBorder, MemoryBuffer& border)
+		{
+			size_t borderSize = numElementsPerBorder * sizeof(T);
+			border.reserve(borderSize);
+			border.adjustSize(borderSize);
+			for (int idx = 0; idx < numElementsPerBorder; idx++)
+			{
+				T* element = get_at_ptr<T>(idx, numElementsPerBorder - 1, numElementsPerBorder);
+				border.set_at_ref<T>(*element, idx, 0, numElementsPerBorder);
+			}
+		}
+		template <typename T> __declspec(dllexport) void getEastBorder(size_t numElementsPerBorder, BYTE* border)
+		{
+			size_t borderSize = numElementsPerBorder * sizeof(T);
+			T* eastBorderCursor = (T*)border;
+			for (int idx = 0; idx < numElementsPerBorder; idx++)
+			{
+				T* element = get_at_ptr<T>(idx, numElementsPerBorder - 1, numElementsPerBorder);
+				*eastBorderCursor = *element;
+				eastBorderCursor++;
+			}
+		}
 		template <typename T> __declspec(dllexport) void getBorders(size_t numElementsPerBorder, BYTE* northBorder, BYTE* southBorder, BYTE* westBorder, BYTE* eastBorder)
 		{
 			size_t borderSize = numElementsPerBorder * sizeof(T);
 
 			// North Border Row
+			//getNorthBorder<T>(numElementsPerBorder, northBorder);	// this is the same as the code below
 			{
 				memcpy(northBorder, ptr(), borderSize);
 			}
 
 			// South Border Row
+			//getSouthBorder<T>(numElementsPerBorder, southBorder);	// this is the same as the code below
 			{
 				BYTE* offset = ptr() + borderSize * (numElementsPerBorder - 1);
 				memcpy(southBorder, offset, borderSize);
 			}
 
 			// West Border Row
+			//getWestBorder<T>(numElementsPerBorder, westBorder);	// this is the same as the code below
 			{
 				T* westBorderCursor = (T*)westBorder;
 				for (int idx = 0; idx < numElementsPerBorder; idx++)
@@ -364,6 +435,7 @@ namespace TheWorld_Utils
 			}
 
 			// East Border Row
+			//getEastBorder<T>(numElementsPerBorder, eastBorder);	// this is the same as the code below
 			{
 				T* eastBorderCursor = (T*)eastBorder;
 				for (int idx = 0; idx < numElementsPerBorder; idx++)
@@ -380,27 +452,30 @@ namespace TheWorld_Utils
 			borderBuffer.reserve(borderSize * 4);	// reserve for 4 borders (UP/NORTH,DOWN/SOUTH,LEFT/WEST,RIGHT/EAST)
 			borderBuffer.adjustSize(borderSize * 4);
 			getBorders<T>(numElementsPerBorder,
-													borderBuffer.ptr() + (borderSize * 0),		// UP/NORTH border
-													borderBuffer.ptr() + (borderSize * 1),		// DOWN/SOUTH border
-													borderBuffer.ptr() + (borderSize * 2),		// LEFT/WEST border
-													borderBuffer.ptr() + (borderSize * 3));		// RIGHT/EAST border
+							borderBuffer.ptr() + (borderSize * 0),		// UP/NORTH border
+							borderBuffer.ptr() + (borderSize * 1),		// DOWN/SOUTH border
+							borderBuffer.ptr() + (borderSize * 2),		// LEFT/WEST border
+							borderBuffer.ptr() + (borderSize * 3));		// RIGHT/EAST border
 		}
 		template <typename T> __declspec(dllexport) void getBorders(size_t numElementsPerBorder, MemoryBuffer& northUpBorder, MemoryBuffer& southDownBorder, MemoryBuffer& westLeftBorder, MemoryBuffer& eastRightBorder)
 		{
 			size_t borderSize = numElementsPerBorder * sizeof(T);
 
 			// North/Up Border Row
+			//getNorthBorder<T>(numElementsPerBorder, northUpBorder);	// this is the same as the code below
 			{
 				northUpBorder.set(ptr(), borderSize);
 			}
 
 			// South/Down Border Row
+			//getSouthBorder<T>(numElementsPerBorder, southDownBorder);	// this is the same as the code below
 			{
 				BYTE* offset = ptr() + borderSize * (numElementsPerBorder - 1);
 				southDownBorder.set(offset, borderSize);
 			}
 
 			// West/Left Border Row
+			//getWestBorder<T>(numElementsPerBorder, westLeftBorder);	// this is the same as the code below
 			{
 				westLeftBorder.reserve(borderSize);
 				westLeftBorder.adjustSize(borderSize);
@@ -412,6 +487,7 @@ namespace TheWorld_Utils
 			}
 
 			// East/Right Border Row
+			//getEastBorder<T>(numElementsPerBorder, eastRightBorder);	// this is the same as the code below
 			{
 				eastRightBorder.reserve(borderSize);
 				eastRightBorder.adjustSize(borderSize);
@@ -1581,11 +1657,11 @@ namespace TheWorld_Utils
 		size_t size;
 		enum class TerrainType terrainType;
 		bool needUploadToServer = false;
-		bool heightsNeedRegen = false;
-		bool normalsNeedRegen = false;
-		bool m_splatmapNeedRegen = false;
-		bool colormapNeedRegen = false;
-		bool globalmapNeedRegen = false;
+		bool m_heightsNeedRegen = false;
+		bool m_normalsNeedRegen_notUsed = false;
+		bool m_splatmapNeedRegen_notUsed = false;
+		bool m_colormapNeedRegen_notUsed = false;
+		bool m_globalmapNeedRegen = false;
 
 		float minHeight;
 		float maxHeight;
@@ -1687,16 +1763,60 @@ namespace TheWorld_Utils
 		__declspec(dllexport) void setWestGroundTextures(std::string lowElevationTexName, std::string highElevationTexName, std::string dirtTexName, std::string rocksTexName);
 		__declspec(dllexport) void getNorthwestGroundTextures(std::string& lowElevationTexName, std::string& highElevationTexName, std::string& dirtTexName, std::string& rocksTexName) const;
 		__declspec(dllexport) void setNorthwestGroundTextures(std::string lowElevationTexName, std::string highElevationTexName, std::string dirtTexName, std::string rocksTexName);
-		void splatmapNeedRegen(bool b)
+		void heightsNeedRegen(bool b)
 		{
 			if (b)
-				m_splatmapNeedRegen = b;
+				m_heightsNeedRegen = b;
 			else
-				m_splatmapNeedRegen = b;
+				m_heightsNeedRegen = b;
 		}
-		bool splatmapNeedRegen(void) const
+		bool heightsNeedRegen(void) const
 		{
-			return m_splatmapNeedRegen;
+			return m_heightsNeedRegen;
+		}
+		//void normalsNeedRegen(bool b)
+		//{
+		//	if (b)
+		//		m_normalsNeedRegen = b;
+		//	else
+		//		m_normalsNeedRegen = b;
+		//}
+		//bool normalsNeedRegen(void) const
+		//{
+		//	return m_normalsNeedRegen;
+		//}
+		//void splatmapNeedRegen(bool b)
+		//{
+		//	if (b)
+		//		m_splatmapNeedRegen = b;
+		//	else
+		//		m_splatmapNeedRegen = b;
+		//}
+		//bool splatmapNeedRegen(void) const
+		//{
+		//	return m_splatmapNeedRegen;
+		//}
+		//void colormapNeedRegen(bool b)
+		//{
+		//	if (b)
+		//		m_colormapNeedRegen = b;
+		//	else
+		//		m_colormapNeedRegen = b;
+		//}
+		//bool colormapNeedRegen(void) const
+		//{
+		//	return m_colormapNeedRegen;
+		//}
+		void globalmapNeedRegen(bool b)
+		{
+			if (b)
+				m_globalmapNeedRegen = b;
+			else
+				m_globalmapNeedRegen = b;
+		}
+		bool globalmapNeedRegen(void) const
+		{
+			return m_globalmapNeedRegen;
 		}
 	};
 
@@ -1977,14 +2097,15 @@ namespace TheWorld_Utils
 		__declspec(dllexport) std::string getMeshIdStr(void);
 		__declspec(dllexport) std::string getCacheIdStr(void);
 		__declspec(dllexport) bool refreshMapsFromDisk(size_t numVerticesPerSize, float gridStepInWU, std::string meshId, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitde, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool overrideEmptyMaps);
-		__declspec(dllexport) void refreshMapsFromBuffer(const BYTE* buffer, const size_t bufferSize, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitde, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache, bool overrideEmptyMaps);
-		__declspec(dllexport) void refreshMapsFromBuffer(TheWorld_Utils::MemoryBuffer& buffer, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitde, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache, bool overrideEmptyMaps);
-		__declspec(dllexport) void refreshMapsFromBuffer(std::string& buffer, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitde, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache, bool overrideEmptyMaps);
-		__declspec(dllexport) void refreshCacheQuadrantDataFromBuffer(const BYTE* buffer, const size_t bufferSize, CacheQuadrantData& cacheQuadrantData, bool updateCache, bool overrideEmptyMaps);
-		__declspec(dllexport) void refreshCacheQuadrantDataFromBuffer(TheWorld_Utils::MemoryBuffer& buffer, CacheQuadrantData& cacheQuadrantData, bool updateCache, bool overrideEmptyMaps);
-		__declspec(dllexport) void refreshCacheQuadrantDataFromBuffer(std::string& buffer, CacheQuadrantData& cacheQuadrantData, bool updateCache, bool overrideEmptyMaps);
-		__declspec(dllexport) void refreshInternalCacheQuadrantDataFromDisk(bool force, bool renewMeshId);
-		__declspec(dllexport) void refreshInternalCacheQuadrantDataFromDisk(bool workDir, bool force, bool renewMeshId);
+		__declspec(dllexport) bool refreshMapsFromBuffer(const BYTE* buffer, const size_t bufferSize, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitde, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache, bool overrideEmptyMaps);
+		__declspec(dllexport) bool refreshMapsFromBuffer(TheWorld_Utils::MemoryBuffer& buffer, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitde, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache, bool overrideEmptyMaps);
+		__declspec(dllexport) bool refreshMapsFromBuffer(std::string& buffer, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitde, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache, bool overrideEmptyMaps);
+		__declspec(dllexport) bool refreshCacheQuadrantDataFromBuffer(const BYTE* buffer, const size_t bufferSize, CacheQuadrantData& cacheQuadrantData, bool updateCache, bool overrideEmptyMaps);
+		__declspec(dllexport) bool refreshCacheQuadrantDataFromBuffer(TheWorld_Utils::MemoryBuffer& buffer, CacheQuadrantData& cacheQuadrantData, bool updateCache, bool overrideEmptyMaps);
+		__declspec(dllexport) bool refreshCacheQuadrantDataFromBuffer(std::string& buffer, CacheQuadrantData& cacheQuadrantData, bool updateCache, bool overrideEmptyMaps);
+		__declspec(dllexport) bool refreshInternalCacheQuadrantDataFromDisk(bool force, bool renewMeshId);
+		__declspec(dllexport) bool refreshInternalCacheQuadrantDataFromDisk(bool workDir, bool force, bool renewMeshId);
+		__declspec(dllexport) void refreshInternalCacheQuadrantDataFromBuffer(std::string& buffer, bool force = false);
 		__declspec(dllexport) CacheQuadrantData* internalCacheQuadrantData(void);
 		__declspec(dllexport) void readBufferFromDisk(std::string meshId, TheWorld_Utils::MemoryBuffer& buffer, bool workDir = false, TerrainEdit* terrainEdit = nullptr, bool onlyTerrainEdit = false);
 		__declspec(dllexport) void readBufferFromDisk(std::string meshId, std::string& buffer, bool workDir = false, TerrainEdit* terrainEdit = nullptr);
@@ -1994,9 +2115,9 @@ namespace TheWorld_Utils
 		__declspec(dllexport) std::string writeBufferToDiskCache2(TheWorld_Utils::MemoryBuffer& buffer, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* terrainEdit = nullptr);
 		__declspec(dllexport) std::string writeBufferToDiskCache(const BYTE* buffer, const size_t bufferSize, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* terrainEdit = nullptr) ;
 		__declspec(dllexport) std::string writeBufferToDiskCache2(const BYTE* buffer, const size_t bufferSize, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* terrainEdit = nullptr);
-		__declspec(dllexport) void setDummyBuffer(std::string meshId, std::string& buffer);
+		__declspec(dllexport) void setDummyBuffer(std::string meshId, std::string& buffer, TheWorld_Utils::TerrainEdit* terrainEdit);
 		__declspec(dllexport) void setDummyBuffer_Format0(std::string meshId, std::string& buffer);
-		__declspec(dllexport) void setDummyBuffer_Format1(std::string meshId, std::string& buffer);
+		__declspec(dllexport) void setDummyBuffer_Format1(std::string meshId, std::string& buffer, TheWorld_Utils::TerrainEdit* terrainEdit);
 		__declspec(dllexport) void setBufferFromCacheQuadrantData_Format1(size_t numVerticesPerSize, CacheQuadrantData& cacheQuadrantData, TheWorld_Utils::MemoryBuffer& buffer);
 		__declspec(dllexport) void setBufferFromCacheQuadrantData(size_t numVerticesPerSize, CacheQuadrantData& cacheQuadrantData, TheWorld_Utils::MemoryBuffer& buffer);
 		__declspec(dllexport) void setBufferFromCacheQuadrantData(size_t numVerticesPerSize, CacheQuadrantData& cacheQuadrantData, std::string& buffer);
@@ -2004,8 +2125,8 @@ namespace TheWorld_Utils
 		__declspec(dllexport) void setEmptyBuffer(size_t numVerticesPerSize, std::string& meshId, std::string& buffer);
 		__declspec(dllexport) void generateHeightsWithNoise(size_t numVerticesPerSize, float gridStepInWU, float lowerXGridVertex, float lowerZGridVertex, TerrainEdit* terrainEdit, std::vector<float>& vectGridHeights);
 		__declspec(dllexport) void applyWorldModifier(int level, size_t numVerticesPerSize, float gridStepInWU, float lowerXGridVertex, float lowerZGridVertex, TerrainEdit* terrainEdit, std::vector<float>& vectGridHeights, WorldModifier& wm);
-		__declspec(dllexport) void calcMinMaxHeight(size_t numVerticesPerSize, TheWorld_Utils::TerrainEdit* terrainEdit, TheWorld_Utils::MemoryBuffer& heights32Buffer);
-		__declspec(dllexport) bool blendQuadrant(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase, bool renewMeshIdOnUpdate,
+		static __declspec(dllexport) void calcMinMaxHeight(size_t numVerticesPerSize, TheWorld_Utils::TerrainEdit* terrainEdit, TheWorld_Utils::MemoryBuffer& heights32Buffer);
+		static __declspec(dllexport) bool blendQuadrant(TheWorld_Utils::QuadrantPos pos, bool lastPhase, bool renewMeshIdOnUpdate,
 			CacheQuadrantData& data,
 			CacheQuadrantData& northData,
 			CacheQuadrantData& southData,
@@ -2067,7 +2188,7 @@ namespace TheWorld_Utils
 		}
 
 	private:
-		__declspec(dllexport) bool blendBorders(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
+		static __declspec(dllexport) bool blendBorders(TheWorld_Utils::QuadrantPos& pos, bool lastPhase,
 			CacheQuadrantData& data,
 			CacheQuadrantData& northData,
 			CacheQuadrantData& southData,
@@ -2077,7 +2198,7 @@ namespace TheWorld_Utils
 			CacheQuadrantData& northeastData,
 			CacheQuadrantData& southwestData,
 			CacheQuadrantData& southeastData);
-		__declspec(dllexport) bool blendQuadrantOnNorthSide(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
+		static __declspec(dllexport) bool blendQuadrantOnNorthSide(TheWorld_Utils::QuadrantPos& pos, bool lastPhase,
 			CacheQuadrantData& data,
 			CacheQuadrantData& northData,
 			CacheQuadrantData& southData,
@@ -2087,7 +2208,7 @@ namespace TheWorld_Utils
 			CacheQuadrantData& northeastData,
 			CacheQuadrantData& southwesthData,
 			CacheQuadrantData& southeastData);
-		__declspec(dllexport) bool blendQuadrantOnSouthSide(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
+		static __declspec(dllexport) bool blendQuadrantOnSouthSide(TheWorld_Utils::QuadrantPos& pos, bool lastPhase,
 			CacheQuadrantData& data,
 			CacheQuadrantData& northData,
 			CacheQuadrantData& southData,
@@ -2097,7 +2218,7 @@ namespace TheWorld_Utils
 			CacheQuadrantData& northeastData,
 			CacheQuadrantData& southwesthData,
 			CacheQuadrantData& southeastData);
-		__declspec(dllexport) bool blendQuadrantOnWestSide(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
+		static __declspec(dllexport) bool blendQuadrantOnWestSide(TheWorld_Utils::QuadrantPos& pos, bool lastPhase,
 			CacheQuadrantData& data,
 			CacheQuadrantData& northData,
 			CacheQuadrantData& southData,
@@ -2107,7 +2228,7 @@ namespace TheWorld_Utils
 			CacheQuadrantData& northeastData,
 			CacheQuadrantData& southwesthData,
 			CacheQuadrantData& southeastData);
-		__declspec(dllexport) bool blendQuadrantOnEastSide(size_t numVerticesPerSize, float gridStepInWU, bool lastPhase,
+		static __declspec(dllexport) bool blendQuadrantOnEastSide(TheWorld_Utils::QuadrantPos& pos, bool lastPhase,
 			CacheQuadrantData& data,
 			CacheQuadrantData& northData,
 			CacheQuadrantData& southData,
