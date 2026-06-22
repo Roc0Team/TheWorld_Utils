@@ -802,8 +802,8 @@ namespace TheWorld_Utils
 		return ret;
 	}
 
-	constexpr auto QUADRANT_TRACKING_IDX_POS_X = -80;
-	constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -63;
+	constexpr auto QUADRANT_TRACKING_IDX_POS_X = -46;
+	constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -90;
 
 	bool QuadrantPos::isQuadrantTrackedForDebug(void) const
 	{
@@ -812,11 +812,11 @@ namespace TheWorld_Utils
 
 	void QuadrantPos::trackQuadrantForDebug(std::string owner, std::string text, std::string hash) const
 	{
-#ifdef _DEBUG
-		return;
-#else
-		return;
-#endif	
+//#ifdef _DEBUG
+//		return;
+//#else
+//		return;
+//#endif	
 		if (isQuadrantTrackedForDebug())
 		{
 			PLOG_DEBUG << "[" << owner << "] TRACKING QUADRANT " << getIdStr() << (text.size() > 0 ? " - " + text : "") << (hash.size() > 0 ? " - Hash=" + TheWorld_Utils::MeshCacheBuffer::meshIdToPrint(hash) : "");
@@ -832,19 +832,19 @@ namespace TheWorld_Utils
 		minHeight = 0;
 		maxHeight = 0;
 
-		eastSideXPlus.needBlend = true;
+		//eastSideXPlus.needBlend_notused = true;
 		eastSideXPlus.minHeight = 0.0f;
 		eastSideXPlus.maxHeight = 0.0f;
 
-		westSideXMinus.needBlend = true;
+		//westSideXMinus.needBlend_notused = true;
 		westSideXMinus.minHeight = 0.0f;
 		westSideXMinus.maxHeight = 0.0f;
 
-		southSideZPlus.needBlend = true;
+		//southSideZPlus.needBlend_notused = true;
 		southSideZPlus.minHeight = 0.0f;
 		southSideZPlus.maxHeight = 0.0f;
 
-		northSideZMinus.needBlend = true;
+		//northSideZMinus.needBlend_notused = true;
 		northSideZMinus.minHeight = 0.0f;
 		northSideZMinus.maxHeight = 0.0f;
 
@@ -1368,7 +1368,7 @@ namespace TheWorld_Utils
 
 			if (northSideZMinus != nullptr)
 			{
-				if (not northSideZMinus->southSideZPlus.needBlend)
+				//if (not northSideZMinus->southSideZPlus.needBlend_notused)
 				{
 					averageHeight += (northSideZMinus->southSideZPlus.maxHeight + northSideZMinus->southSideZPlus.minHeight) / 2;
 					num++;
@@ -1376,7 +1376,7 @@ namespace TheWorld_Utils
 			}
 			if (southSideZPlus != nullptr)
 			{
-				if (not southSideZPlus->northSideZMinus.needBlend)
+				//if (not southSideZPlus->northSideZMinus.needBlend_notused)
 				{
 					averageHeight += (southSideZPlus->northSideZMinus.maxHeight + southSideZPlus->northSideZMinus.minHeight) / 2;
 					num++;
@@ -1384,7 +1384,7 @@ namespace TheWorld_Utils
 			}
 			if (westSideXMinus != nullptr)
 			{
-				if (not westSideXMinus->eastSideXPlus.needBlend)
+				//if (not westSideXMinus->eastSideXPlus.needBlend_notused)
 				{
 					averageHeight += (westSideXMinus->eastSideXPlus.maxHeight + westSideXMinus->eastSideXPlus.minHeight) / 2;
 					num++;
@@ -1392,7 +1392,7 @@ namespace TheWorld_Utils
 			}
 			if (eastSideXPlus != nullptr)
 			{
-				if (not eastSideXPlus->westSideXMinus.needBlend)
+				//if (not eastSideXPlus->westSideXMinus.needBlend_notused)
 				{
 					averageHeight += (eastSideXPlus->westSideXMinus.maxHeight + eastSideXPlus->westSideXMinus.minHeight) / 2;
 					num++;
@@ -4774,6 +4774,139 @@ namespace TheWorld_Utils
 		m_meshId = meshId;
 	}
 
+	bool MeshCacheBuffer::calcMinMaxHeights(TheWorld_Utils::QuadrantPos pos, bool renewMeshIdOnUpdate, CacheQuadrantData& data)
+	{
+		// DEBUG
+		if (pos.isQuadrantTrackedForDebug())
+		{
+			bool debug = true;
+		}
+		// DEBUG
+
+		bool updated = false;
+
+		if (data.heights32Buffer == nullptr)
+			return updated;
+
+		TerrainEdit* terrainEdit = (TerrainEdit*)data.terrainEditValues->ptr();
+
+		float minHeight = FLT_MAX;
+		float maxHeight = -FLT_MAX;
+		float eastSideXPlusMinHeight = FLT_MAX;
+		float eastSideXPlusMaxHeight = -FLT_MAX;
+		float westSideXMinusMinHeight = FLT_MAX;
+		float westSideXMinusMaxHeight = -FLT_MAX;
+		float southSideZPlusMinHeight = FLT_MAX;
+		float southSideZPlusMaxHeight = -FLT_MAX;
+		float northSideZMinusMinHeight = FLT_MAX;
+		float northSideZMinusMaxHeight = -FLT_MAX;
+
+		size_t numVerticesPerSize = (size_t)pos.getNumVerticesPerSize();
+		size_t maxIndex = numVerticesPerSize - 1;
+
+		for (size_t z = 0; z < numVerticesPerSize; z++)
+		{
+			for (size_t x = 0; x < numVerticesPerSize; x++)
+			{
+				float h = data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize);
+				if (h < minHeight)
+					minHeight = h;
+				if (h > maxHeight)
+					maxHeight = h;
+
+				if (x == 0)
+				{
+					if (h < westSideXMinusMinHeight)
+						westSideXMinusMinHeight = h;
+					if (h > westSideXMinusMaxHeight)
+						westSideXMinusMaxHeight = h;
+				}
+
+				if (z == 0)
+				{
+					if (h < northSideZMinusMinHeight)
+						northSideZMinusMinHeight = h;
+					if (h > northSideZMinusMaxHeight)
+						northSideZMinusMaxHeight = h;
+				}
+
+				if (x == maxIndex)
+				{
+					if (h < eastSideXPlusMinHeight)
+						eastSideXPlusMinHeight = h;
+					if (h > eastSideXPlusMaxHeight)
+						eastSideXPlusMaxHeight = h;
+				}
+
+				if (z == maxIndex)
+				{
+					if (h < southSideZPlusMinHeight)
+						southSideZPlusMinHeight = h;
+					if (h > southSideZPlusMaxHeight)
+						southSideZPlusMaxHeight = h;
+				}
+			}
+		}
+
+		if (terrainEdit->minHeight != minHeight)
+		{
+			terrainEdit->minHeight = minHeight;
+			updated = true;
+		}
+		if (terrainEdit->maxHeight != maxHeight)
+		{
+			terrainEdit->maxHeight = maxHeight;
+			updated = true;
+		}
+		if (terrainEdit->eastSideXPlus.minHeight != eastSideXPlusMinHeight)
+		{
+			terrainEdit->eastSideXPlus.minHeight = eastSideXPlusMinHeight;
+			updated = true;
+		}
+		if (terrainEdit->eastSideXPlus.maxHeight != eastSideXPlusMaxHeight)
+		{
+			terrainEdit->eastSideXPlus.maxHeight = eastSideXPlusMaxHeight;
+			updated = true;
+		}
+		if (terrainEdit->westSideXMinus.minHeight != westSideXMinusMinHeight)
+		{
+			terrainEdit->westSideXMinus.minHeight = westSideXMinusMinHeight;
+			updated = true;
+		}
+		if (terrainEdit->westSideXMinus.maxHeight != westSideXMinusMaxHeight)
+		{
+			terrainEdit->westSideXMinus.maxHeight = westSideXMinusMaxHeight;
+			updated = true;
+		}
+		if (terrainEdit->southSideZPlus.minHeight != southSideZPlusMinHeight)
+		{
+			terrainEdit->southSideZPlus.minHeight = southSideZPlusMinHeight;
+			updated = true;
+		}
+		if (terrainEdit->southSideZPlus.maxHeight != southSideZPlusMaxHeight)
+		{
+			terrainEdit->southSideZPlus.maxHeight = southSideZPlusMaxHeight;
+			updated = true;
+		}
+		if (terrainEdit->northSideZMinus.minHeight != northSideZMinusMinHeight)
+		{
+			terrainEdit->northSideZMinus.minHeight = northSideZMinusMinHeight;
+			updated = true;
+		}
+		if (terrainEdit->northSideZMinus.maxHeight != northSideZMinusMaxHeight)
+		{
+			terrainEdit->northSideZMinus.maxHeight = northSideZMinusMaxHeight;
+			updated = true;
+		}
+
+		if (renewMeshIdOnUpdate and updated)
+		{
+			data.meshId = TheWorld_Utils::MeshCacheBuffer::generateNewMeshId();	// update meshId as terrain data updated
+		}
+
+		return updated;
+	}
+
 	bool MeshCacheBuffer::blendQuadrant(TheWorld_Utils::QuadrantPos pos, bool lastPhase, bool renewMeshIdOnUpdate,
 		CacheQuadrantData& data,
 		CacheQuadrantData& northData,
@@ -4785,6 +4918,13 @@ namespace TheWorld_Utils
 		CacheQuadrantData& southwestData,
 		CacheQuadrantData& southeastData)
 	{
+		// DEBUG
+		if (pos.isQuadrantTrackedForDebug())
+		{
+			bool debug = true;
+		}
+		// DEBUG
+
 		bool updated = false;
 
 		size_t numVerticesPerSize = pos.getNumVerticesPerSize();
@@ -4832,7 +4972,8 @@ namespace TheWorld_Utils
 		//	W	D	E
 		//		
 		//	SW	S	SE
-		if (blendQuadrantOnWestSide(pos, lastPhase, northData,
+		TheWorld_Utils::QuadrantPos northQuadrantPos = pos.getQuadrantPos(TheWorld_Utils::QuadrantPos::DirectionSlot::NorthZMinus);
+		if (blendQuadrantOnWestSide(northQuadrantPos, lastPhase, northData,
 			emptyData /*N*/, data /*S*/, northwestData /*W*/, northeastData /*E*/, emptyData /*NW*/, emptyData /*NE*/, westData /*SW*/, eastData /*SE*/))
 			updated = true;
 		//	NW	N|	NE
@@ -4840,7 +4981,7 @@ namespace TheWorld_Utils
 		//	W	D	E
 		//		
 		//	SW	S	SE
-		if (blendQuadrantOnEastSide(pos, lastPhase, northData,
+		if (blendQuadrantOnEastSide(northQuadrantPos, lastPhase, northData,
 			emptyData /*N*/, data /*S*/, northwestData /*W*/, northeastData /*E*/, emptyData /*NW*/, emptyData /*NE*/, westData /*SW*/, eastData /*SE*/))
 			updated = true;
 
@@ -4849,7 +4990,8 @@ namespace TheWorld_Utils
 		//	W	D	E
 		//		
 		//	SW	|S	SE
-		if (blendQuadrantOnWestSide(pos, lastPhase, southData,
+		TheWorld_Utils::QuadrantPos southQuadrantPos = pos.getQuadrantPos(TheWorld_Utils::QuadrantPos::DirectionSlot::SouthZPlus);
+		if (blendQuadrantOnWestSide(southQuadrantPos, lastPhase, southData,
 			data /*N*/, emptyData /*S*/, southwestData /*W*/, southeastData /*E*/, westData /*NW*/, eastData /*NE*/, emptyData /*SW*/, emptyData /*SE*/))
 			updated = true;
 		//	NW	N	NE
@@ -4857,7 +4999,7 @@ namespace TheWorld_Utils
 		//	W	D	E
 		//		
 		//	SW	S|	SE
-		if (blendQuadrantOnEastSide(pos, lastPhase, southData,
+		if (blendQuadrantOnEastSide(southQuadrantPos, lastPhase, southData,
 			data /*N*/, emptyData /*S*/, southwestData /*W*/, southeastData /*E*/, westData /*NW*/, eastData /*NE*/, emptyData /*SW*/, emptyData /*SE*/))
 			updated = true;
 
@@ -4866,7 +5008,8 @@ namespace TheWorld_Utils
 		//	W	D	E
 		//		
 		//	SW	S	SE
-		if (blendQuadrantOnNorthSide(pos, lastPhase, westData,
+		TheWorld_Utils::QuadrantPos westQuadrantPos = pos.getQuadrantPos(TheWorld_Utils::QuadrantPos::DirectionSlot::WestXMinus);
+		if (blendQuadrantOnNorthSide(westQuadrantPos, lastPhase, westData,
 			northwestData /*N*/, southwestData /*S*/, emptyData /*W*/, data /*E*/, emptyData /*NW*/, northData /*NE*/, emptyData /*SW*/, southData /*SE*/))
 			updated = true;
 		//	NW	N	NE
@@ -4874,7 +5017,7 @@ namespace TheWorld_Utils
 		//	W	D	E
 		//	-	
 		//	SW	S	SE
-		if (blendQuadrantOnSouthSide(pos, lastPhase, westData,
+		if (blendQuadrantOnSouthSide(westQuadrantPos, lastPhase, westData,
 			northwestData /*N*/, southwestData /*S*/, emptyData /*W*/, data /*E*/, emptyData /*NW*/, northData /*NE*/, emptyData /*SW*/, southData /*SE*/))
 			updated = true;
 
@@ -4883,7 +5026,8 @@ namespace TheWorld_Utils
 		//	W	D	E
 		//		
 		//	SW	S	SE
-		if (blendQuadrantOnNorthSide(pos, lastPhase, eastData,
+		TheWorld_Utils::QuadrantPos eastQuadrantPos = pos.getQuadrantPos(TheWorld_Utils::QuadrantPos::DirectionSlot::EastXPlus);
+		if (blendQuadrantOnNorthSide(eastQuadrantPos, lastPhase, eastData,
 			northeastData /*N*/, southeastData /*S*/, data /*W*/, emptyData /*E*/, northData /*NW*/, emptyData /*NE*/, southData /*SW*/, emptyData /*SE*/))
 			updated = true;
 		//	NW	N	NE
@@ -4891,7 +5035,7 @@ namespace TheWorld_Utils
 		//	W	D	E
 		//			-
 		//	SW	S	SE
-		if (blendQuadrantOnSouthSide(pos, lastPhase, eastData,
+		if (blendQuadrantOnSouthSide(eastQuadrantPos, lastPhase, eastData,
 			northeastData /*N*/, southeastData /*S*/, data /*W*/, emptyData /*E*/, northData /*NW*/, emptyData /*NE*/, southData /*SW*/, emptyData /*SE*/))
 			updated = true;
 
@@ -4991,6 +5135,13 @@ namespace TheWorld_Utils
 		CacheQuadrantData& southwestData,
 		CacheQuadrantData& southeastData)
 	{
+		// DEBUG
+		if (pos.isQuadrantTrackedForDebug())
+		{
+			bool debug = true;
+		}
+		// DEBUG
+
 		bool updated = false;
 
 		size_t numVerticesPerSize = pos.getNumVerticesPerSize();
@@ -5001,7 +5152,7 @@ namespace TheWorld_Utils
 
 		size_t maxIndex = numVerticesPerSize - 1;
 
-		// North/West corner of current quadrant
+		// idx = 0 ==> North/West corner of current quadrant
 		for (size_t idx = 0; idx < numVerticesPerSize; idx++)
 		{
 			
@@ -5014,13 +5165,11 @@ namespace TheWorld_Utils
 				&& northData.heights16Buffer != nullptr && northData.heights16Buffer->size() > 0)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = northData.heights32Buffer;
-				TheWorld_Utils::MemoryBuffer* data1heights16Buffer = northData.heights16Buffer;
 				CacheQuadrantData* data1 = &northData;
 				size_t border1X = idx;				size_t border1Z = maxIndex;
 				size_t nearBorder1X = idx;			size_t nearBorder1Z = maxIndex - 1;
 				
 				TheWorld_Utils::MemoryBuffer* data2heights32Buffer = currentData.heights32Buffer;
-				TheWorld_Utils::MemoryBuffer* data2heights16Buffer = currentData.heights16Buffer;
 				CacheQuadrantData* data2 = &currentData;
 				size_t border2X = idx;				size_t border2Z = 0;
 				size_t nearBorder2X = idx;			size_t nearBorder2Z = 1;
@@ -5036,6 +5185,9 @@ namespace TheWorld_Utils
 					TheWorld_Utils::FLOAT_32 f(h);
 					uint16_t half = half_from_float(f.u32);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
+
+					TheWorld_Utils::MemoryBuffer* data1heights16Buffer = northData.heights16Buffer;
+					TheWorld_Utils::MemoryBuffer* data2heights16Buffer = currentData.heights16Buffer;
 					data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
@@ -5049,13 +5201,11 @@ namespace TheWorld_Utils
 				&& southData.heights16Buffer != nullptr && southData.heights16Buffer->size() > 0)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = currentData.heights32Buffer;
-				TheWorld_Utils::MemoryBuffer* data1heights16Buffer = currentData.heights16Buffer;
 				CacheQuadrantData* data1 = &currentData;
 				size_t border1X = idx;				size_t border1Z = maxIndex;
 				size_t nearBorder1X = idx;			size_t nearBorder1Z = maxIndex - 1;
 
 				TheWorld_Utils::MemoryBuffer* data2heights32Buffer = southData.heights32Buffer;
-				TheWorld_Utils::MemoryBuffer* data2heights16Buffer = southData.heights16Buffer;
 				CacheQuadrantData* data2 = &southData;
 				size_t border2X = idx;				size_t border2Z = 0;
 				size_t nearBorder2X = idx;			size_t nearBorder2Z = 1;
@@ -5082,6 +5232,9 @@ namespace TheWorld_Utils
 					TheWorld_Utils::FLOAT_32 f(h);
 					uint16_t half = half_from_float(f.u32);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
+
+					TheWorld_Utils::MemoryBuffer* data1heights16Buffer = currentData.heights16Buffer;
+					TheWorld_Utils::MemoryBuffer* data2heights16Buffer = southData.heights16Buffer;
 					data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 
 					//// DEBUG
@@ -5106,13 +5259,11 @@ namespace TheWorld_Utils
 				&& eastData.heights16Buffer != nullptr && eastData.heights16Buffer->size() > 0)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = currentData.heights32Buffer;
-				TheWorld_Utils::MemoryBuffer* data1heights16Buffer = currentData.heights16Buffer;
 				CacheQuadrantData* data1 = &currentData;
 				size_t border1X = maxIndex;			size_t border1Z = idx;
 				size_t nearBorder1X = maxIndex - 1;	size_t nearBorder1Z = idx;
 
 				TheWorld_Utils::MemoryBuffer* data2heights32Buffer = eastData.heights32Buffer;
-				TheWorld_Utils::MemoryBuffer* data2heights16Buffer = eastData.heights16Buffer;
 				CacheQuadrantData* data2 = &eastData;
 				size_t border2X = 0;					size_t border2Z = idx;
 				size_t nearBorder2X = 1;				size_t nearBorder2Z = idx;
@@ -5128,6 +5279,9 @@ namespace TheWorld_Utils
 					TheWorld_Utils::FLOAT_32 f(h);
 					uint16_t half = half_from_float(f.u32);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
+
+					TheWorld_Utils::MemoryBuffer* data1heights16Buffer = currentData.heights16Buffer;
+					TheWorld_Utils::MemoryBuffer* data2heights16Buffer = eastData.heights16Buffer;
 					data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
@@ -5141,13 +5295,11 @@ namespace TheWorld_Utils
 				&& westData.heights16Buffer != nullptr && westData.heights16Buffer->size() > 0)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = westData.heights32Buffer;
-				TheWorld_Utils::MemoryBuffer* data1heights16Buffer = westData.heights16Buffer;
 				CacheQuadrantData* data1 = &westData;
 				size_t border1X = maxIndex;			size_t border1Z = idx;
 				size_t nearBorder1X = maxIndex - 1;	size_t nearBorder1Z = idx;
 
 				TheWorld_Utils::MemoryBuffer* data2heights32Buffer = currentData.heights32Buffer;
-				TheWorld_Utils::MemoryBuffer* data2heights16Buffer = currentData.heights16Buffer;
 				CacheQuadrantData* data2 = &currentData;
 				size_t border2X = 0;					size_t border2Z = idx;
 				size_t nearBorder2X = 1;				size_t nearBorder2Z = idx;
@@ -5163,6 +5315,9 @@ namespace TheWorld_Utils
 					TheWorld_Utils::FLOAT_32 f(h);
 					uint16_t half = half_from_float(f.u32);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
+
+					TheWorld_Utils::MemoryBuffer* data1heights16Buffer = westData.heights16Buffer;
+					TheWorld_Utils::MemoryBuffer* data2heights16Buffer = currentData.heights16Buffer;
 					data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
@@ -5178,13 +5333,11 @@ namespace TheWorld_Utils
 				&& northData.heights16Buffer != nullptr && northData.heights16Buffer->size() > 0)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = northwestData.heights32Buffer;
-				TheWorld_Utils::MemoryBuffer* data1heights16Buffer = northwestData.heights16Buffer;
 				CacheQuadrantData* data1 = &northwestData;
 				size_t border1X = maxIndex;			size_t border1Z = idx;
 				size_t nearBorder1X = maxIndex - 1;	size_t nearBorder1Z = idx;
 
 				TheWorld_Utils::MemoryBuffer* data2heights32Buffer = northData.heights32Buffer;
-				TheWorld_Utils::MemoryBuffer* data2heights16Buffer = northData.heights16Buffer;
 				CacheQuadrantData* data2 = &northData;
 				size_t border2X = 0;					size_t border2Z = idx;
 				size_t nearBorder2X = 1;				size_t nearBorder2Z = idx;
@@ -5200,6 +5353,9 @@ namespace TheWorld_Utils
 					TheWorld_Utils::FLOAT_32 f(h);
 					uint16_t half = half_from_float(f.u32);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
+
+					TheWorld_Utils::MemoryBuffer* data1heights16Buffer = northwestData.heights16Buffer;
+					TheWorld_Utils::MemoryBuffer* data2heights16Buffer = northData.heights16Buffer;
 					data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
@@ -5215,13 +5371,11 @@ namespace TheWorld_Utils
 				&& northeastData.heights16Buffer != nullptr && northeastData.heights16Buffer->size() > 0)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = northData.heights32Buffer;
-				TheWorld_Utils::MemoryBuffer* data1heights16Buffer = northData.heights16Buffer;
 				CacheQuadrantData* data1 = &northData;
 				size_t border1X = maxIndex;			size_t border1Z = idx;
 				size_t nearBorder1X = maxIndex - 1;	size_t nearBorder1Z = idx;
 
 				TheWorld_Utils::MemoryBuffer* data2heights32Buffer = northeastData.heights32Buffer;
-				TheWorld_Utils::MemoryBuffer* data2heights16Buffer = northeastData.heights16Buffer;
 				CacheQuadrantData* data2 = &northeastData;
 				size_t border2X = 0;					size_t border2Z = idx;
 				size_t nearBorder2X = 1;				size_t nearBorder2Z = idx;
@@ -5237,6 +5391,9 @@ namespace TheWorld_Utils
 					TheWorld_Utils::FLOAT_32 f(h);
 					uint16_t half = half_from_float(f.u32);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
+
+					TheWorld_Utils::MemoryBuffer* data1heights16Buffer = northData.heights16Buffer;
+					TheWorld_Utils::MemoryBuffer* data2heights16Buffer = northeastData.heights16Buffer;
 					data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
@@ -5252,13 +5409,11 @@ namespace TheWorld_Utils
 				&& westData.heights16Buffer != nullptr && westData.heights16Buffer->size() > 0)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = northwestData.heights32Buffer;
-				TheWorld_Utils::MemoryBuffer* data1heights16Buffer = northwestData.heights16Buffer;
 				CacheQuadrantData* data1 = &northwestData;
 				size_t border1X = idx;				size_t border1Z = maxIndex;
 				size_t nearBorder1X = idx;			size_t nearBorder1Z = maxIndex - 1;
 
 				TheWorld_Utils::MemoryBuffer* data2heights32Buffer = westData.heights32Buffer;
-				TheWorld_Utils::MemoryBuffer* data2heights16Buffer = westData.heights16Buffer;
 				CacheQuadrantData* data2 = &westData;
 				size_t border2X = idx;				size_t border2Z = 0;
 				size_t nearBorder2X = idx;			size_t nearBorder2Z = 1;
@@ -5274,6 +5429,9 @@ namespace TheWorld_Utils
 					TheWorld_Utils::FLOAT_32 f(h);
 					uint16_t half = half_from_float(f.u32);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
+
+					TheWorld_Utils::MemoryBuffer* data1heights16Buffer = northwestData.heights16Buffer;
+					TheWorld_Utils::MemoryBuffer* data2heights16Buffer = westData.heights16Buffer;
 					data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
@@ -5289,13 +5447,11 @@ namespace TheWorld_Utils
 				&& eastData.heights16Buffer != nullptr && eastData.heights16Buffer->size() > 0)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = northeastData.heights32Buffer;
-				TheWorld_Utils::MemoryBuffer* data1heights16Buffer = northeastData.heights16Buffer;
 				CacheQuadrantData* data1 = &northeastData;
 				size_t border1X = idx;				size_t border1Z = maxIndex;
 				size_t nearBorder1X = idx;			size_t nearBorder1Z = maxIndex - 1;
 
 				TheWorld_Utils::MemoryBuffer* data2heights32Buffer = eastData.heights32Buffer;
-				TheWorld_Utils::MemoryBuffer* data2heights16Buffer = eastData.heights16Buffer;
 				CacheQuadrantData* data2 = &eastData;
 				size_t border2X = idx;				size_t border2Z = 0;
 				size_t nearBorder2X = idx;			size_t nearBorder2Z = 1;
@@ -5311,6 +5467,9 @@ namespace TheWorld_Utils
 					TheWorld_Utils::FLOAT_32 f(h);
 					uint16_t half = half_from_float(f.u32);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
+
+					TheWorld_Utils::MemoryBuffer* data1heights16Buffer = northeastData.heights16Buffer;
+					TheWorld_Utils::MemoryBuffer* data2heights16Buffer = eastData.heights16Buffer;
 					data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
@@ -5326,13 +5485,11 @@ namespace TheWorld_Utils
 				&& southwestData.heights16Buffer != nullptr && southwestData.heights16Buffer->size() > 0)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = westData.heights32Buffer;
-				TheWorld_Utils::MemoryBuffer* data1heights16Buffer = westData.heights16Buffer;
 				CacheQuadrantData* data1 = &westData;
 				size_t border1X = idx;				size_t border1Z = maxIndex;
 				size_t nearBorder1X = idx;			size_t nearBorder1Z = maxIndex - 1;
 
 				TheWorld_Utils::MemoryBuffer* data2heights32Buffer = southwestData.heights32Buffer;
-				TheWorld_Utils::MemoryBuffer* data2heights16Buffer = southwestData.heights16Buffer;
 				CacheQuadrantData* data2 = &southwestData;
 				size_t border2X = idx;				size_t border2Z = 0;
 				size_t nearBorder2X = idx;			size_t nearBorder2Z = 1;
@@ -5348,6 +5505,9 @@ namespace TheWorld_Utils
 					TheWorld_Utils::FLOAT_32 f(h);
 					uint16_t half = half_from_float(f.u32);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
+
+					TheWorld_Utils::MemoryBuffer* data1heights16Buffer = westData.heights16Buffer;
+					TheWorld_Utils::MemoryBuffer* data2heights16Buffer = southwestData.heights16Buffer;
 					data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
@@ -5363,13 +5523,11 @@ namespace TheWorld_Utils
 				&& southeastData.heights16Buffer != nullptr && southeastData.heights16Buffer->size() > 0)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = eastData.heights32Buffer;
-				TheWorld_Utils::MemoryBuffer* data1heights16Buffer = eastData.heights16Buffer;
 				CacheQuadrantData* data1 = &eastData;
 				size_t border1X = idx;				size_t border1Z = maxIndex;
 				size_t nearBorder1X = idx;			size_t nearBorder1Z = maxIndex - 1;
 
 				TheWorld_Utils::MemoryBuffer* data2heights32Buffer = southeastData.heights32Buffer;
-				TheWorld_Utils::MemoryBuffer* data2heights16Buffer = southeastData.heights16Buffer;
 				CacheQuadrantData* data2 = &southeastData;
 				size_t border2X = idx;				size_t border2Z = 0;
 				size_t nearBorder2X = idx;			size_t nearBorder2Z = 1;
@@ -5385,6 +5543,9 @@ namespace TheWorld_Utils
 					TheWorld_Utils::FLOAT_32 f(h);
 					uint16_t half = half_from_float(f.u32);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
+
+					TheWorld_Utils::MemoryBuffer* data1heights16Buffer = eastData.heights16Buffer;
+					TheWorld_Utils::MemoryBuffer* data2heights16Buffer = southeastData.heights16Buffer;
 					data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
@@ -5400,13 +5561,11 @@ namespace TheWorld_Utils
 				&& southData.heights16Buffer != nullptr && southData.heights16Buffer->size() > 0)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = southwestData.heights32Buffer;
-				TheWorld_Utils::MemoryBuffer* data1heights16Buffer = southwestData.heights16Buffer;
 				CacheQuadrantData* data1 = &southwestData;
 				size_t border1X = maxIndex;			size_t border1Z = idx;
 				size_t nearBorder1X = maxIndex - 1;	size_t nearBorder1Z = idx;
 
 				TheWorld_Utils::MemoryBuffer* data2heights32Buffer = southData.heights32Buffer;
-				TheWorld_Utils::MemoryBuffer* data2heights16Buffer = southData.heights16Buffer;
 				CacheQuadrantData* data2 = &southData;
 				size_t border2X = 0;					size_t border2Z = idx;
 				size_t nearBorder2X = 1;				size_t nearBorder2Z = idx;
@@ -5422,6 +5581,9 @@ namespace TheWorld_Utils
 					TheWorld_Utils::FLOAT_32 f(h);
 					uint16_t half = half_from_float(f.u32);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
+
+					TheWorld_Utils::MemoryBuffer* data1heights16Buffer = southwestData.heights16Buffer;
+					TheWorld_Utils::MemoryBuffer* data2heights16Buffer = southData.heights16Buffer;
 					data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
@@ -5437,13 +5599,11 @@ namespace TheWorld_Utils
 				&& southeastData.heights16Buffer != nullptr && southeastData.heights16Buffer->size() > 0)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = southData.heights32Buffer;
-				TheWorld_Utils::MemoryBuffer* data1heights16Buffer = southData.heights16Buffer;
 				CacheQuadrantData* data1 = &southData;
 				size_t border1X = maxIndex;			size_t border1Z = idx;
 				size_t nearBorder1X = maxIndex - 1;	size_t nearBorder1Z = idx;
 
 				TheWorld_Utils::MemoryBuffer* data2heights32Buffer = southeastData.heights32Buffer;
-				TheWorld_Utils::MemoryBuffer* data2heights16Buffer = southeastData.heights16Buffer;
 				CacheQuadrantData* data2 = &southeastData;
 				size_t border2X = 0;					size_t border2Z = idx;
 				size_t nearBorder2X = 1;				size_t nearBorder2Z = idx;
@@ -5459,6 +5619,9 @@ namespace TheWorld_Utils
 					TheWorld_Utils::FLOAT_32 f(h);
 					uint16_t half = half_from_float(f.u32);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
+
+					TheWorld_Utils::MemoryBuffer* data1heights16Buffer = southData.heights16Buffer;
+					TheWorld_Utils::MemoryBuffer* data2heights16Buffer = southeastData.heights16Buffer;
 					data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
@@ -5568,6 +5731,45 @@ namespace TheWorld_Utils
 			eastData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(0, maxIndex, numVerticesPerSize) = half;
 		}
 
+		// DEBUG
+		if (pos.isQuadrantTrackedForDebug())
+		{
+			float minHeight1 = FLT_MAX, minHeight2 = FLT_MAX;
+			float maxHeight1 = -FLT_MAX, maxHeight2 = -FLT_MAX;
+			for (size_t idx = 0; idx < numVerticesPerSize; idx++)
+			{
+
+				//	NW	N	NE
+				//		-
+				//	W	D	E
+				//			
+				//	SW	S	SE
+				if (northData.heights32Buffer != nullptr && northData.heights32Buffer->size() > 0
+					&& northData.heights16Buffer != nullptr && northData.heights16Buffer->size() > 0)
+				{
+					TheWorld_Utils::MemoryBuffer* data1heights32Buffer = northData.heights32Buffer;
+					size_t border1X = idx;				size_t border1Z = maxIndex;
+					float borderH1 = data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize);
+
+					TheWorld_Utils::MemoryBuffer* data2heights32Buffer = currentData.heights32Buffer;
+					size_t border2X = idx;				size_t border2Z = 0;
+					float borderH2 = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize);
+
+					if (borderH1 > maxHeight1)
+						maxHeight1 = borderH1;
+					if (borderH2 > maxHeight2)
+						maxHeight2 = borderH2;
+					if (borderH1 < minHeight1)
+						minHeight1 = borderH1;
+					if (borderH2 < minHeight2)
+						minHeight2 = borderH2;
+				}
+			}
+			bool debug = true;
+		}
+		// DEBUG
+
+
 		return updated;
 	}
 		
@@ -5642,6 +5844,13 @@ namespace TheWorld_Utils
 		CacheQuadrantData& southwestData,
 		CacheQuadrantData& southeastData)
 	{
+		// DEBUG
+		if (pos.isQuadrantTrackedForDebug())
+		{
+			bool debug = true;
+		}
+		// DEBUG
+
 		bool updated = false;
 
 		if (data.terrainEditValues == nullptr || data.terrainEditValues->size() == 0
@@ -5784,8 +5993,8 @@ namespace TheWorld_Utils
 				}
 			}
 
-			terrainEdit->northSideZMinus.needBlend = false;
-			northTerrainEdit->southSideZPlus.needBlend = false;
+			terrainEdit->northSideZMinus.needBlend_notused = false;
+			northTerrainEdit->southSideZPlus.needBlend_notused = false;
 		}
 
 		return updated;
@@ -5802,6 +6011,13 @@ namespace TheWorld_Utils
 		CacheQuadrantData& southwestData,
 		CacheQuadrantData& southeastData)
 	{
+		// DEBUG
+		if (pos.isQuadrantTrackedForDebug())
+		{
+			bool debug = true;
+		}
+		// DEBUG
+
 		bool updated = false;
 
 		if (data.terrainEditValues == nullptr || data.terrainEditValues->size() == 0
@@ -5942,8 +6158,8 @@ namespace TheWorld_Utils
 				}
 			}
 
-			terrainEdit->southSideZPlus.needBlend = false;
-			southTerrainEdit->northSideZMinus.needBlend = false;
+			terrainEdit->southSideZPlus.needBlend_notused = false;
+			southTerrainEdit->northSideZMinus.needBlend_notused = false;
 		}
 
 		return updated;
@@ -5960,6 +6176,13 @@ namespace TheWorld_Utils
 		CacheQuadrantData& southwestData,
 		CacheQuadrantData& southeastData)
 	{
+		// DEBUG
+		if (pos.isQuadrantTrackedForDebug())
+		{
+			bool debug = true;
+		}
+		// DEBUG
+
 		bool updated = false;
 
 		if (data.terrainEditValues == nullptr || data.terrainEditValues->size() == 0
@@ -6099,8 +6322,8 @@ namespace TheWorld_Utils
 				}
 			}
 
-			terrainEdit->westSideXMinus.needBlend = false;
-			westTerrainEdit->eastSideXPlus.needBlend = false;
+			terrainEdit->westSideXMinus.needBlend_notused = false;
+			westTerrainEdit->eastSideXPlus.needBlend_notused = false;
 		}
 
 		return updated;
@@ -6117,6 +6340,13 @@ namespace TheWorld_Utils
 		CacheQuadrantData& southwestData,
 		CacheQuadrantData& southeastData)
 	{
+		// DEBUG
+		if (pos.isQuadrantTrackedForDebug())
+		{
+			bool debug = true;
+		}
+		// DEBUG
+
 		bool updated = false;
 
 		if (data.terrainEditValues == nullptr || data.terrainEditValues->size() == 0
@@ -6256,8 +6486,8 @@ namespace TheWorld_Utils
 				}
 			}
 
-			terrainEdit->eastSideXPlus.needBlend = false;
-			eastTerrainEdit->westSideXMinus.needBlend = false;
+			terrainEdit->eastSideXPlus.needBlend_notused = false;
+			eastTerrainEdit->westSideXMinus.needBlend_notused = false;
 		}
 
 		return updated;

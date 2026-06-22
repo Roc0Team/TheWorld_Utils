@@ -1535,12 +1535,12 @@ namespace TheWorld_Utils
 	class TerrainSideInfo
 	{
 	public:
-		bool needBlend;
+		bool needBlend_notused;
 		float minHeight;
 		float maxHeight;
 		bool operator==(const TerrainSideInfo& o) const
 		{
-			if (needBlend != o.needBlend)
+			if (needBlend_notused != o.needBlend_notused)
 				return false;
 			if (minHeight != o.minHeight)
 				return false;
@@ -2136,6 +2136,7 @@ namespace TheWorld_Utils
 			CacheQuadrantData& northeastData,
 			CacheQuadrantData& southwesthData,
 			CacheQuadrantData& southeastData);
+		static __declspec(dllexport) bool calcMinMaxHeights(TheWorld_Utils::QuadrantPos pos, bool renewMeshIdOnUpdate, CacheQuadrantData& data);
 
 		//__declspec(dllexport) std::string getCacheDir()
 		//{
