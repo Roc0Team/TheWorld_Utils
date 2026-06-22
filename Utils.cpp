@@ -802,8 +802,8 @@ namespace TheWorld_Utils
 		return ret;
 	}
 
-	constexpr auto QUADRANT_TRACKING_IDX_POS_X = -68;
-	constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -69;
+	constexpr auto QUADRANT_TRACKING_IDX_POS_X = -80;
+	constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -63;
 
 	bool QuadrantPos::isQuadrantTrackedForDebug(void) const
 	{
@@ -812,7 +812,9 @@ namespace TheWorld_Utils
 
 	void QuadrantPos::trackQuadrantForDebug(std::string owner, std::string text, std::string hash) const
 	{
-#ifndef _DEBUG
+#ifdef _DEBUG
+		return;
+#else
 		return;
 #endif	
 		if (isQuadrantTrackedForDebug())
@@ -3125,12 +3127,12 @@ namespace TheWorld_Utils
 				size_t numVerticesPerSize = (size_t)sqrt((double)vectSize);
 				for (int i = 0; i < vectSize; i++)
 				{
-					// DEBUG
-					if (i == numVerticesPerSize * (numVerticesPerSize - 1) and getQuadrantPos().isQuadrantTrackedForDebug())	// first index of last row of the quadrant
-					{
-						TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromBuffer 1.1 ") + __FUNCTION__, "dummy");
-					}
-					// DEBUG
+					//// DEBUG
+					//if (i == numVerticesPerSize * (numVerticesPerSize - 1) and getQuadrantPos().isQuadrantTrackedForDebug())	// first index of last row of the quadrant
+					//{
+					//	TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromBuffer 1.1 ") + __FUNCTION__, "dummy");
+					//}
+					//// DEBUG
 					pFloat32[i] = TheWorld_Utils::MeshCacheBuffer::halfToFloat_1(pFloat16[i]);
 				}
 			}
@@ -5058,16 +5060,16 @@ namespace TheWorld_Utils
 				size_t border2X = idx;				size_t border2Z = 0;
 				size_t nearBorder2X = idx;			size_t nearBorder2Z = 1;
 
-				// DEBUG
-				if (pos.isQuadrantTrackedForDebug())
-				{
-					uint16_t southBorderH1_half = data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize);
-					uint16_t northBorderOfSouthDataBorderH2_half = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize);
-					float southBorderH1 = data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize);
-					float northBorderOfSouthDataBorderH2 = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize);
-					float xxx = southBorderH1;
-				}
-				// DEBUG
+				//// DEBUG
+				//if (pos.isQuadrantTrackedForDebug())
+				//{
+				//	uint16_t southBorderH1_half = data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize);
+				//	uint16_t northBorderOfSouthDataBorderH2_half = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize);
+				//	float southBorderH1 = data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize);
+				//	float northBorderOfSouthDataBorderH2 = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize);
+				//	float xxx = southBorderH1;
+				//}
+				//// DEBUG
 
 				float nearBorderH1 = data1heights32Buffer->_deprecated_get_at_ref<float>(nearBorder1X, nearBorder1Z, numVerticesPerSize);
 				float nearBorderH2 = data2heights32Buffer->_deprecated_get_at_ref<float>(nearBorder2X, nearBorder2Z, numVerticesPerSize);
@@ -5082,16 +5084,16 @@ namespace TheWorld_Utils
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
 					data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 
-					// DEBUG
-					if (pos.isQuadrantTrackedForDebug())
-					{
-						uint16_t southBorderH1_half = data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize);
-						uint16_t northBorderOfSouthDataBorderH2_half = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize);
-						float southBorderH1 = data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize);
-						float northBorderOfSouthDataBorderH2 = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize);
-						float xxx = southBorderH1;
-					}
-					// DEBUG
+					//// DEBUG
+					//if (pos.isQuadrantTrackedForDebug())
+					//{
+					//	uint16_t southBorderH1_half = data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize);
+					//	uint16_t northBorderOfSouthDataBorderH2_half = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize);
+					//	float southBorderH1 = data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize);
+					//	float northBorderOfSouthDataBorderH2 = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize);
+					//	float xxx = southBorderH1;
+					//}
+					//// DEBUG
 				}
 			}
 
