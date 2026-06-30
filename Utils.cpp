@@ -802,12 +802,48 @@ namespace TheWorld_Utils
 		return ret;
 	}
 
-	constexpr auto QUADRANT_TRACKING_IDX_POS_X = -46;
-	constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -90;
+	//constexpr auto QUADRANT_TRACKING_IDX_POS_X = -46;
+	//constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -90;
+
+	constexpr auto QUADRANT_TRACKING_MULTIPLE = false;
+	static std::vector<int> quadrantTrackingPosX = { -45, -45 };
+	static std::vector<int> quadrantTrackingPosZ = { -80, -81 };
+
+	constexpr auto QUADRANT_TRACKING_QUAD = false;
+	constexpr auto QUADRANT_TRACKING_IDX_MIN_X = -45;
+	constexpr auto QUADRANT_TRACKING_IDX_MAX_X = -41;
+	constexpr auto QUADRANT_TRACKING_IDX_MIN_Z = -85;
+	constexpr auto QUADRANT_TRACKING_IDX_MAX_Z = -81;
 
 	bool QuadrantPos::isQuadrantTrackedForDebug(void) const
 	{
-		return (isInitialized() and m_quadrantPosX == QUADRANT_TRACKING_IDX_POS_X and m_quadrantPosZ == QUADRANT_TRACKING_IDX_POS_Z);
+		if (not isInitialized())
+			return false;
+
+		if (QUADRANT_TRACKING_MULTIPLE)
+		{
+			if (quadrantTrackingPosX.size() != quadrantTrackingPosZ.size())
+				return false;
+
+			for (size_t i = 0; i < quadrantTrackingPosX.size(); i++)
+			{
+				if (m_quadrantPosX == quadrantTrackingPosX[i] && m_quadrantPosZ == quadrantTrackingPosZ[i])
+					return true;
+			}
+		}
+
+		if (QUADRANT_TRACKING_QUAD)
+		{
+			if (m_quadrantPosX >= QUADRANT_TRACKING_IDX_MIN_X && m_quadrantPosX <= QUADRANT_TRACKING_IDX_MAX_X and
+				m_quadrantPosZ >= QUADRANT_TRACKING_IDX_MIN_Z && m_quadrantPosZ <= QUADRANT_TRACKING_IDX_MAX_Z)
+			{
+				return true;
+			}
+		}
+
+		return false;
+		
+		//return (isInitialized() and m_quadrantPosX == QUADRANT_TRACKING_IDX_POS_X and m_quadrantPosZ == QUADRANT_TRACKING_IDX_POS_Z);
 	}
 
 	void QuadrantPos::trackQuadrantForDebug(std::string owner, std::string text, std::string hash) const
@@ -3088,6 +3124,10 @@ namespace TheWorld_Utils
 		size_t vectSize = TheWorld_Utils::deserializeFromByteStream<size_t>((BYTE*)movingStreamBuffer, size);
 		movingStreamBuffer += size;
 
+		TheWorld_Utils::QuadrantPos pos = getQuadrantPos();
+		PLOG_VERBOSE << "Refreshing maps for quadrant " << pos.getIdStr() << " hash=" << TheWorld_Utils::MeshCacheBuffer::meshIdToPrint1(meshIdFromBuffer);
+		pos.TRACK_QUADRANT_FOR_DEBUG("Refreshing maps", meshIdFromBuffer);
+
 		if (vectSize > 0)
 		{
 			minAltitude = TheWorld_Utils::deserializeFromByteStream<float>((BYTE*)movingStreamBuffer, size);
@@ -3108,6 +3148,18 @@ namespace TheWorld_Utils
 				float16HeigthsBuffer.set((BYTE*)movingStreamBuffer, float16HeightMapSize);
 			}
 			movingStreamBuffer += float16HeightMapSize;
+
+			//// DEBUG
+			//if (pos.isQuadrantTrackedForDebug())
+			//{
+			//	if (terrainEditValues.size() > 0)
+			//	{
+			//		TerrainEdit terrainEdit;
+			//		terrainEdit.deserialize(terrainEditValues);
+			//		bool b = TheWorld_Utils::MeshCacheBuffer::debugCheckMinMaxHeight(pos, &terrainEdit, "refreshMapsFromBuffer", &meshIdFromBuffer, &float16HeigthsBuffer, nullptr);
+			//	}
+			//}
+			//// DEBUG
 
 			size_t float32HeightMapSize = vectSize * float_size;
 			if (BUFFER_FORMAT_VERSION_1)
@@ -3316,7 +3368,8 @@ namespace TheWorld_Utils
 			if (updateCache)
 			{
 				std::string meshId;
-				writeBufferToDiskCache(buffer, bufferSize, meshId);
+				TheWorld_Utils::TerrainEdit writtenTerrainEdit;
+				writeBufferToDiskCache(buffer, bufferSize, meshId, false, false, &writtenTerrainEdit);
 			}
 		}
 		else
@@ -3582,40 +3635,40 @@ namespace TheWorld_Utils
 		_buffer.append((char*)buffer.ptr(), size);
 	}
 		
-	std::string MeshCacheBuffer::writeBufferToDiskCache2(std::string& buffer, std::string& writtenMeshId, bool renewMeshId, bool workDir, TerrainEdit* terrainEdit)
+	std::string MeshCacheBuffer::writeBufferToDiskCache2(std::string& buffer, std::string& writtenMeshId, bool renewMeshId, bool workDir, TerrainEdit* writtenTerrainEdit)
 	{
-		std::string bufferMeshId = writeBufferToDiskCache((BYTE*)buffer.c_str(), buffer.size(), writtenMeshId, renewMeshId, workDir, terrainEdit);
+		std::string bufferMeshId = writeBufferToDiskCache((BYTE*)buffer.c_str(), buffer.size(), writtenMeshId, renewMeshId, workDir, writtenTerrainEdit);
 		m_meshId = writtenMeshId;
 		return bufferMeshId;
 	}
 
-	std::string MeshCacheBuffer::writeBufferToDiskCache(std::string& buffer, std::string& writtenMeshId, bool renewMeshId, bool workDir, TerrainEdit* terrainEdit)
+	std::string MeshCacheBuffer::writeBufferToDiskCache(std::string& buffer, std::string& writtenMeshId, bool renewMeshId, bool workDir, TerrainEdit* writtenTerrainEdit)
 	{
-		std::string bufferMeshId = writeBufferToDiskCache((BYTE*)buffer.c_str(), buffer.size(), writtenMeshId, renewMeshId, workDir, terrainEdit);
+		std::string bufferMeshId = writeBufferToDiskCache((BYTE*)buffer.c_str(), buffer.size(), writtenMeshId, renewMeshId, workDir, writtenTerrainEdit);
 		return bufferMeshId;
 	}
 
-	std::string MeshCacheBuffer::writeBufferToDiskCache2(TheWorld_Utils::MemoryBuffer& buffer, std::string& writtenMeshId, bool renewMeshId, bool workDir, TerrainEdit* terrainEdit)
+	std::string MeshCacheBuffer::writeBufferToDiskCache2(TheWorld_Utils::MemoryBuffer& buffer, std::string& writtenMeshId, bool renewMeshId, bool workDir, TerrainEdit* writtenTerrainEdit)
 	{
-		std::string bufferMeshId = writeBufferToDiskCache(buffer.ptr(), buffer.size(), writtenMeshId, renewMeshId, workDir, terrainEdit);
+		std::string bufferMeshId = writeBufferToDiskCache(buffer.ptr(), buffer.size(), writtenMeshId, renewMeshId, workDir, writtenTerrainEdit);
 		m_meshId = writtenMeshId;
 		return bufferMeshId;
 	}
 
-	std::string MeshCacheBuffer::writeBufferToDiskCache(TheWorld_Utils::MemoryBuffer& buffer, std::string& writtenMeshId, bool renewMeshId, bool workDir, TerrainEdit* terrainEdit)
+	std::string MeshCacheBuffer::writeBufferToDiskCache(TheWorld_Utils::MemoryBuffer& buffer, std::string& writtenMeshId, bool renewMeshId, bool workDir, TerrainEdit* writtenTerrainEdit)
 	{
-		std::string bufferMeshId = writeBufferToDiskCache(buffer.ptr(), buffer.size(), writtenMeshId, renewMeshId, workDir, terrainEdit);
+		std::string bufferMeshId = writeBufferToDiskCache(buffer.ptr(), buffer.size(), writtenMeshId, renewMeshId, workDir, writtenTerrainEdit);
 		return bufferMeshId;
 	}
 
-	std::string MeshCacheBuffer::writeBufferToDiskCache2(const BYTE* buffer, const size_t bufferSize, std::string& writtenMeshId, bool renewMeshId, bool workDir, TerrainEdit* terrainEdit)
+	std::string MeshCacheBuffer::writeBufferToDiskCache2(const BYTE* buffer, const size_t bufferSize, std::string& writtenMeshId, bool renewMeshId, bool workDir, TerrainEdit* writtenTerrainEdit)
 	{
-		std::string bufferMeshId = writeBufferToDiskCache(buffer, bufferSize, writtenMeshId, renewMeshId, workDir, terrainEdit);
+		std::string bufferMeshId = writeBufferToDiskCache(buffer, bufferSize, writtenMeshId, renewMeshId, workDir, writtenTerrainEdit);
 		m_meshId = writtenMeshId;
 		return bufferMeshId;
 	}
 
-	std::string MeshCacheBuffer::writeBufferToDiskCache(const BYTE* buffer, const size_t bufferSize, std::string& writtenMeshId, bool renewMeshId, bool workDir, TerrainEdit* terrainEdit)
+	std::string MeshCacheBuffer::writeBufferToDiskCache(const BYTE* buffer, const size_t bufferSize, std::string& writtenMeshId, bool renewMeshId, bool workDir, TerrainEdit* writtenTerrainEdit)
 	{
 		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer writeBufferToCache 1 ") + __FUNCTION__, "ALL");
 
@@ -3628,8 +3681,13 @@ namespace TheWorld_Utils
 		BYTE shortBuffer[256 + 1];
 		size_t bufferSize_size = 0;	// get size of a size_t
 
-		char* movingStreamBuffer = (char*)buffer + 1;	// bypass buffer format "0"/"1"
+		char* movingStreamBuffer = (char*)buffer;
 		size_t size = 0;
+
+#define BUFFER_FORMAT_VERSION_0 (bufferFormat == '0')
+#define BUFFER_FORMAT_VERSION_1 (bufferFormat == '1')
+		char bufferFormat = *movingStreamBuffer;
+		movingStreamBuffer++;	// bypass buffer format "0"/"1"
 
 		std::string bufferMeshId;
 		
@@ -3654,14 +3712,64 @@ namespace TheWorld_Utils
 		}
 
 		TheWorld_Utils::QuadrantPos pos = getQuadrantPos();
-		PLOG_VERBOSE << "Quadrant " << pos.getIdStr() << " saved to " << (workDir ? "work " : "") << "disk cache with hash[" << TheWorld_Utils::MeshCacheBuffer::meshIdToPrint1(writtenMeshId) << "]";
+		PLOG_VERBOSE << "Quadrant " << pos.getIdStr() << " saving to " << (workDir ? "work " : "") << "disk cache with hash[" << TheWorld_Utils::MeshCacheBuffer::meshIdToPrint1(writtenMeshId) << "]";
+		pos.TRACK_QUADRANT_FOR_DEBUG("Saved to disk cache", writtenMeshId);
 
-		if (terrainEdit != nullptr)
+		TerrainEdit _writtenTerrainEdit;
 		{
 			size_t terrainEditSize = TheWorld_Utils::deserializeFromByteStream<size_t>((BYTE*)movingStreamBuffer, size);
 			movingStreamBuffer += size;			// bypass TerrainEdit size
 			TheWorld_Utils::MemoryBuffer terrainEditBuffer((BYTE*)movingStreamBuffer, terrainEditSize);
-			terrainEdit->deserialize(terrainEditBuffer);
+			_writtenTerrainEdit.deserialize(terrainEditBuffer);
+			movingStreamBuffer += terrainEditSize;			// bypass TerrainEdit
+
+			//// DEBUG
+			//if (pos.isQuadrantTrackedForDebug())
+			//{
+			//	std::string s = "MinMax " + std::to_string(_writtenTerrainEdit.minHeight) + "/" + std::to_string(_writtenTerrainEdit.maxHeight)
+			//		+ " N=" + std::to_string(_writtenTerrainEdit.northSideZMinus.minHeight) + "/" + std::to_string(_writtenTerrainEdit.northSideZMinus.maxHeight)
+			//		+ " S=" + std::to_string(_writtenTerrainEdit.southSideZPlus.minHeight) + "/" + std::to_string(_writtenTerrainEdit.southSideZPlus.maxHeight)
+			//		+ " E=" + std::to_string(_writtenTerrainEdit.eastSideXPlus.minHeight) + "/" + std::to_string(_writtenTerrainEdit.eastSideXPlus.maxHeight)
+			//		+ " W=" + std::to_string(_writtenTerrainEdit.westSideXMinus.minHeight) + "/" + std::to_string(_writtenTerrainEdit.westSideXMinus.maxHeight);
+			//	pos.TRACK_QUADRANT_FOR_DEBUG(std::string("Updated quadrant server Cache - ") + s, writtenMeshId);
+			//}
+			//// DEBUG
+		}
+
+		//// DEBUG
+		//if (pos.isQuadrantTrackedForDebug())
+		//{
+		//	size_t vectSize = TheWorld_Utils::deserializeFromByteStream<size_t>((BYTE*)movingStreamBuffer, size);
+		//	movingStreamBuffer += size;
+
+		//	if (vectSize > 0)
+		//	{
+		//		float minAltitude = TheWorld_Utils::deserializeFromByteStream<float>((BYTE*)movingStreamBuffer, size);
+		//		movingStreamBuffer += size;
+
+		//		float maxAltitude = TheWorld_Utils::deserializeFromByteStream<float>((BYTE*)movingStreamBuffer, size);
+		//		movingStreamBuffer += size;
+
+		//		size_t float16HeightMapSize = vectSize * sizeof(uint16_t);
+		//		if (BUFFER_FORMAT_VERSION_1)
+		//		{
+		//			float16HeightMapSize = TheWorld_Utils::deserializeFromByteStream<size_t>((BYTE*)movingStreamBuffer, size);
+		//			movingStreamBuffer += size;
+		//			my_assert(float16HeightMapSize == vectSize * sizeof(uint16_t));
+		//		}
+		//		TheWorld_Utils::MemoryBuffer float16HeigthsBuffer;
+		//		float16HeigthsBuffer.set((BYTE*)movingStreamBuffer, float16HeightMapSize);
+		//		movingStreamBuffer += float16HeightMapSize;
+
+		//		bool b = TheWorld_Utils::MeshCacheBuffer::debugCheckMinMaxHeight(pos, &_writtenTerrainEdit, "writeBufferToDiskCache",  & writtenMeshId, &float16HeigthsBuffer, nullptr);
+		//	}
+		//}
+		//// DEBUG
+
+
+		if (writtenTerrainEdit != nullptr)
+		{
+			*writtenTerrainEdit = _writtenTerrainEdit;
 		}
 				
 		TheWorld_Utils::serializeToByteStream<size_t>(bufferSize, shortBuffer, bufferSize_size);
@@ -3965,231 +4073,231 @@ namespace TheWorld_Utils
 		}
 	}
 		
-	void MeshCacheBuffer::applyWorldModifier(int level, size_t numVerticesPerSize, float gridStepInWU, float lowerXGridVertex, float lowerZGridVertex, TerrainEdit* terrainEdit, std::vector<float>& vectGridHeights, WorldModifier& wm)
-	{
-		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer applyWorldModifier 1 ") + __FUNCTION__, "ALL");
+	//void MeshCacheBuffer::applyWorldModifier(int level, size_t numVerticesPerSize, float gridStepInWU, float lowerXGridVertex, float lowerZGridVertex, TerrainEdit* terrainEdit, std::vector<float>& vectGridHeights, WorldModifier& wm)
+	//{
+	//	TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer applyWorldModifier 1 ") + __FUNCTION__, "ALL");
 
-		if (level != wm.getPos().getLevel())
-			return;
+	//	if (level != wm.getPos().getLevel())
+	//		return;
 
-		float sizeInWU = (numVerticesPerSize - 1) * gridStepInWU;
+	//	float sizeInWU = (numVerticesPerSize - 1) * gridStepInWU;
 
-		float AOE = wm.getAOE();
-		float wmX = wm.getPos().getPosX();
-		float wmZ = wm.getPos().getPosZ();
-		float wmMin = wm.getMin();
-		float wmMax = wm.getMax();
-		enum class TheWorld_Utils::WMType wmType = wm.getPos().getType();
-		enum class TheWorld_Utils::WMFunctionType wmFunctionType = wm.getFunctionType();
-		enum class TheWorld_Utils::WMOrder wmOrder = wm.getOrder();
-		float wmMaxExtension = wmMax - wmMin;
-		float wmStrength = wmMax - wmMin;
+	//	float AOE = wm.getAOE();
+	//	float wmX = wm.getPos().getPosX();
+	//	float wmZ = wm.getPos().getPosZ();
+	//	float wmMin = wm.getMin();
+	//	float wmMax = wm.getMax();
+	//	enum class TheWorld_Utils::WMType wmType = wm.getPos().getType();
+	//	enum class TheWorld_Utils::WMFunctionType wmFunctionType = wm.getFunctionType();
+	//	enum class TheWorld_Utils::WMOrder wmOrder = wm.getOrder();
+	//	float wmMaxExtension = wmMax - wmMin;
+	//	float wmStrength = wmMax - wmMin;
 
-		if (wmType == TheWorld_Utils::WMType::none)
-			return;
+	//	if (wmType == TheWorld_Utils::WMType::none)
+	//		return;
 
-		if (AOE > 0)
-		{
-			float d1 = TheWorld_Utils::Utils::getDistance(wmX, wmZ, lowerXGridVertex, lowerZGridVertex);
-			float d2 = TheWorld_Utils::Utils::getDistance(wmX, wmZ, lowerXGridVertex + sizeInWU, lowerZGridVertex);
-			float d3 = TheWorld_Utils::Utils::getDistance(wmX, wmZ, lowerXGridVertex, lowerZGridVertex + sizeInWU);
-			float d4 = TheWorld_Utils::Utils::getDistance(wmX, wmZ, lowerXGridVertex + sizeInWU, lowerZGridVertex + sizeInWU);
+	//	if (AOE > 0)
+	//	{
+	//		float d1 = TheWorld_Utils::Utils::getDistance(wmX, wmZ, lowerXGridVertex, lowerZGridVertex);
+	//		float d2 = TheWorld_Utils::Utils::getDistance(wmX, wmZ, lowerXGridVertex + sizeInWU, lowerZGridVertex);
+	//		float d3 = TheWorld_Utils::Utils::getDistance(wmX, wmZ, lowerXGridVertex, lowerZGridVertex + sizeInWU);
+	//		float d4 = TheWorld_Utils::Utils::getDistance(wmX, wmZ, lowerXGridVertex + sizeInWU, lowerZGridVertex + sizeInWU);
 
-			if (d1 > AOE && d2 > AOE && d3 > AOE && d4 > AOE)
-				return;
-		}
+	//		if (d1 > AOE && d2 > AOE && d3 > AOE && d4 > AOE)
+	//			return;
+	//	}
 
-		terrainEdit->eastSideXPlus.minHeight = FLT_MAX;
-		terrainEdit->eastSideXPlus.maxHeight = -FLT_MAX;
+	//	terrainEdit->eastSideXPlus.minHeight = FLT_MAX;
+	//	terrainEdit->eastSideXPlus.maxHeight = -FLT_MAX;
 
-		terrainEdit->westSideXMinus.minHeight = FLT_MAX;
-		terrainEdit->westSideXMinus.maxHeight = -FLT_MAX;
+	//	terrainEdit->westSideXMinus.minHeight = FLT_MAX;
+	//	terrainEdit->westSideXMinus.maxHeight = -FLT_MAX;
 
-		terrainEdit->southSideZPlus.minHeight = FLT_MAX;
-		terrainEdit->southSideZPlus.maxHeight = -FLT_MAX;
+	//	terrainEdit->southSideZPlus.minHeight = FLT_MAX;
+	//	terrainEdit->southSideZPlus.maxHeight = -FLT_MAX;
 
-		terrainEdit->northSideZMinus.minHeight = FLT_MAX;
-		terrainEdit->northSideZMinus.maxHeight = -FLT_MAX;
+	//	terrainEdit->northSideZMinus.minHeight = FLT_MAX;
+	//	terrainEdit->northSideZMinus.maxHeight = -FLT_MAX;
 
-		size_t maxIndex = numVerticesPerSize - 1;
+	//	size_t maxIndex = numVerticesPerSize - 1;
 
-		size_t idx = -1;
-		for (int z = 0; z < numVerticesPerSize; z++)
-			for (int x = 0; x < numVerticesPerSize; x++)
-			{
-				idx++;
+	//	size_t idx = -1;
+	//	for (int z = 0; z < numVerticesPerSize; z++)
+	//		for (int x = 0; x < numVerticesPerSize; x++)
+	//		{
+	//			idx++;
 
-				if (x == maxIndex && z == 0)
-				{
-					assert(x == maxIndex && z == 0);
-				}
-				if (x == 0 && z == maxIndex)
-				{
-					assert(x == 0 && z == maxIndex);
-				}
-				if (x == maxIndex && z == maxIndex)
-				{
-					assert(x == maxIndex && z == maxIndex);
-				}
+	//			if (x == maxIndex && z == 0)
+	//			{
+	//				assert(x == maxIndex && z == 0);
+	//			}
+	//			if (x == 0 && z == maxIndex)
+	//			{
+	//				assert(x == 0 && z == maxIndex);
+	//			}
+	//			if (x == maxIndex && z == maxIndex)
+	//			{
+	//				assert(x == maxIndex && z == maxIndex);
+	//			}
 
-				float dist = TheWorld_Utils::Utils::getDistance(wmX, wmZ, (float)x * gridStepInWU + lowerXGridVertex, (float)z * gridStepInWU + lowerZGridVertex);
+	//			float dist = TheWorld_Utils::Utils::getDistance(wmX, wmZ, (float)x * gridStepInWU + lowerXGridVertex, (float)z * gridStepInWU + lowerZGridVertex);
 
-				if (dist > AOE)
-				{
-					if (idx == 0)
-					{
-						terrainEdit->minHeight = terrainEdit->maxHeight = vectGridHeights[idx];
-					}
-					else
-					{
-						if (vectGridHeights[idx] < terrainEdit->minHeight)
-							terrainEdit->minHeight = vectGridHeights[idx];
-						if (vectGridHeights[idx] > terrainEdit->maxHeight)
-							terrainEdit->maxHeight = vectGridHeights[idx];
-					}
-					
-					if (x == 0)
-					{
-						if (vectGridHeights[idx] < terrainEdit->westSideXMinus.minHeight)
-							terrainEdit->westSideXMinus.minHeight = vectGridHeights[idx];
-						if (vectGridHeights[idx] > terrainEdit->westSideXMinus.maxHeight)
-							terrainEdit->westSideXMinus.maxHeight = vectGridHeights[idx];
-					}
+	//			if (dist > AOE)
+	//			{
+	//				if (idx == 0)
+	//				{
+	//					terrainEdit->minHeight = terrainEdit->maxHeight = vectGridHeights[idx];
+	//				}
+	//				else
+	//				{
+	//					if (vectGridHeights[idx] < terrainEdit->minHeight)
+	//						terrainEdit->minHeight = vectGridHeights[idx];
+	//					if (vectGridHeights[idx] > terrainEdit->maxHeight)
+	//						terrainEdit->maxHeight = vectGridHeights[idx];
+	//				}
+	//				
+	//				if (x == 0)
+	//				{
+	//					if (vectGridHeights[idx] < terrainEdit->westSideXMinus.minHeight)
+	//						terrainEdit->westSideXMinus.minHeight = vectGridHeights[idx];
+	//					if (vectGridHeights[idx] > terrainEdit->westSideXMinus.maxHeight)
+	//						terrainEdit->westSideXMinus.maxHeight = vectGridHeights[idx];
+	//				}
 
-					if (z == 0)
-					{
-						if (vectGridHeights[idx] < terrainEdit->northSideZMinus.minHeight)
-							terrainEdit->northSideZMinus.minHeight = vectGridHeights[idx];
-						if (vectGridHeights[idx] > terrainEdit->northSideZMinus.maxHeight)
-							terrainEdit->northSideZMinus.maxHeight = vectGridHeights[idx];
-					}
+	//				if (z == 0)
+	//				{
+	//					if (vectGridHeights[idx] < terrainEdit->northSideZMinus.minHeight)
+	//						terrainEdit->northSideZMinus.minHeight = vectGridHeights[idx];
+	//					if (vectGridHeights[idx] > terrainEdit->northSideZMinus.maxHeight)
+	//						terrainEdit->northSideZMinus.maxHeight = vectGridHeights[idx];
+	//				}
 
-					if (x == maxIndex)
-					{
-						if (vectGridHeights[idx] < terrainEdit->eastSideXPlus.minHeight)
-							terrainEdit->eastSideXPlus.minHeight = vectGridHeights[idx];
-						if (vectGridHeights[idx] > terrainEdit->eastSideXPlus.maxHeight)
-							terrainEdit->eastSideXPlus.maxHeight = vectGridHeights[idx];
-					}
+	//				if (x == maxIndex)
+	//				{
+	//					if (vectGridHeights[idx] < terrainEdit->eastSideXPlus.minHeight)
+	//						terrainEdit->eastSideXPlus.minHeight = vectGridHeights[idx];
+	//					if (vectGridHeights[idx] > terrainEdit->eastSideXPlus.maxHeight)
+	//						terrainEdit->eastSideXPlus.maxHeight = vectGridHeights[idx];
+	//				}
 
-					if (z == maxIndex)
-					{
-						if (vectGridHeights[idx] < terrainEdit->southSideZPlus.minHeight)
-							terrainEdit->southSideZPlus.minHeight = vectGridHeights[idx];
-						if (vectGridHeights[idx] > terrainEdit->southSideZPlus.maxHeight)
-							terrainEdit->southSideZPlus.maxHeight = vectGridHeights[idx];
-					}
+	//				if (z == maxIndex)
+	//				{
+	//					if (vectGridHeights[idx] < terrainEdit->southSideZPlus.minHeight)
+	//						terrainEdit->southSideZPlus.minHeight = vectGridHeights[idx];
+	//					if (vectGridHeights[idx] > terrainEdit->southSideZPlus.maxHeight)
+	//						terrainEdit->southSideZPlus.maxHeight = vectGridHeights[idx];
+	//				}
 
-					continue;
-				}
+	//				continue;
+	//			}
 
-				switch (wmType)
-				{
-				case TheWorld_Utils::WMType::elevator:
-				{
-					// TheWorld_Utils::WMType::elevator
-					switch (wmFunctionType)
-					{
-						// TheWorld_Utils::WMType::elevator - TheWorld_Utils::WMFunctionType::ConsiderMinMax
-					case TheWorld_Utils::WMFunctionType::ConsiderMinMax:
-					{
-						switch (wmOrder)
-						{
-							// TheWorld_Utils::WMType::elevator - TheWorld_Utils::WMFunctionType::ConsiderMinMax - TheWorld_Utils::WMOrder::MaxEffectOnWM
-						case TheWorld_Utils::WMOrder::MaxEffectOnWM:
-						{
-							float coeff = (AOE - dist) / AOE;	// 0 on perimeter, 1 on WM
-							float addition = wmMaxExtension * coeff + wmMin;
-							vectGridHeights[idx] += addition;
-						}
-						break;
-						// TheWorld_Utils::WMType::elevator - TheWorld_Utils::WMFunctionType::ConsiderMinMax - TheWorld_Utils::WMOrder::MinEffectOnWM
-						case TheWorld_Utils::WMOrder::MinEffectOnWM:
-						{
-							float coeff = dist / AOE;			// 1 on perimeter, 0 on WM
-							float addition = wmMaxExtension * coeff + wmMin;
-							vectGridHeights[idx] += addition;
-						}
-						break;
-						}
-					}
-					break;
+	//			switch (wmType)
+	//			{
+	//			case TheWorld_Utils::WMType::elevator:
+	//			{
+	//				// TheWorld_Utils::WMType::elevator
+	//				switch (wmFunctionType)
+	//				{
+	//					// TheWorld_Utils::WMType::elevator - TheWorld_Utils::WMFunctionType::ConsiderMinMax
+	//				case TheWorld_Utils::WMFunctionType::ConsiderMinMax:
+	//				{
+	//					switch (wmOrder)
+	//					{
+	//						// TheWorld_Utils::WMType::elevator - TheWorld_Utils::WMFunctionType::ConsiderMinMax - TheWorld_Utils::WMOrder::MaxEffectOnWM
+	//					case TheWorld_Utils::WMOrder::MaxEffectOnWM:
+	//					{
+	//						float coeff = (AOE - dist) / AOE;	// 0 on perimeter, 1 on WM
+	//						float addition = wmMaxExtension * coeff + wmMin;
+	//						vectGridHeights[idx] += addition;
+	//					}
+	//					break;
+	//					// TheWorld_Utils::WMType::elevator - TheWorld_Utils::WMFunctionType::ConsiderMinMax - TheWorld_Utils::WMOrder::MinEffectOnWM
+	//					case TheWorld_Utils::WMOrder::MinEffectOnWM:
+	//					{
+	//						float coeff = dist / AOE;			// 1 on perimeter, 0 on WM
+	//						float addition = wmMaxExtension * coeff + wmMin;
+	//						vectGridHeights[idx] += addition;
+	//					}
+	//					break;
+	//					}
+	//				}
+	//				break;
 
-					// TheWorld_Utils::WMType::elevator - TheWorld_Utils::WMFunctionType::ConsiderStrength
-					case TheWorld_Utils::WMFunctionType::ConsiderStrength:
-					{
-						switch (wmOrder)
-						{
-							// TheWorld_Utils::WMType::elevator - TheWorld_Utils::WMFunctionType::ConsiderStrength - TheWorld_Utils::WMOrder::MaxEffectOnWM
-						case TheWorld_Utils::WMOrder::MaxEffectOnWM:
-						{
-							float coeff = (AOE - dist) / AOE;	// 0 on perimeter, 1 on WM
-							float addition = wmStrength * coeff;
-							vectGridHeights[idx] += addition;
-						}
-						break;
+	//				// TheWorld_Utils::WMType::elevator - TheWorld_Utils::WMFunctionType::ConsiderStrength
+	//				case TheWorld_Utils::WMFunctionType::ConsiderStrength:
+	//				{
+	//					switch (wmOrder)
+	//					{
+	//						// TheWorld_Utils::WMType::elevator - TheWorld_Utils::WMFunctionType::ConsiderStrength - TheWorld_Utils::WMOrder::MaxEffectOnWM
+	//					case TheWorld_Utils::WMOrder::MaxEffectOnWM:
+	//					{
+	//						float coeff = (AOE - dist) / AOE;	// 0 on perimeter, 1 on WM
+	//						float addition = wmStrength * coeff;
+	//						vectGridHeights[idx] += addition;
+	//					}
+	//					break;
 
-						// TheWorld_Utils::WMType::elevator - TheWorld_Utils::WMFunctionType::ConsiderStrength - TheWorld_Utils::WMOrder::MinEffectOnWM
-						case TheWorld_Utils::WMOrder::MinEffectOnWM:
-						{
-							float coeff = dist / AOE;			// 1 on perimeter, 0 on WM
-							float addition = wmMaxExtension * coeff;
-							vectGridHeights[idx] += addition;
-						}
-						break;
-						}
-					}
-					break;
-					}
-				}
-				break;
-				}
+	//					// TheWorld_Utils::WMType::elevator - TheWorld_Utils::WMFunctionType::ConsiderStrength - TheWorld_Utils::WMOrder::MinEffectOnWM
+	//					case TheWorld_Utils::WMOrder::MinEffectOnWM:
+	//					{
+	//						float coeff = dist / AOE;			// 1 on perimeter, 0 on WM
+	//						float addition = wmMaxExtension * coeff;
+	//						vectGridHeights[idx] += addition;
+	//					}
+	//					break;
+	//					}
+	//				}
+	//				break;
+	//				}
+	//			}
+	//			break;
+	//			}
 
-				if (idx == 0)
-				{
-					terrainEdit->minHeight = terrainEdit->maxHeight = vectGridHeights[idx];
-				}
-				else
-				{
-					if (vectGridHeights[idx] < terrainEdit->minHeight)
-						terrainEdit->minHeight = vectGridHeights[idx];
-					if (vectGridHeights[idx] > terrainEdit->maxHeight)
-						terrainEdit->maxHeight = vectGridHeights[idx];
-				}
+	//			if (idx == 0)
+	//			{
+	//				terrainEdit->minHeight = terrainEdit->maxHeight = vectGridHeights[idx];
+	//			}
+	//			else
+	//			{
+	//				if (vectGridHeights[idx] < terrainEdit->minHeight)
+	//					terrainEdit->minHeight = vectGridHeights[idx];
+	//				if (vectGridHeights[idx] > terrainEdit->maxHeight)
+	//					terrainEdit->maxHeight = vectGridHeights[idx];
+	//			}
 
-				if (x == 0)
-				{
-					if (vectGridHeights[idx] < terrainEdit->westSideXMinus.minHeight)
-						terrainEdit->westSideXMinus.minHeight = vectGridHeights[idx];
-					if (vectGridHeights[idx] > terrainEdit->westSideXMinus.maxHeight)
-						terrainEdit->westSideXMinus.maxHeight = vectGridHeights[idx];
-				}
+	//			if (x == 0)
+	//			{
+	//				if (vectGridHeights[idx] < terrainEdit->westSideXMinus.minHeight)
+	//					terrainEdit->westSideXMinus.minHeight = vectGridHeights[idx];
+	//				if (vectGridHeights[idx] > terrainEdit->westSideXMinus.maxHeight)
+	//					terrainEdit->westSideXMinus.maxHeight = vectGridHeights[idx];
+	//			}
 
-				if (z == 0)
-				{
-					if (vectGridHeights[idx] < terrainEdit->northSideZMinus.minHeight)
-						terrainEdit->northSideZMinus.minHeight = vectGridHeights[idx];
-					if (vectGridHeights[idx] > terrainEdit->northSideZMinus.maxHeight)
-						terrainEdit->northSideZMinus.maxHeight = vectGridHeights[idx];
-				}
+	//			if (z == 0)
+	//			{
+	//				if (vectGridHeights[idx] < terrainEdit->northSideZMinus.minHeight)
+	//					terrainEdit->northSideZMinus.minHeight = vectGridHeights[idx];
+	//				if (vectGridHeights[idx] > terrainEdit->northSideZMinus.maxHeight)
+	//					terrainEdit->northSideZMinus.maxHeight = vectGridHeights[idx];
+	//			}
 
-				if (x == maxIndex)
-				{
-					if (vectGridHeights[idx] < terrainEdit->eastSideXPlus.minHeight)
-						terrainEdit->eastSideXPlus.minHeight = vectGridHeights[idx];
-					if (vectGridHeights[idx] > terrainEdit->eastSideXPlus.maxHeight)
-						terrainEdit->eastSideXPlus.maxHeight = vectGridHeights[idx];
-				}
+	//			if (x == maxIndex)
+	//			{
+	//				if (vectGridHeights[idx] < terrainEdit->eastSideXPlus.minHeight)
+	//					terrainEdit->eastSideXPlus.minHeight = vectGridHeights[idx];
+	//				if (vectGridHeights[idx] > terrainEdit->eastSideXPlus.maxHeight)
+	//					terrainEdit->eastSideXPlus.maxHeight = vectGridHeights[idx];
+	//			}
 
-				if (z == maxIndex)
-				{
-					if (vectGridHeights[idx] < terrainEdit->southSideZPlus.minHeight)
-						terrainEdit->southSideZPlus.minHeight = vectGridHeights[idx];
-					if (vectGridHeights[idx] > terrainEdit->southSideZPlus.maxHeight)
-						terrainEdit->southSideZPlus.maxHeight = vectGridHeights[idx];
-				}
-			}
-	}
+	//			if (z == maxIndex)
+	//			{
+	//				if (vectGridHeights[idx] < terrainEdit->southSideZPlus.minHeight)
+	//					terrainEdit->southSideZPlus.minHeight = vectGridHeights[idx];
+	//				if (vectGridHeights[idx] > terrainEdit->southSideZPlus.maxHeight)
+	//					terrainEdit->southSideZPlus.maxHeight = vectGridHeights[idx];
+	//			}
+	//		}
+	//}
 		
 	void MeshCacheBuffer::setBufferFromCacheQuadrantData(size_t numVerticesPerSize, CacheQuadrantData& cacheQuadrantData, std::string& buffer)
 	{
@@ -4291,7 +4399,7 @@ namespace TheWorld_Utils
 		size_t namedDataBufferSerializedSize = cacheQuadrantData.namedDataBuffer == nullptr ? 0 : cacheQuadrantData.namedDataBuffer->serializedSize();
 
 		// Forcing not to save 32 heights and normals in the buffer to save memory, cache disk space and bandwidth (they must be generated on the fly by heights 16 and normals directly by the shader)
-		float32HeightmapSize = 0;	// for now we don't want to use float32 heights in cache quadrant buffers, we will generate them on the fly when needed (we want to save memory and bandwidth)
+		float32HeightmapSize = 0;	// for now we don't want to use float32 heights in cache quadrant buffers, we will generate them on the fly when needed - refreshing quadrant data from buffer during load from disk or from server time (we want to save memory and bandwidth)
 		normalmapSize = 0;			// for now we don't want to use normals in cache quadrant buffers, we will generate them on the fly when needed (we want to save memory and bandwidth)
 		colormapSize = 0;			// colormaps are not used atm
 
@@ -4774,19 +4882,290 @@ namespace TheWorld_Utils
 		m_meshId = meshId;
 	}
 
-	bool MeshCacheBuffer::calcMinMaxHeights(TheWorld_Utils::QuadrantPos pos, bool renewMeshIdOnUpdate, CacheQuadrantData& data)
+	bool MeshCacheBuffer::debugCheckMinMaxHeight(TheWorld_Utils::QuadrantPos& pos, TheWorld_Utils::TerrainEdit* terrainEdit,
+		//float& minHeight, float& maxHeight, float& northSideMin, float& northSideMax, float& southSideMin, float& southSideMax, float& westSideMin, float& westSideMax, float& eastSideMin, float& eastSideMax, 
+		std::string msgHeader, std::string* meshId, TheWorld_Utils::MemoryBuffer* heights16Buffer, TheWorld_Utils::MemoryBuffer* heights32Buffer)
 	{
-		// DEBUG
-		if (pos.isQuadrantTrackedForDebug())
+		std::string _msg;
+
+		std::string _meshId = meshId == nullptr ? "" : *meshId;
+		
+		//if (not pos.isQuadrantTrackedForDebug())
+		//	return true;
+		
+		bool match = true;
+
+		size_t numVerticesPerSize = (size_t)pos.getNumVerticesPerSize();
+
+		if (match)
 		{
-			bool debug = true;
+			if (heights32Buffer == nullptr and heights16Buffer == nullptr)
+			{
+				_msg += "checkMinMaxHeight: both heights32Buffer and heights16Buffer are null";
+				match = false;
+			}
+		}
+
+		if (match)
+		{
+			if (heights32Buffer != nullptr)
+			{
+				if (match)
+				{
+					if (heights32Buffer->size() == 0)
+					{
+						_msg += "checkMinMaxHeight: heights32Buffer is empty";
+						match = false;
+					}
+				}
+				if (match)
+				{
+					if (heights32Buffer->size() != (numVerticesPerSize * numVerticesPerSize * sizeof(float)))
+					{
+						_msg += "checkMinMaxHeight: heights32Buffer has incorrect size";
+						match = false;
+					}
+				}
+			}
+		}
+
+		if (match)
+		{
+			if (heights16Buffer != nullptr)
+			{
+				if (match)
+				{
+					if (heights16Buffer->size() == 0)
+					{
+						_msg += "checkMinMaxHeight: heights16Buffer is empty";
+						match = false;
+					}
+				}
+				if (match)
+				{
+					if (heights16Buffer->size() != (numVerticesPerSize * numVerticesPerSize * sizeof(uint16_t)))
+					{
+						_msg += "checkMinMaxHeight: heights16Buffer has incorrect size";
+						match = false;
+					}
+				}
+			}
+		}
+
+		if (match)
+		{
+			size_t maxIndex = numVerticesPerSize - 1;
+
+			float minHeight = FLT_MAX, maxHeight = -FLT_MAX;
+			float northSideMin = FLT_MAX, northSideMax = -FLT_MAX;
+			float southSideMin = FLT_MAX, southSideMax = -FLT_MAX;
+			float westSideMin = FLT_MAX, westSideMax = -FLT_MAX;
+			float eastSideMin = FLT_MAX, eastSideMax = -FLT_MAX;
+
+			for (size_t z = 0; z < numVerticesPerSize; z++)
+			{
+				for (size_t x = 0; x < numVerticesPerSize; x++)
+				{
+					float h32 = FLT_MAX, h16 = FLT_MAX, h = FLT_MAX;
+					if (heights32Buffer != nullptr)
+						h32 = heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize);
+					if (heights16Buffer != nullptr)
+						h16 = TheWorld_Utils::MeshCacheBuffer::halfToFloat_1(heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, z, numVerticesPerSize));
+					if (h32 != FLT_MAX and h16 != FLT_MAX)
+					{
+						if (h32 != h16)
+						{
+							_msg += "h32 not equal h16";
+							match = false;
+							break;
+						}
+						h = h32;
+					}
+					else if (h32 != FLT_MAX)
+						h = h32;
+					else if (h16 != FLT_MAX)
+						h = h16;
+					else
+					{
+						_msg += "both h32 and h16 are FLT_MAX";
+						match = false;
+						break;
+					}
+
+					if (h < minHeight)
+						minHeight = h;
+					if (h > maxHeight)
+						maxHeight = h;
+
+					if (x == 0)
+					{
+						if (h < westSideMin)
+							westSideMin = h;
+						if (h > westSideMax)
+							westSideMax = h;
+					}
+
+					if (z == 0)
+					{
+						if (h < northSideMin)
+							northSideMin = h;
+						if (h > northSideMax)
+							northSideMax = h;
+					}
+
+					if (x == maxIndex)
+					{
+						if (h < eastSideMin)
+							eastSideMin = h;
+						if (h > eastSideMax)
+							eastSideMax = h;
+					}
+
+					if (z == maxIndex)
+					{
+						if (h < southSideMin)
+							southSideMin = h;
+						if (h > southSideMax)
+							southSideMax = h;
+					}
+				}
+
+				if (not match)
+					break;
+			}
+
+			if (match)
+			{
+				if (terrainEdit->minHeight != minHeight)
+				{
+					_msg += (std::string("minHeight terrainEdit ") + std::to_string(terrainEdit->minHeight) + " != recalc " + std::to_string(minHeight) + " ");
+					match = false;
+				}
+				if (terrainEdit->maxHeight != maxHeight)
+				{
+					_msg += (std::string("maxHeight terrainEdit ") + std::to_string(terrainEdit->maxHeight) + " != recalc " + std::to_string(maxHeight) + " ");
+					match = false;
+				}
+				if (terrainEdit->northSideZMinus.minHeight != northSideMin or terrainEdit->northSideZMinus.maxHeight != northSideMax)
+				{
+					_msg += " - N ";
+					if (terrainEdit->northSideZMinus.minHeight != northSideMin)
+					{
+						_msg += (std::string("minHeight terrainEdit ") + std::to_string(terrainEdit->northSideZMinus.minHeight) + " != recalc " + std::to_string(northSideMin) + " ");
+						match = false;
+					}
+					if (terrainEdit->northSideZMinus.maxHeight != northSideMax)
+					{
+						_msg += (std::string("maxHeight terrainEdit ") + std::to_string(terrainEdit->northSideZMinus.maxHeight) + " != recalc " + std::to_string(northSideMax) + " ");
+						match = false;
+					}
+				}
+				if (terrainEdit->southSideZPlus.minHeight != southSideMin or terrainEdit->southSideZPlus.maxHeight != southSideMax)
+				{
+					_msg += " - S ";
+					if (terrainEdit->southSideZPlus.minHeight != southSideMin)
+					{
+						_msg += (std::string("minHeight terrainEdit ") + std::to_string(terrainEdit->southSideZPlus.minHeight) + " != recalc " + std::to_string(southSideMin) + " ");
+						match = false;
+					}
+					if (terrainEdit->southSideZPlus.maxHeight != southSideMax)
+					{
+						_msg += (std::string("maxHeight terrainEdit ") + std::to_string(terrainEdit->southSideZPlus.maxHeight) + " != recalc " + std::to_string(southSideMax) + " ");
+						match = false;
+					}
+				}
+				if (terrainEdit->westSideXMinus.minHeight != westSideMin or terrainEdit->westSideXMinus.maxHeight != westSideMax)
+				{
+					_msg += " - W ";
+					if (terrainEdit->westSideXMinus.minHeight != westSideMin)
+					{
+						_msg += (std::string("minHeight terrainEdit ") + std::to_string(terrainEdit->westSideXMinus.minHeight) + " != recalc " + std::to_string(westSideMin) + " ");
+						match = false;
+					}
+					if (terrainEdit->westSideXMinus.maxHeight != westSideMax)
+					{
+						_msg += (std::string("maxHeight terrainEdit ") + std::to_string(terrainEdit->westSideXMinus.maxHeight) + " != recalc " + std::to_string(westSideMax) + " ");
+						match = false;
+					}
+				}
+				if (terrainEdit->eastSideXPlus.minHeight != eastSideMin or terrainEdit->eastSideXPlus.maxHeight != eastSideMax)
+				{
+					_msg += " - E ";
+					if (terrainEdit->eastSideXPlus.minHeight != eastSideMin)
+					{
+						_msg += (std::string("minHeight terrainEdit ") + std::to_string(terrainEdit->eastSideXPlus.minHeight) + " != recalc " + std::to_string(eastSideMin) + " ");
+						match = false;
+					}
+					if (terrainEdit->eastSideXPlus.maxHeight != eastSideMax)
+					{
+						_msg += (std::string("maxHeight terrainEdit ") + std::to_string(terrainEdit->eastSideXPlus.maxHeight) + " != recalc " + std::to_string(eastSideMax) + " ");
+						match = false;
+					}
+				}
+			}
+		}
+
+		// DEBUG
+		if (match)
+		{
+			pos.TRACK_QUADRANT_FOR_DEBUG(msgHeader + " - MinMax MATCHING", _meshId);
+		}
+		else
+		{
+			std::string s = "MinMax " + std::to_string(terrainEdit->minHeight) + "/" + std::to_string(terrainEdit->maxHeight)
+				+ " N=" + std::to_string(terrainEdit->northSideZMinus.minHeight) + "/" + std::to_string(terrainEdit->northSideZMinus.maxHeight)
+				+ " S=" + std::to_string(terrainEdit->southSideZPlus.minHeight) + "/" + std::to_string(terrainEdit->southSideZPlus.maxHeight)
+				+ " E=" + std::to_string(terrainEdit->eastSideXPlus.minHeight) + "/" + std::to_string(terrainEdit->eastSideXPlus.maxHeight)
+				+ " W=" + std::to_string(terrainEdit->westSideXMinus.minHeight) + "/" + std::to_string(terrainEdit->westSideXMinus.maxHeight);
+			pos.TRACK_QUADRANT_FOR_DEBUG(s, _meshId);
+			pos.TRACK_QUADRANT_FOR_DEBUG(msgHeader + " - MinMax MISMATCH - " + _msg, _meshId);
 		}
 		// DEBUG
 
+		if (match)
+			return match;
+		else
+			return match;
+	}
+
+	bool MeshCacheBuffer::calcMinMaxHeights(TheWorld_Utils::QuadrantPos pos, bool renewMeshIdOnUpdate, CacheQuadrantData& data)
+	{
 		bool updated = false;
 
-		if (data.heights32Buffer == nullptr)
-			return updated;
+		size_t numVerticesPerSize = (size_t)pos.getNumVerticesPerSize();
+
+		my_assert(data.heights32Buffer != nullptr and data.heights16Buffer != nullptr);
+		my_assert(data.heights32Buffer->size() == numVerticesPerSize * numVerticesPerSize * sizeof(float));
+		my_assert(data.heights16Buffer->size() == numVerticesPerSize * numVerticesPerSize * sizeof(uint16_t));
+		my_assert(data.terrainEditValues != nullptr and data.terrainEditValues->size() == sizeof(TerrainEdit));
+
+		{
+			size_t numVertices = numVerticesPerSize * numVerticesPerSize;
+
+			size_t heights16BufferSize = numVertices * sizeof(uint16_t);
+			uint16_t* movingHeights16Buffer = (uint16_t*)data.heights16Buffer->ptr();
+
+			size_t heights32BufferSize = numVertices * sizeof(float);
+			float* movingHeights32Buffer = (float*)data.heights32Buffer->ptr();
+			{
+				TheWorld_Utils::GuardProfiler profiler(std::string("generateDetailDataForQuadrants 2 ") + __FUNCTION__, "Move Heights to float16/float32 buffer");
+				for (int z = 0; z < numVerticesPerSize; z++)
+					for (int x = 0; x < numVerticesPerSize; x++)
+					{
+						float altitude = *movingHeights32Buffer;
+						TheWorld_Utils::FLOAT_32 f(altitude);
+						*movingHeights16Buffer = half_from_float(f.u32);
+						f.u32 = half_to_float(*movingHeights16Buffer);
+						*movingHeights32Buffer = f.f32;
+						movingHeights16Buffer++;
+						movingHeights32Buffer++;
+					}
+				PLOG_VERBOSE << "calcMinMaxHeights - " << "Adjusted Heights to float16/float32 buffer to prevent heigth mismatch " << pos.getIdStr() << " " << pos.getName() << " - Elapsed " << profiler.partialDuration() / 1000 << " ms";
+			}
+		}
+		
+		//if (data.heights32Buffer == nullptr or data.heights16Buffer == nullptr)
+		//	return updated;
 
 		TerrainEdit* terrainEdit = (TerrainEdit*)data.terrainEditValues->ptr();
 
@@ -4801,7 +5180,6 @@ namespace TheWorld_Utils
 		float northSideZMinusMinHeight = FLT_MAX;
 		float northSideZMinusMaxHeight = -FLT_MAX;
 
-		size_t numVerticesPerSize = (size_t)pos.getNumVerticesPerSize();
 		size_t maxIndex = numVerticesPerSize - 1;
 
 		for (size_t z = 0; z < numVerticesPerSize; z++)
@@ -4918,12 +5296,14 @@ namespace TheWorld_Utils
 		CacheQuadrantData& southwestData,
 		CacheQuadrantData& southeastData)
 	{
-		// DEBUG
-		if (pos.isQuadrantTrackedForDebug())
-		{
-			bool debug = true;
-		}
-		// DEBUG
+		TheWorld_Utils::QuadrantPos northQuadrantPos = pos.getQuadrantPos(TheWorld_Utils::QuadrantPos::DirectionSlot::NorthZMinus);
+		TheWorld_Utils::QuadrantPos southQuadrantPos = pos.getQuadrantPos(TheWorld_Utils::QuadrantPos::DirectionSlot::SouthZPlus);
+		TheWorld_Utils::QuadrantPos westQuadrantPos = pos.getQuadrantPos(TheWorld_Utils::QuadrantPos::DirectionSlot::WestXMinus);
+		TheWorld_Utils::QuadrantPos eastQuadrantPos = pos.getQuadrantPos(TheWorld_Utils::QuadrantPos::DirectionSlot::EastXPlus);
+		TheWorld_Utils::QuadrantPos northwestQuadrantPos = pos.getQuadrantPos(TheWorld_Utils::QuadrantPos::DirectionSlot::NorthwestZMinusXMinus);
+		TheWorld_Utils::QuadrantPos northeastQuadrantPos = pos.getQuadrantPos(TheWorld_Utils::QuadrantPos::DirectionSlot::NortheastZMinusXPlus);
+		TheWorld_Utils::QuadrantPos southwestQuadrantPos = pos.getQuadrantPos(TheWorld_Utils::QuadrantPos::DirectionSlot::SouthwestZPlusXMinus);
+		TheWorld_Utils::QuadrantPos southeastQuadrantPos = pos.getQuadrantPos(TheWorld_Utils::QuadrantPos::DirectionSlot::SoutheastZPlusXPlus);
 
 		bool updated = false;
 
@@ -4972,7 +5352,6 @@ namespace TheWorld_Utils
 		//	W	D	E
 		//		
 		//	SW	S	SE
-		TheWorld_Utils::QuadrantPos northQuadrantPos = pos.getQuadrantPos(TheWorld_Utils::QuadrantPos::DirectionSlot::NorthZMinus);
 		if (blendQuadrantOnWestSide(northQuadrantPos, lastPhase, northData,
 			emptyData /*N*/, data /*S*/, northwestData /*W*/, northeastData /*E*/, emptyData /*NW*/, emptyData /*NE*/, westData /*SW*/, eastData /*SE*/))
 			updated = true;
@@ -4990,7 +5369,6 @@ namespace TheWorld_Utils
 		//	W	D	E
 		//		
 		//	SW	|S	SE
-		TheWorld_Utils::QuadrantPos southQuadrantPos = pos.getQuadrantPos(TheWorld_Utils::QuadrantPos::DirectionSlot::SouthZPlus);
 		if (blendQuadrantOnWestSide(southQuadrantPos, lastPhase, southData,
 			data /*N*/, emptyData /*S*/, southwestData /*W*/, southeastData /*E*/, westData /*NW*/, eastData /*NE*/, emptyData /*SW*/, emptyData /*SE*/))
 			updated = true;
@@ -5008,7 +5386,6 @@ namespace TheWorld_Utils
 		//	W	D	E
 		//		
 		//	SW	S	SE
-		TheWorld_Utils::QuadrantPos westQuadrantPos = pos.getQuadrantPos(TheWorld_Utils::QuadrantPos::DirectionSlot::WestXMinus);
 		if (blendQuadrantOnNorthSide(westQuadrantPos, lastPhase, westData,
 			northwestData /*N*/, southwestData /*S*/, emptyData /*W*/, data /*E*/, emptyData /*NW*/, northData /*NE*/, emptyData /*SW*/, southData /*SE*/))
 			updated = true;
@@ -5026,7 +5403,6 @@ namespace TheWorld_Utils
 		//	W	D	E
 		//		
 		//	SW	S	SE
-		TheWorld_Utils::QuadrantPos eastQuadrantPos = pos.getQuadrantPos(TheWorld_Utils::QuadrantPos::DirectionSlot::EastXPlus);
 		if (blendQuadrantOnNorthSide(eastQuadrantPos, lastPhase, eastData,
 			northeastData /*N*/, southeastData /*S*/, data /*W*/, emptyData /*E*/, northData /*NW*/, emptyData /*NE*/, southData /*SW*/, emptyData /*SE*/))
 			updated = true;
@@ -5045,79 +5421,109 @@ namespace TheWorld_Utils
 				updated = true;
 		}
 
+		bool minMaxUpdated = false, northSideMinMaxUpdated = false, southSideMinMaxUpdated = false, westSideMinMaxUpdated = false, eastSideMinMaxUpdated = false, 
+			northwestSideMinMaxUpdated = false, northeastSideMinMaxUpdated = false, southwestSideMinMaxUpdated = false, southeastSideMinMaxUpdated = false;
+		
 		if (lastPhase or data.heightsUpdated)
 		{
 			TerrainEdit* terrainEdit = (TerrainEdit*)data.terrainEditValues->ptr();
-			calcMinMaxHeight(numVerticesPerSize, terrainEdit, *data.heights32Buffer);
+			if (calcMinMaxHeight(pos, numVerticesPerSize, terrainEdit, *data.heights32Buffer))
+			{
+				updated = minMaxUpdated = true;
+			}
 		}
 
 		if ((lastPhase or northData.heightsUpdated) and northData.terrainEditValues != nullptr and northData.terrainEditValues->ptr() != nullptr)
 		{
 			TerrainEdit* northTerrainEdit = (TerrainEdit*)northData.terrainEditValues->ptr();
-			calcMinMaxHeight(numVerticesPerSize, northTerrainEdit, *northData.heights32Buffer);
+			if (calcMinMaxHeight(northQuadrantPos, numVerticesPerSize, northTerrainEdit, *northData.heights32Buffer))
+			{
+				updated = northSideMinMaxUpdated = true;
+			}
 		}
 
 		if ((lastPhase or southData.heightsUpdated) and southData.terrainEditValues != nullptr and southData.terrainEditValues->ptr() != nullptr)
 		{
 			TerrainEdit* southTerrainEdit = (TerrainEdit*)southData.terrainEditValues->ptr();
-			calcMinMaxHeight(numVerticesPerSize, southTerrainEdit, *southData.heights32Buffer);
+			if (calcMinMaxHeight(southQuadrantPos,numVerticesPerSize, southTerrainEdit, *southData.heights32Buffer))
+			{
+				updated = southSideMinMaxUpdated = true;
+			}
 		}
 
 		if ((lastPhase or westData.heightsUpdated) and westData.terrainEditValues != nullptr and westData.terrainEditValues->ptr() != nullptr)
 		{
 			TerrainEdit* westTerrainEdit = (TerrainEdit*)westData.terrainEditValues->ptr();
-			calcMinMaxHeight(numVerticesPerSize, westTerrainEdit, *westData.heights32Buffer);
+			if (calcMinMaxHeight(westQuadrantPos, numVerticesPerSize, westTerrainEdit, *westData.heights32Buffer))
+			{
+				updated = westSideMinMaxUpdated = true;
+			}
 		}
 
 		if ((lastPhase or eastData.heightsUpdated) and eastData.terrainEditValues != nullptr and eastData.terrainEditValues->ptr() != nullptr)
 		{
 			TerrainEdit* eastTerrainEdit = (TerrainEdit*)eastData.terrainEditValues->ptr();
-			calcMinMaxHeight(numVerticesPerSize, eastTerrainEdit, *eastData.heights32Buffer);
+			if (calcMinMaxHeight(eastQuadrantPos, numVerticesPerSize, eastTerrainEdit, *eastData.heights32Buffer))
+			{
+				updated = eastSideMinMaxUpdated = true;
+			}
 		}
 
 		if ((lastPhase or northwestData.heightsUpdated) and northwestData.terrainEditValues != nullptr and northwestData.terrainEditValues->ptr() != nullptr)
 		{
 			TerrainEdit* northwestTerrainEdit = (TerrainEdit*)northwestData.terrainEditValues->ptr();
-			calcMinMaxHeight(numVerticesPerSize, northwestTerrainEdit, *northwestData.heights32Buffer);
+			if (calcMinMaxHeight(northwestQuadrantPos, numVerticesPerSize, northwestTerrainEdit, *northwestData.heights32Buffer))
+			{
+				updated = northwestSideMinMaxUpdated = true;
+			}
 		}
 
 		if ((lastPhase or northeastData.heightsUpdated) and northeastData.terrainEditValues != nullptr and northeastData.terrainEditValues->ptr() != nullptr)
 		{
 			TerrainEdit* northeastTerrainEdit = (TerrainEdit*)northeastData.terrainEditValues->ptr();
-			calcMinMaxHeight(numVerticesPerSize, northeastTerrainEdit, *northeastData.heights32Buffer);
+			if (calcMinMaxHeight(northeastQuadrantPos, numVerticesPerSize, northeastTerrainEdit, *northeastData.heights32Buffer))
+			{
+				updated = northeastSideMinMaxUpdated = true;
+			}
 		}
 
 		if ((lastPhase or southwestData.heightsUpdated) and southwestData.terrainEditValues != nullptr and southwestData.terrainEditValues->ptr() != nullptr)
 		{
 			TerrainEdit* southwesthTerrainEdit = (TerrainEdit*)southwestData.terrainEditValues->ptr();
-			calcMinMaxHeight(numVerticesPerSize, southwesthTerrainEdit, *southwestData.heights32Buffer);
+			if (calcMinMaxHeight(southwestQuadrantPos, numVerticesPerSize, southwesthTerrainEdit, *southwestData.heights32Buffer))
+			{
+				updated = southwestSideMinMaxUpdated = true;
+			}
 		}
 
 		if ((lastPhase or southeastData.heightsUpdated) and southeastData.terrainEditValues != nullptr and southeastData.terrainEditValues->ptr() != nullptr)
 		{
 			TerrainEdit* southeastTerrainEdit = (TerrainEdit*)southeastData.terrainEditValues->ptr();
-			calcMinMaxHeight(numVerticesPerSize, southeastTerrainEdit, *southeastData.heights32Buffer);
+			if (calcMinMaxHeight(southeastQuadrantPos, numVerticesPerSize, southeastTerrainEdit, *southeastData.heights32Buffer))
+			{
+				updated = southeastSideMinMaxUpdated = true;
+			}
 		}
 
 		if (renewMeshIdOnUpdate)
 		{
-			if (data.heightsUpdated)
+			if (data.heightsUpdated or minMaxUpdated)
 				data.meshId = TheWorld_Utils::MeshCacheBuffer::generateNewMeshId();	// update meshId as heights updated
-			if (northData.heightsUpdated)
+			if (northData.heightsUpdated or northSideMinMaxUpdated)
 				northData.meshId = TheWorld_Utils::MeshCacheBuffer::generateNewMeshId();
-			if (southData.heightsUpdated)
+			if (southData.heightsUpdated or southSideMinMaxUpdated)
 				southData.meshId = TheWorld_Utils::MeshCacheBuffer::generateNewMeshId();
-			if (westData.heightsUpdated)
+			if (westData.heightsUpdated or westSideMinMaxUpdated)
 				westData.meshId = TheWorld_Utils::MeshCacheBuffer::generateNewMeshId();
-			if (eastData.heightsUpdated)
+			if (eastData.heightsUpdated or eastSideMinMaxUpdated)
 				eastData.meshId = TheWorld_Utils::MeshCacheBuffer::generateNewMeshId();
-			if (northwestData.heightsUpdated)
+			if (northwestData.heightsUpdated or northwestSideMinMaxUpdated)
 				northwestData.meshId = TheWorld_Utils::MeshCacheBuffer::generateNewMeshId();
-			if (northeastData.heightsUpdated)
+			if (northeastData.heightsUpdated or northeastSideMinMaxUpdated)
 				northeastData.meshId = TheWorld_Utils::MeshCacheBuffer::generateNewMeshId();
-			if (southwestData.heightsUpdated)
+			if (southwestData.heightsUpdated or southwestSideMinMaxUpdated)
 				southwestData.meshId = TheWorld_Utils::MeshCacheBuffer::generateNewMeshId();
-			if (southeastData.heightsUpdated)
+			if (southeastData.heightsUpdated or southeastSideMinMaxUpdated)
 				southeastData.meshId = TheWorld_Utils::MeshCacheBuffer::generateNewMeshId();
 		}
 		
@@ -5135,13 +5541,6 @@ namespace TheWorld_Utils
 		CacheQuadrantData& southwestData,
 		CacheQuadrantData& southeastData)
 	{
-		// DEBUG
-		if (pos.isQuadrantTrackedForDebug())
-		{
-			bool debug = true;
-		}
-		// DEBUG
-
 		bool updated = false;
 
 		size_t numVerticesPerSize = pos.getNumVerticesPerSize();
@@ -5731,61 +6130,24 @@ namespace TheWorld_Utils
 			eastData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(0, maxIndex, numVerticesPerSize) = half;
 		}
 
-		// DEBUG
-		if (pos.isQuadrantTrackedForDebug())
-		{
-			float minHeight1 = FLT_MAX, minHeight2 = FLT_MAX;
-			float maxHeight1 = -FLT_MAX, maxHeight2 = -FLT_MAX;
-			for (size_t idx = 0; idx < numVerticesPerSize; idx++)
-			{
-
-				//	NW	N	NE
-				//		-
-				//	W	D	E
-				//			
-				//	SW	S	SE
-				if (northData.heights32Buffer != nullptr && northData.heights32Buffer->size() > 0
-					&& northData.heights16Buffer != nullptr && northData.heights16Buffer->size() > 0)
-				{
-					TheWorld_Utils::MemoryBuffer* data1heights32Buffer = northData.heights32Buffer;
-					size_t border1X = idx;				size_t border1Z = maxIndex;
-					float borderH1 = data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize);
-
-					TheWorld_Utils::MemoryBuffer* data2heights32Buffer = currentData.heights32Buffer;
-					size_t border2X = idx;				size_t border2Z = 0;
-					float borderH2 = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize);
-
-					if (borderH1 > maxHeight1)
-						maxHeight1 = borderH1;
-					if (borderH2 > maxHeight2)
-						maxHeight2 = borderH2;
-					if (borderH1 < minHeight1)
-						minHeight1 = borderH1;
-					if (borderH2 < minHeight2)
-						minHeight2 = borderH2;
-				}
-			}
-			bool debug = true;
-		}
-		// DEBUG
-
-
 		return updated;
 	}
 		
-	void MeshCacheBuffer::calcMinMaxHeight(size_t numVerticesPerSize, TheWorld_Utils::TerrainEdit* terrainEdit, TheWorld_Utils::MemoryBuffer& heights32Buffer)
+	bool MeshCacheBuffer::calcMinMaxHeight(TheWorld_Utils::QuadrantPos& pos, size_t numVerticesPerSize, TheWorld_Utils::TerrainEdit* terrainEdit, TheWorld_Utils::MemoryBuffer& heights32Buffer)
 	{
-		terrainEdit->minHeight = FLT_MAX;
-		terrainEdit->maxHeight = -FLT_MAX;
-		terrainEdit->eastSideXPlus.minHeight = FLT_MAX;
-		terrainEdit->eastSideXPlus.maxHeight = -FLT_MAX;
-		terrainEdit->westSideXMinus.minHeight = FLT_MAX;
-		terrainEdit->westSideXMinus.maxHeight = -FLT_MAX;
-		terrainEdit->southSideZPlus.minHeight = FLT_MAX;
-		terrainEdit->southSideZPlus.maxHeight = -FLT_MAX;
-		terrainEdit->northSideZMinus.minHeight = FLT_MAX;
-		terrainEdit->northSideZMinus.maxHeight = -FLT_MAX;
-
+		bool updated = false;
+		
+		float terrainEditMinHeight = FLT_MAX;
+		float terrainEditMaxHeight = -FLT_MAX;
+		float terrainEditEastSideXPlusMinHeight = FLT_MAX;
+		float terrainEditEastSideXPlusMaxHeight = -FLT_MAX;
+		float terrainEditWestSideXMinusMinHeight = FLT_MAX;
+		float terrainEditWestSideXMinusMaxHeight = -FLT_MAX;
+		float terrainEditSouthSideZPlusMinHeight = FLT_MAX;
+		float terrainEditSouthSideZPlusMaxHeight = -FLT_MAX;
+		float terrainEditNorthSideZMinusMinHeight = FLT_MAX;
+		float terrainEditNorthSideZMinusMaxHeight = -FLT_MAX;
+		
 		size_t maxIndex = numVerticesPerSize - 1;
 
 		for (size_t z = 0; z < numVerticesPerSize; z++)
@@ -5793,46 +6155,99 @@ namespace TheWorld_Utils
 			for (size_t x = 0; x < numVerticesPerSize; x++)
 			{
 				float h = heights32Buffer._deprecated_get_at_ref<float>(x, z, numVerticesPerSize);
-				if (h < terrainEdit->minHeight)
-					terrainEdit->minHeight = h;
-				if (h > terrainEdit->maxHeight)
-					terrainEdit->maxHeight = h;
+				if (h < terrainEditMinHeight)
+					terrainEditMinHeight = h;
+				if (h > terrainEditMaxHeight)
+					terrainEditMaxHeight = h;
 
 				if (x == 0)
 				{
-					if (h < terrainEdit->westSideXMinus.minHeight)
-						terrainEdit->westSideXMinus.minHeight = h;
-					if (h > terrainEdit->westSideXMinus.maxHeight)
-						terrainEdit->westSideXMinus.maxHeight = h;
+					if (h < terrainEditWestSideXMinusMinHeight)
+						terrainEditWestSideXMinusMinHeight = h;
+					if (h > terrainEditWestSideXMinusMaxHeight)
+						terrainEditWestSideXMinusMaxHeight = h;
 				}
 
 				if (z == 0)
 				{
-					if (h < terrainEdit->northSideZMinus.minHeight)
-						terrainEdit->northSideZMinus.minHeight = h;
-					if (h > terrainEdit->northSideZMinus.maxHeight)
-						terrainEdit->northSideZMinus.maxHeight = h;
+					if (h < terrainEditNorthSideZMinusMinHeight)
+						terrainEditNorthSideZMinusMinHeight = h;
+					if (h > terrainEditNorthSideZMinusMaxHeight)
+						terrainEditNorthSideZMinusMaxHeight = h;
 				}
 
 				if (x == maxIndex)
 				{
-					if (h < terrainEdit->eastSideXPlus.minHeight)
-						terrainEdit->eastSideXPlus.minHeight = h;
-					if (h > terrainEdit->eastSideXPlus.maxHeight)
-						terrainEdit->eastSideXPlus.maxHeight = h;
+					if (h < terrainEditEastSideXPlusMinHeight)
+						terrainEditEastSideXPlusMinHeight = h;
+					if (h > terrainEditEastSideXPlusMaxHeight)
+						terrainEditEastSideXPlusMaxHeight = h;
 				}
 
 				if (z == maxIndex)
 				{
-					if (h < terrainEdit->southSideZPlus.minHeight)
-						terrainEdit->southSideZPlus.minHeight = h;
-					if (h > terrainEdit->southSideZPlus.maxHeight)
-						terrainEdit->southSideZPlus.maxHeight = h;
+					if (h < terrainEditSouthSideZPlusMinHeight)
+						terrainEditSouthSideZPlusMinHeight = h;
+					if (h > terrainEditSouthSideZPlusMaxHeight)
+						terrainEditSouthSideZPlusMaxHeight = h;
 				}
 			}
 		}
-	}
 
+		if (terrainEdit->minHeight != terrainEditMinHeight)
+		{
+			terrainEdit->minHeight = terrainEditMinHeight;
+			updated = true;
+		}
+		if (terrainEdit->maxHeight != terrainEditMaxHeight)
+		{
+			terrainEdit->maxHeight = terrainEditMaxHeight;
+			updated = true;
+		}
+		if (terrainEdit->eastSideXPlus.minHeight != terrainEditEastSideXPlusMinHeight)
+		{
+			terrainEdit->eastSideXPlus.minHeight = terrainEditEastSideXPlusMinHeight;
+			updated = true;
+		}
+		if (terrainEdit->eastSideXPlus.maxHeight != terrainEditEastSideXPlusMaxHeight)
+		{
+			terrainEdit->eastSideXPlus.maxHeight = terrainEditEastSideXPlusMaxHeight;
+			updated = true;
+		}
+		if (terrainEdit->westSideXMinus.minHeight != terrainEditWestSideXMinusMinHeight)
+		{
+			terrainEdit->westSideXMinus.minHeight = terrainEditWestSideXMinusMinHeight;
+			updated = true;
+		}
+		if (terrainEdit->westSideXMinus.maxHeight != terrainEditWestSideXMinusMaxHeight)
+		{
+			terrainEdit->westSideXMinus.maxHeight = terrainEditWestSideXMinusMaxHeight;
+			updated = true;
+		}
+		if (terrainEdit->southSideZPlus.minHeight != terrainEditSouthSideZPlusMinHeight)
+		{
+			terrainEdit->southSideZPlus.minHeight = terrainEditSouthSideZPlusMinHeight;
+			updated = true;
+		}
+		if (terrainEdit->southSideZPlus.maxHeight != terrainEditSouthSideZPlusMaxHeight)
+		{
+			terrainEdit->southSideZPlus.maxHeight = terrainEditSouthSideZPlusMaxHeight;
+			updated = true;
+		}
+		if (terrainEdit->northSideZMinus.minHeight != terrainEditNorthSideZMinusMinHeight)
+		{
+			terrainEdit->northSideZMinus.minHeight = terrainEditNorthSideZMinusMinHeight;
+			updated = true;
+		}
+		if (terrainEdit->northSideZMinus.maxHeight != terrainEditNorthSideZMinusMaxHeight)
+		{
+			terrainEdit->northSideZMinus.maxHeight = terrainEditNorthSideZMinusMaxHeight;
+			updated = true;
+		}
+
+		return updated;
+	}
+ 
 	bool MeshCacheBuffer::blendQuadrantOnNorthSide(TheWorld_Utils::QuadrantPos& pos, bool lastPhase,
 		CacheQuadrantData& data,
 		CacheQuadrantData& northData,
@@ -5844,13 +6259,6 @@ namespace TheWorld_Utils
 		CacheQuadrantData& southwestData,
 		CacheQuadrantData& southeastData)
 	{
-		// DEBUG
-		if (pos.isQuadrantTrackedForDebug())
-		{
-			bool debug = true;
-		}
-		// DEBUG
-
 		bool updated = false;
 
 		if (data.terrainEditValues == nullptr || data.terrainEditValues->size() == 0
@@ -6011,13 +6419,6 @@ namespace TheWorld_Utils
 		CacheQuadrantData& southwestData,
 		CacheQuadrantData& southeastData)
 	{
-		// DEBUG
-		if (pos.isQuadrantTrackedForDebug())
-		{
-			bool debug = true;
-		}
-		// DEBUG
-
 		bool updated = false;
 
 		if (data.terrainEditValues == nullptr || data.terrainEditValues->size() == 0
@@ -6176,13 +6577,6 @@ namespace TheWorld_Utils
 		CacheQuadrantData& southwestData,
 		CacheQuadrantData& southeastData)
 	{
-		// DEBUG
-		if (pos.isQuadrantTrackedForDebug())
-		{
-			bool debug = true;
-		}
-		// DEBUG
-
 		bool updated = false;
 
 		if (data.terrainEditValues == nullptr || data.terrainEditValues->size() == 0
@@ -6340,13 +6734,6 @@ namespace TheWorld_Utils
 		CacheQuadrantData& southwestData,
 		CacheQuadrantData& southeastData)
 	{
-		// DEBUG
-		if (pos.isQuadrantTrackedForDebug())
-		{
-			bool debug = true;
-		}
-		// DEBUG
-
 		bool updated = false;
 
 		if (data.terrainEditValues == nullptr || data.terrainEditValues->size() == 0

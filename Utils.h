@@ -190,6 +190,8 @@ namespace TheWorld_Utils
 		size_t m_currentBlendingCycle = 0;
 		size_t m_numBlendedQuadrants = 0;
 		size_t m_numQuadrantsToBlend = 0;
+		size_t m_numGeneratedMinMaxQuadrants = 0;
+		size_t m_numQuadrantsToGenerateMinMax = 0;
 		size_t m_numQuadrantsToElabClientSide = 0;
 		size_t m_quadrantsToProcessServerSide = 0;
 	};
@@ -2109,12 +2111,12 @@ namespace TheWorld_Utils
 		__declspec(dllexport) CacheQuadrantData* internalCacheQuadrantData(void);
 		__declspec(dllexport) void readBufferFromDisk(std::string meshId, TheWorld_Utils::MemoryBuffer& buffer, bool workDir = false, TerrainEdit* terrainEdit = nullptr, bool onlyTerrainEdit = false);
 		__declspec(dllexport) void readBufferFromDisk(std::string meshId, std::string& buffer, bool workDir = false, TerrainEdit* terrainEdit = nullptr);
-		__declspec(dllexport) std::string writeBufferToDiskCache(std::string& buffer, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* terrainEdit = nullptr);
-		__declspec(dllexport) std::string writeBufferToDiskCache2(std::string& buffer, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* terrainEdit = nullptr);
-		__declspec(dllexport) std::string writeBufferToDiskCache(TheWorld_Utils::MemoryBuffer& buffer, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* terrainEdit = nullptr);
-		__declspec(dllexport) std::string writeBufferToDiskCache2(TheWorld_Utils::MemoryBuffer& buffer, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* terrainEdit = nullptr);
-		__declspec(dllexport) std::string writeBufferToDiskCache(const BYTE* buffer, const size_t bufferSize, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* terrainEdit = nullptr) ;
-		__declspec(dllexport) std::string writeBufferToDiskCache2(const BYTE* buffer, const size_t bufferSize, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* terrainEdit = nullptr);
+		__declspec(dllexport) std::string writeBufferToDiskCache(std::string& buffer, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* writtenTerrainEdit = nullptr);
+		__declspec(dllexport) std::string writeBufferToDiskCache2(std::string& buffer, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* writtenTerrainEdit = nullptr);
+		__declspec(dllexport) std::string writeBufferToDiskCache(TheWorld_Utils::MemoryBuffer& buffer, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* writtenTerrainEdit = nullptr);
+		__declspec(dllexport) std::string writeBufferToDiskCache2(TheWorld_Utils::MemoryBuffer& buffer, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* writtenTerrainEdit = nullptr);
+		__declspec(dllexport) std::string writeBufferToDiskCache(const BYTE* buffer, const size_t bufferSize, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* writtenTerrainEdit = nullptr) ;
+		__declspec(dllexport) std::string writeBufferToDiskCache2(const BYTE* buffer, const size_t bufferSize, std::string& meshId, bool renewMeshId = false, bool workDir = false, TerrainEdit* writtenTerrainEdit = nullptr);
 		__declspec(dllexport) void setDummyBuffer(std::string meshId, std::string& buffer, TheWorld_Utils::TerrainEdit* terrainEdit);
 		__declspec(dllexport) void setDummyBuffer_Format0(std::string meshId, std::string& buffer);
 		__declspec(dllexport) void setDummyBuffer_Format1(std::string meshId, std::string& buffer, TheWorld_Utils::TerrainEdit* terrainEdit);
@@ -2124,8 +2126,8 @@ namespace TheWorld_Utils
 		__declspec(dllexport) void setEmptyBuffer(size_t numVerticesPerSize, std::string& meshId, TheWorld_Utils::MemoryBuffer& buffer);
 		__declspec(dllexport) void setEmptyBuffer(size_t numVerticesPerSize, std::string& meshId, std::string& buffer);
 		__declspec(dllexport) void generateHeightsWithNoise(size_t numVerticesPerSize, float gridStepInWU, float lowerXGridVertex, float lowerZGridVertex, TerrainEdit* terrainEdit, std::vector<float>& vectGridHeights);
-		__declspec(dllexport) void applyWorldModifier(int level, size_t numVerticesPerSize, float gridStepInWU, float lowerXGridVertex, float lowerZGridVertex, TerrainEdit* terrainEdit, std::vector<float>& vectGridHeights, WorldModifier& wm);
-		static __declspec(dllexport) void calcMinMaxHeight(size_t numVerticesPerSize, TheWorld_Utils::TerrainEdit* terrainEdit, TheWorld_Utils::MemoryBuffer& heights32Buffer);
+		//__declspec(dllexport) void applyWorldModifier(int level, size_t numVerticesPerSize, float gridStepInWU, float lowerXGridVertex, float lowerZGridVertex, TerrainEdit* terrainEdit, std::vector<float>& vectGridHeights, WorldModifier& wm);
+		static __declspec(dllexport) bool calcMinMaxHeight(TheWorld_Utils::QuadrantPos& pos, size_t numVerticesPerSize, TheWorld_Utils::TerrainEdit* terrainEdit, TheWorld_Utils::MemoryBuffer& heights32Buffer);
 		static __declspec(dllexport) bool blendQuadrant(TheWorld_Utils::QuadrantPos pos, bool lastPhase, bool renewMeshIdOnUpdate,
 			CacheQuadrantData& data,
 			CacheQuadrantData& northData,
@@ -2137,6 +2139,9 @@ namespace TheWorld_Utils
 			CacheQuadrantData& southwesthData,
 			CacheQuadrantData& southeastData);
 		static __declspec(dllexport) bool calcMinMaxHeights(TheWorld_Utils::QuadrantPos pos, bool renewMeshIdOnUpdate, CacheQuadrantData& data);
+		static __declspec(dllexport) bool debugCheckMinMaxHeight(TheWorld_Utils::QuadrantPos& pos, TheWorld_Utils::TerrainEdit* terrainEdit, 
+			//float& min, float& max, float& northSideMin, float& northSideMax, float& southSideMin, float& southSideMax, float& westSideMin, float& westSideMax, float& eastSideMin, float& eastSideMax, std::string& msg,
+			std::string msg, std::string* meshId = nullptr, TheWorld_Utils::MemoryBuffer* heights16Buffer = nullptr, TheWorld_Utils::MemoryBuffer* heights32Buffer = nullptr);
 
 		//__declspec(dllexport) std::string getCacheDir()
 		//{
