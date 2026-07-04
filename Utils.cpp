@@ -3817,9 +3817,14 @@ namespace TheWorld_Utils
 		return bufferMeshId;
 	}
 
-	void MeshCacheBuffer::generateHeightsWithNoise(size_t numVerticesPerSize, float gridStepInWU, float lowerXGridVertex, float lowerZGridVertex, TerrainEdit* terrainEdit, std::vector<float>& vectGridHeights)
+	void MeshCacheBuffer::generateHeightsWithNoise(TheWorld_Utils::QuadrantPos pos, TerrainEdit* terrainEdit, std::vector<float>& vectGridHeights)
 	{
 		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer generateHeights 1 ") + __FUNCTION__, "ALL");
+
+		size_t numVerticesPerSize = pos.getNumVerticesPerSize();
+		float gridStepInWU = pos.getGridStepInWU();
+		float lowerXGridVertex = pos.getLowerXGridVertex();
+		float lowerZGridVertex = pos.getLowerZGridVertex();
 
 		vectGridHeights.clear();
 		vectGridHeights.resize(numVerticesPerSize * numVerticesPerSize);

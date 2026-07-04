@@ -41,15 +41,15 @@ constexpr auto THEWORLD_QUADRANT_NAMEDATA_NORTHWESTQUADSPLATMAPTEXEL = "NorthWes
 
 constexpr auto THEWORLD_QUADRANT_DISTANCE_FOR_BLENDING = 2;
 
-#define THEWORLD_SEA_LEVEL				0.0f
-#define THEWORLD_SEA_MAX_WAVE_HEIGHT	30.0f
-#define EMPTY_QUADRANTS_TERRAIN_HEIGHT	-500.0f
-#define EMPTY_QUADRANT_TERRAIN_TEXTURE	"beach_1"
-#define UNKNOWN_QUADRANT_TERRAIN_TEXTURE	"beach_1"
-//#define EMPTY_QUADRANT_TERRAIN_TEXTURE	"Marble021_1K"
-#define FLAT_QUADRANTS_TERRAIN_HEIGHT	(THEWORLD_SEA_LEVEL + THEWORLD_SEA_MAX_WAVE_HEIGHT + 1.0f)
-
-#define THEWORLD_DEFAULT_AMPLITUDE_BLEND_FACTOR									2.0f
+// D:\TheWorld\Client\TheWorld_MapManager\Data\DBJson\TheWorldMap.TestMap03.json
+constexpr auto THEWORLD_SEA_LEVEL = 0.0f;
+constexpr auto  THEWORLD_SEA_MAX_WAVE_HEIGHT = 30.0f;
+constexpr auto EMPTY_QUADRANTS_TERRAIN_HEIGHT = -500.0f;
+constexpr auto EMPTY_QUADRANT_TERRAIN_TEXTURE = "beach_1";
+constexpr auto UNKNOWN_QUADRANT_TERRAIN_TEXTURE = "beach_1";
+//constexpr auto EMPTY_QUADRANT_TERRAIN_TEXTURE = "Marble021_1K";
+constexpr auto FLAT_QUADRANTS_TERRAIN_HEIGHT = (THEWORLD_SEA_LEVEL + THEWORLD_SEA_MAX_WAVE_HEIGHT + 1.0f);
+constexpr auto THEWORLD_DEFAULT_AMPLITUDE_BLEND_FACTOR = 2.0f;
 
 #define Vector3Zero godot::Vector3(0, 0, 0)
 #define Vector3UP godot::Vector3(0, 1, 0)
@@ -2125,7 +2125,7 @@ namespace TheWorld_Utils
 		__declspec(dllexport) void setBufferFromCacheQuadrantData(size_t numVerticesPerSize, CacheQuadrantData& cacheQuadrantData, std::string& buffer);
 		__declspec(dllexport) void setEmptyBuffer(size_t numVerticesPerSize, std::string& meshId, TheWorld_Utils::MemoryBuffer& buffer);
 		__declspec(dllexport) void setEmptyBuffer(size_t numVerticesPerSize, std::string& meshId, std::string& buffer);
-		__declspec(dllexport) void generateHeightsWithNoise(size_t numVerticesPerSize, float gridStepInWU, float lowerXGridVertex, float lowerZGridVertex, TerrainEdit* terrainEdit, std::vector<float>& vectGridHeights);
+		__declspec(dllexport) void generateHeightsWithNoise(TheWorld_Utils::QuadrantPos pos, TerrainEdit* terrainEdit, std::vector<float>& vectGridHeights);
 		//__declspec(dllexport) void applyWorldModifier(int level, size_t numVerticesPerSize, float gridStepInWU, float lowerXGridVertex, float lowerZGridVertex, TerrainEdit* terrainEdit, std::vector<float>& vectGridHeights, WorldModifier& wm);
 		static __declspec(dllexport) bool calcMinMaxHeight(TheWorld_Utils::QuadrantPos& pos, size_t numVerticesPerSize, TheWorld_Utils::TerrainEdit* terrainEdit, TheWorld_Utils::MemoryBuffer& heights32Buffer);
 		static __declspec(dllexport) bool blendQuadrant(TheWorld_Utils::QuadrantPos pos, bool lastPhase, bool renewMeshIdOnUpdate,
