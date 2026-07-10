@@ -215,6 +215,19 @@ namespace TheWorld_Utils
 		return t;
 	}
 
+	std::time_t SYSTEMTIME_utc_to_time_t_utc(const SYSTEMTIME& st)
+	{
+		std::tm t = {};
+		t.tm_year = st.wYear - 1900;
+		t.tm_mon = st.wMonth - 1;
+		t.tm_mday = st.wDay;
+		t.tm_hour = st.wHour;
+		t.tm_min = st.wMinute;
+		t.tm_sec = st.wSecond;
+		std::time_t time_t_utc = _mkgmtime(&t);	// correct: correct to time_t ignoring local calendar (it assumes input time is in UTC format and mantains it)
+		return time_t_utc;
+	}
+
 	std::chrono::system_clock::time_point str_time_to_time_point(const std::string& time /* es: 2023-09-04 19:33:24.7026392 */)
 	{
 		std::chrono::system_clock::time_point tp;
@@ -7091,6 +7104,76 @@ namespace TheWorld_Utils
 		m_threads.clear();
 	}
 	
+	void Utils::deleteFile(std::string filePath)
+	{
+		remove(filePath.c_str());
+	}
+
+	void Utils::getFilesOrderedByLastAccessTime(std::string dirPath, std::string extension, std::map<std::time_t, std::string>& files)
+	{
+		files.clear();
+
+		if (!fs::exists(dirPath))
+			return;
+
+		while (extension.starts_with("."))
+			extension = extension.substr(1);
+
+		for (const auto& entry : fs::directory_iterator(dirPath))
+			if (entry.is_regular_file())
+			{
+				std::string filename = entry.path().filename().generic_string();
+				std::string filenameExt = entry.path().filename().extension().generic_string();
+				while (filenameExt.starts_with("."))
+					filenameExt = filenameExt.substr(1);
+				if (extension == filenameExt)
+				{
+					std::string filePath = dirPath + "\\" + filename;
+					HANDLE hFile = CreateFile(convert(filePath).c_str(), FILE_GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+					if (hFile != INVALID_HANDLE_VALUE) {
+						FILETIME ftAccess;
+						if (GetFileTime(hFile, NULL, &ftAccess, NULL))
+						{
+							SYSTEMTIME stAccess;	FileTimeToSystemTime(&ftAccess, &stAccess);
+							std::time_t t = SYSTEMTIME_utc_to_time_t_utc(stAccess);
+							files[t] = filename;
+						}
+						CloseHandle(hFile);
+					}
+				}
+			}
+	}
+
+	void Utils::deleteUnusedFiles(std::string dirPath, std::string extension, size_t notAccessedFor /* seconds */, size_t notMoreThan)
+	{
+		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer freeOldFiles 1 ") + __FUNCTION__, "ALL");
+
+		if (!fs::exists(dirPath))
+			return;
+
+		std::map<std::time_t, std::string> files;
+		TheWorld_Utils::Utils::getFilesOrderedByLastAccessTime(dirPath, extension, files);
+
+		size_t numFilesToEvaluate = files.size() - notMoreThan;
+		
+		std::vector<std::time_t> toDelete;
+		for (auto it = files.rbegin(); it != files.rend() && numFilesToEvaluate > 0; ++it, --numFilesToEvaluate)
+		{
+			std::time_t currentTime = current_utc_time_t();
+			size_t _notAccessedFor = currentTime - it->first;
+			if (_notAccessedFor > notAccessedFor)
+			{
+				toDelete.push_back(it->first);
+			}
+		}
+
+		for (auto& t : toDelete)
+		{
+			std::string fullPath = dirPath + "\\" + files[t];
+			deleteFile(fullPath);
+		}
+	}
+
 	std::string Utils::ReplaceString(std::string subject, const std::string& search, const std::string& replace)
 	{
 		size_t pos = 0;

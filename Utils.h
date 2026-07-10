@@ -6,6 +6,7 @@
 //	#include <PoolArrays.hpp>
 //#endif
 
+#include "Params.h"
 #include "WorldModifier.h"
 
 #ifndef MYAPI 
@@ -38,18 +39,6 @@
 constexpr auto THEWORLD_QUADRANT_NAMEDATA_NORTHQUADSPLATMAPROW = "NorthQuadSplatmapRow";
 constexpr auto THEWORLD_QUADRANT_NAMEDATA_WESTQUADSPLATMAPROW = "WestQuadSplatmapRow";
 constexpr auto THEWORLD_QUADRANT_NAMEDATA_NORTHWESTQUADSPLATMAPTEXEL = "NorthWestQuadSplatmapTexel";
-
-constexpr auto THEWORLD_QUADRANT_DISTANCE_FOR_BLENDING = 2;
-
-// D:\TheWorld\Client\TheWorld_MapManager\Data\DBJson\TheWorldMap.TestMap03.json
-constexpr auto THEWORLD_SEA_LEVEL = 0.0f;
-constexpr auto  THEWORLD_SEA_MAX_WAVE_HEIGHT = 30.0f;
-constexpr auto EMPTY_QUADRANTS_TERRAIN_HEIGHT = -500.0f;
-constexpr auto EMPTY_QUADRANT_TERRAIN_TEXTURE = "beach_1";
-constexpr auto UNKNOWN_QUADRANT_TERRAIN_TEXTURE = "beach_1";
-//constexpr auto EMPTY_QUADRANT_TERRAIN_TEXTURE = "Marble021_1K";
-constexpr auto FLAT_QUADRANTS_TERRAIN_HEIGHT = (THEWORLD_SEA_LEVEL + THEWORLD_SEA_MAX_WAVE_HEIGHT + 1.0f);
-constexpr auto THEWORLD_DEFAULT_AMPLITUDE_BLEND_FACTOR = 2.0f;
 
 #define Vector3Zero godot::Vector3(0, 0, 0)
 #define Vector3UP godot::Vector3(0, 1, 0)
@@ -117,6 +106,8 @@ namespace TheWorld_Utils
 
 	__declspec(dllexport) std::chrono::system_clock::time_point time_t_to_time_point(const std::time_t time);
 	__declspec(dllexport) std::time_t time_point_to_time_t(const std::chrono::system_clock::time_point time);
+
+	__declspec(dllexport) std::time_t SYSTEMTIME_utc_to_time_t_utc(const SYSTEMTIME& st);
 
 	__declspec(dllexport) std::chrono::system_clock::time_point str_time_to_time_point(const std::string& time);	// es: 2023-09-04 19:33:24.7026392
 	__declspec(dllexport) std::string time_point_to_str_time(std::chrono::system_clock::time_point time);			// es: 2023-09-04 19:33:24.7026392
@@ -2268,6 +2259,10 @@ namespace TheWorld_Utils
 		__declspec(dllexport) static void plogInit(plog::Severity sev, plog::IAppender* appender);
 		__declspec(dllexport) static void plogSetMaxSeverity(plog::Severity sev);
 		__declspec(dllexport) static void plogDenit(void);
+
+		__declspec(dllexport) static void getFilesOrderedByLastAccessTime(std::string dirPath, std::string extension, std::map<std::time_t, std::string>& files);
+		__declspec(dllexport) static void deleteUnusedFiles(std::string dirPath, std::string extension, size_t notAccessedFor /* seconds */, size_t notMoreThan);
+		__declspec(dllexport) static void deleteFile(std::string filePath);
 
 		static std::string ReplaceString(std::string subject, const std::string& search, const std::string& replace);
 		static void ReplaceStringInPlace(std::string& subject, const std::string& search, const std::string& replace);

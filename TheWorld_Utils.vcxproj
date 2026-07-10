@@ -228,6 +228,7 @@
     <ClInclude Include="FastNoiseLite.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="half.h" />
+    <ClInclude Include="Params.h" />
     <ClInclude Include="TimeHelper.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Profiler.h" />

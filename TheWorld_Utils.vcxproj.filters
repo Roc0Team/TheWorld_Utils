@@ -48,6 +48,9 @@
     <ClInclude Include="TimeHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Params.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
