@@ -54,22 +54,22 @@ namespace TheWorld_Utils
 		}
 	}
 
-	void WorldModifier::setInternalValues(WorldModifierPos& pos, float radius, float azimuth, float azimuthDegree, float AOE, enum class WMFunctionType functionType, __int64 rowid, float min, float max, enum class WMOrder order, void* fp)
-	{
-		m_pos = pos;
-		//m_strength = strength;
-		m_AOE = AOE;
-		m_radius = radius;
-		m_azimuth = azimuth;
-		m_azimuthDegree = azimuthDegree;
-		m_functionType = functionType;
+	//void WorldModifier::setInternalValues(WorldModifierPos& pos, float radius, float azimuth, float azimuthDegree, float AOE, enum class WMFunctionType functionType, __int64 rowid, float min, float max, enum class WMOrder order, void* fp)
+	//{
+	//	m_pos = pos;
+	//	//m_strength = strength;
+	//	m_AOE = AOE;
+	//	m_radius = radius;
+	//	m_azimuth = azimuth;
+	//	m_azimuthDegree = azimuthDegree;
+	//	m_functionType = functionType;
 
-		m_rowid = rowid;
+	//	m_rowid = rowid;
 
-		m_order = order;
-		m_min = min;
-		m_max = max;
-	}
+	//	m_order = order;
+	//	m_min = min;
+	//	m_max = max;
+	//}
 	
 	WorldModifier::~WorldModifier()
 	{

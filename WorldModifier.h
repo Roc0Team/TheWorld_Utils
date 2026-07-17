@@ -135,7 +135,7 @@ namespace TheWorld_Utils
 		_declspec(dllexport) WorldModifier(WorldModifierPos& pos, enum class WMFunctionType functionType, float AOE, float min, float max, enum class WMOrder order, void* fp = nullptr);
 		_declspec(dllexport) ~WorldModifier();
 
-		_declspec(dllexport) void setInternalValues(WorldModifierPos& pos, float radius, float azimuth, float azimuthDegree, float AOE, enum class WMFunctionType functionType, __int64 rowid, float min, float max, enum class WMOrder order, void* fp = nullptr);
+		//_declspec(dllexport) void setInternalValues(WorldModifierPos& pos, float radius, float azimuth, float azimuthDegree, float AOE, enum class WMFunctionType functionType, __int64 rowid, float min, float max, enum class WMOrder order, void* fp = nullptr);
 
 		_declspec(dllexport) WorldModifierPos getPos(void) const
 		{

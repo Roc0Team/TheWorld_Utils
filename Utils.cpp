@@ -5152,9 +5152,8 @@ namespace TheWorld_Utils
 
 		size_t numVerticesPerSize = (size_t)pos.getNumVerticesPerSize();
 
-		my_assert(data.heights32Buffer != nullptr and data.heights16Buffer != nullptr);
-		my_assert(data.heights32Buffer->size() == numVerticesPerSize * numVerticesPerSize * sizeof(float));
-		my_assert(data.heights16Buffer->size() == numVerticesPerSize * numVerticesPerSize * sizeof(uint16_t));
+		my_assert(data.heights32Buffer != nullptr and data.heights32Buffer->size() == numVerticesPerSize * numVerticesPerSize * sizeof(float));
+		my_assert(data.heights16Buffer != nullptr and data.heights16Buffer->size() == numVerticesPerSize * numVerticesPerSize * sizeof(uint16_t));
 		my_assert(data.terrainEditValues != nullptr and data.terrainEditValues->size() == sizeof(TerrainEdit));
 
 		{
@@ -5165,6 +5164,7 @@ namespace TheWorld_Utils
 
 			size_t heights32BufferSize = numVertices * sizeof(float);
 			float* movingHeights32Buffer = (float*)data.heights32Buffer->ptr();
+			
 			{
 				TheWorld_Utils::GuardProfiler profiler(std::string("generateDetailDataForQuadrants 2 ") + __FUNCTION__, "Move Heights to float16/float32 buffer");
 				for (int z = 0; z < numVerticesPerSize; z++)
@@ -5442,86 +5442,86 @@ namespace TheWorld_Utils
 		bool minMaxUpdated = false, northSideMinMaxUpdated = false, southSideMinMaxUpdated = false, westSideMinMaxUpdated = false, eastSideMinMaxUpdated = false, 
 			northwestSideMinMaxUpdated = false, northeastSideMinMaxUpdated = false, southwestSideMinMaxUpdated = false, southeastSideMinMaxUpdated = false;
 		
-		if (lastPhase or data.heightsUpdated)
-		{
-			TerrainEdit* terrainEdit = (TerrainEdit*)data.terrainEditValues->ptr();
-			if (calcMinMaxHeight(pos, numVerticesPerSize, terrainEdit, *data.heights32Buffer))
-			{
-				updated = minMaxUpdated = true;
-			}
-		}
+		//if (lastPhase or data.heightsUpdated)
+		//{
+		//	TerrainEdit* terrainEdit = (TerrainEdit*)data.terrainEditValues->ptr();
+		//	if (calcMinMaxHeight(pos, numVerticesPerSize, terrainEdit, *data.heights32Buffer))
+		//	{
+		//		updated = minMaxUpdated = true;
+		//	}
+		//}
 
-		if ((lastPhase or northData.heightsUpdated) and northData.terrainEditValues != nullptr and northData.terrainEditValues->ptr() != nullptr)
-		{
-			TerrainEdit* northTerrainEdit = (TerrainEdit*)northData.terrainEditValues->ptr();
-			if (calcMinMaxHeight(northQuadrantPos, numVerticesPerSize, northTerrainEdit, *northData.heights32Buffer))
-			{
-				updated = northSideMinMaxUpdated = true;
-			}
-		}
+		//if ((lastPhase or northData.heightsUpdated) and northData.terrainEditValues != nullptr and northData.terrainEditValues->ptr() != nullptr)
+		//{
+		//	TerrainEdit* northTerrainEdit = (TerrainEdit*)northData.terrainEditValues->ptr();
+		//	if (calcMinMaxHeight(northQuadrantPos, numVerticesPerSize, northTerrainEdit, *northData.heights32Buffer))
+		//	{
+		//		updated = northSideMinMaxUpdated = true;
+		//	}
+		//}
 
-		if ((lastPhase or southData.heightsUpdated) and southData.terrainEditValues != nullptr and southData.terrainEditValues->ptr() != nullptr)
-		{
-			TerrainEdit* southTerrainEdit = (TerrainEdit*)southData.terrainEditValues->ptr();
-			if (calcMinMaxHeight(southQuadrantPos,numVerticesPerSize, southTerrainEdit, *southData.heights32Buffer))
-			{
-				updated = southSideMinMaxUpdated = true;
-			}
-		}
+		//if ((lastPhase or southData.heightsUpdated) and southData.terrainEditValues != nullptr and southData.terrainEditValues->ptr() != nullptr)
+		//{
+		//	TerrainEdit* southTerrainEdit = (TerrainEdit*)southData.terrainEditValues->ptr();
+		//	if (calcMinMaxHeight(southQuadrantPos,numVerticesPerSize, southTerrainEdit, *southData.heights32Buffer))
+		//	{
+		//		updated = southSideMinMaxUpdated = true;
+		//	}
+		//}
 
-		if ((lastPhase or westData.heightsUpdated) and westData.terrainEditValues != nullptr and westData.terrainEditValues->ptr() != nullptr)
-		{
-			TerrainEdit* westTerrainEdit = (TerrainEdit*)westData.terrainEditValues->ptr();
-			if (calcMinMaxHeight(westQuadrantPos, numVerticesPerSize, westTerrainEdit, *westData.heights32Buffer))
-			{
-				updated = westSideMinMaxUpdated = true;
-			}
-		}
+		//if ((lastPhase or westData.heightsUpdated) and westData.terrainEditValues != nullptr and westData.terrainEditValues->ptr() != nullptr)
+		//{
+		//	TerrainEdit* westTerrainEdit = (TerrainEdit*)westData.terrainEditValues->ptr();
+		//	if (calcMinMaxHeight(westQuadrantPos, numVerticesPerSize, westTerrainEdit, *westData.heights32Buffer))
+		//	{
+		//		updated = westSideMinMaxUpdated = true;
+		//	}
+		//}
 
-		if ((lastPhase or eastData.heightsUpdated) and eastData.terrainEditValues != nullptr and eastData.terrainEditValues->ptr() != nullptr)
-		{
-			TerrainEdit* eastTerrainEdit = (TerrainEdit*)eastData.terrainEditValues->ptr();
-			if (calcMinMaxHeight(eastQuadrantPos, numVerticesPerSize, eastTerrainEdit, *eastData.heights32Buffer))
-			{
-				updated = eastSideMinMaxUpdated = true;
-			}
-		}
+		//if ((lastPhase or eastData.heightsUpdated) and eastData.terrainEditValues != nullptr and eastData.terrainEditValues->ptr() != nullptr)
+		//{
+		//	TerrainEdit* eastTerrainEdit = (TerrainEdit*)eastData.terrainEditValues->ptr();
+		//	if (calcMinMaxHeight(eastQuadrantPos, numVerticesPerSize, eastTerrainEdit, *eastData.heights32Buffer))
+		//	{
+		//		updated = eastSideMinMaxUpdated = true;
+		//	}
+		//}
 
-		if ((lastPhase or northwestData.heightsUpdated) and northwestData.terrainEditValues != nullptr and northwestData.terrainEditValues->ptr() != nullptr)
-		{
-			TerrainEdit* northwestTerrainEdit = (TerrainEdit*)northwestData.terrainEditValues->ptr();
-			if (calcMinMaxHeight(northwestQuadrantPos, numVerticesPerSize, northwestTerrainEdit, *northwestData.heights32Buffer))
-			{
-				updated = northwestSideMinMaxUpdated = true;
-			}
-		}
+		//if ((lastPhase or northwestData.heightsUpdated) and northwestData.terrainEditValues != nullptr and northwestData.terrainEditValues->ptr() != nullptr)
+		//{
+		//	TerrainEdit* northwestTerrainEdit = (TerrainEdit*)northwestData.terrainEditValues->ptr();
+		//	if (calcMinMaxHeight(northwestQuadrantPos, numVerticesPerSize, northwestTerrainEdit, *northwestData.heights32Buffer))
+		//	{
+		//		updated = northwestSideMinMaxUpdated = true;
+		//	}
+		//}
 
-		if ((lastPhase or northeastData.heightsUpdated) and northeastData.terrainEditValues != nullptr and northeastData.terrainEditValues->ptr() != nullptr)
-		{
-			TerrainEdit* northeastTerrainEdit = (TerrainEdit*)northeastData.terrainEditValues->ptr();
-			if (calcMinMaxHeight(northeastQuadrantPos, numVerticesPerSize, northeastTerrainEdit, *northeastData.heights32Buffer))
-			{
-				updated = northeastSideMinMaxUpdated = true;
-			}
-		}
+		//if ((lastPhase or northeastData.heightsUpdated) and northeastData.terrainEditValues != nullptr and northeastData.terrainEditValues->ptr() != nullptr)
+		//{
+		//	TerrainEdit* northeastTerrainEdit = (TerrainEdit*)northeastData.terrainEditValues->ptr();
+		//	if (calcMinMaxHeight(northeastQuadrantPos, numVerticesPerSize, northeastTerrainEdit, *northeastData.heights32Buffer))
+		//	{
+		//		updated = northeastSideMinMaxUpdated = true;
+		//	}
+		//}
 
-		if ((lastPhase or southwestData.heightsUpdated) and southwestData.terrainEditValues != nullptr and southwestData.terrainEditValues->ptr() != nullptr)
-		{
-			TerrainEdit* southwesthTerrainEdit = (TerrainEdit*)southwestData.terrainEditValues->ptr();
-			if (calcMinMaxHeight(southwestQuadrantPos, numVerticesPerSize, southwesthTerrainEdit, *southwestData.heights32Buffer))
-			{
-				updated = southwestSideMinMaxUpdated = true;
-			}
-		}
+		//if ((lastPhase or southwestData.heightsUpdated) and southwestData.terrainEditValues != nullptr and southwestData.terrainEditValues->ptr() != nullptr)
+		//{
+		//	TerrainEdit* southwesthTerrainEdit = (TerrainEdit*)southwestData.terrainEditValues->ptr();
+		//	if (calcMinMaxHeight(southwestQuadrantPos, numVerticesPerSize, southwesthTerrainEdit, *southwestData.heights32Buffer))
+		//	{
+		//		updated = southwestSideMinMaxUpdated = true;
+		//	}
+		//}
 
-		if ((lastPhase or southeastData.heightsUpdated) and southeastData.terrainEditValues != nullptr and southeastData.terrainEditValues->ptr() != nullptr)
-		{
-			TerrainEdit* southeastTerrainEdit = (TerrainEdit*)southeastData.terrainEditValues->ptr();
-			if (calcMinMaxHeight(southeastQuadrantPos, numVerticesPerSize, southeastTerrainEdit, *southeastData.heights32Buffer))
-			{
-				updated = southeastSideMinMaxUpdated = true;
-			}
-		}
+		//if ((lastPhase or southeastData.heightsUpdated) and southeastData.terrainEditValues != nullptr and southeastData.terrainEditValues->ptr() != nullptr)
+		//{
+		//	TerrainEdit* southeastTerrainEdit = (TerrainEdit*)southeastData.terrainEditValues->ptr();
+		//	if (calcMinMaxHeight(southeastQuadrantPos, numVerticesPerSize, southeastTerrainEdit, *southeastData.heights32Buffer))
+		//	{
+		//		updated = southeastSideMinMaxUpdated = true;
+		//	}
+		//}
 
 		if (renewMeshIdOnUpdate)
 		{
@@ -5564,7 +5564,7 @@ namespace TheWorld_Utils
 		size_t numVerticesPerSize = pos.getNumVerticesPerSize();
 
 		if (currentData.heights32Buffer == nullptr || currentData.heights32Buffer->size() == 0
-			|| currentData.heights16Buffer == nullptr || currentData.heights16Buffer->size() == 0)
+			/*|| currentData.heights16Buffer == nullptr || currentData.heights16Buffer->size() == 0*/)
 			return updated;
 
 		size_t maxIndex = numVerticesPerSize - 1;
@@ -5579,7 +5579,7 @@ namespace TheWorld_Utils
 			//			
 			//	SW	S	SE
 			if (northData.heights32Buffer != nullptr && northData.heights32Buffer->size() > 0
-				&& northData.heights16Buffer != nullptr && northData.heights16Buffer->size() > 0)
+				/*&& northData.heights16Buffer != nullptr && northData.heights16Buffer->size() > 0*/)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = northData.heights32Buffer;
 				CacheQuadrantData* data1 = &northData;
@@ -5599,13 +5599,13 @@ namespace TheWorld_Utils
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
-					TheWorld_Utils::FLOAT_32 f(h);
-					uint16_t half = half_from_float(f.u32);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
 
-					TheWorld_Utils::MemoryBuffer* data1heights16Buffer = northData.heights16Buffer;
-					TheWorld_Utils::MemoryBuffer* data2heights16Buffer = currentData.heights16Buffer;
-					data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
+					//TheWorld_Utils::FLOAT_32 f(h);
+					//uint16_t half = half_from_float(f.u32);
+					//TheWorld_Utils::MemoryBuffer* data1heights16Buffer = northData.heights16Buffer;
+					//TheWorld_Utils::MemoryBuffer* data2heights16Buffer = currentData.heights16Buffer;
+					//data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
 
@@ -5615,7 +5615,7 @@ namespace TheWorld_Utils
 			//		-	
 			//	SW	S	SE
 			if (southData.heights32Buffer != nullptr && southData.heights32Buffer->size() > 0
-				&& southData.heights16Buffer != nullptr && southData.heights16Buffer->size() > 0)
+				/*&& southData.heights16Buffer != nullptr && southData.heights16Buffer->size() > 0*/)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = currentData.heights32Buffer;
 				CacheQuadrantData* data1 = &currentData;
@@ -5627,17 +5627,6 @@ namespace TheWorld_Utils
 				size_t border2X = idx;				size_t border2Z = 0;
 				size_t nearBorder2X = idx;			size_t nearBorder2Z = 1;
 
-				//// DEBUG
-				//if (pos.isQuadrantTrackedForDebug())
-				//{
-				//	uint16_t southBorderH1_half = data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize);
-				//	uint16_t northBorderOfSouthDataBorderH2_half = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize);
-				//	float southBorderH1 = data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize);
-				//	float northBorderOfSouthDataBorderH2 = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize);
-				//	float xxx = southBorderH1;
-				//}
-				//// DEBUG
-
 				float nearBorderH1 = data1heights32Buffer->_deprecated_get_at_ref<float>(nearBorder1X, nearBorder1Z, numVerticesPerSize);
 				float nearBorderH2 = data2heights32Buffer->_deprecated_get_at_ref<float>(nearBorder2X, nearBorder2Z, numVerticesPerSize);
 				float borderH1 = data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize);
@@ -5646,24 +5635,13 @@ namespace TheWorld_Utils
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
-					TheWorld_Utils::FLOAT_32 f(h);
-					uint16_t half = half_from_float(f.u32);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
 
-					TheWorld_Utils::MemoryBuffer* data1heights16Buffer = currentData.heights16Buffer;
-					TheWorld_Utils::MemoryBuffer* data2heights16Buffer = southData.heights16Buffer;
-					data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
-
-					//// DEBUG
-					//if (pos.isQuadrantTrackedForDebug())
-					//{
-					//	uint16_t southBorderH1_half = data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize);
-					//	uint16_t northBorderOfSouthDataBorderH2_half = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize);
-					//	float southBorderH1 = data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize);
-					//	float northBorderOfSouthDataBorderH2 = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize);
-					//	float xxx = southBorderH1;
-					//}
-					//// DEBUG
+					//TheWorld_Utils::FLOAT_32 f(h);
+					//uint16_t half = half_from_float(f.u32);
+					//TheWorld_Utils::MemoryBuffer* data1heights16Buffer = currentData.heights16Buffer;
+					//TheWorld_Utils::MemoryBuffer* data2heights16Buffer = southData.heights16Buffer;
+					//data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
 
@@ -5673,7 +5651,7 @@ namespace TheWorld_Utils
 			//			
 			//	SW	S	SE
 			if (eastData.heights32Buffer != nullptr && eastData.heights32Buffer->size() > 0
-				&& eastData.heights16Buffer != nullptr && eastData.heights16Buffer->size() > 0)
+				/*&& eastData.heights16Buffer != nullptr && eastData.heights16Buffer->size() > 0*/)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = currentData.heights32Buffer;
 				CacheQuadrantData* data1 = &currentData;
@@ -5693,13 +5671,13 @@ namespace TheWorld_Utils
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
-					TheWorld_Utils::FLOAT_32 f(h);
-					uint16_t half = half_from_float(f.u32);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
 
-					TheWorld_Utils::MemoryBuffer* data1heights16Buffer = currentData.heights16Buffer;
-					TheWorld_Utils::MemoryBuffer* data2heights16Buffer = eastData.heights16Buffer;
-					data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
+					//TheWorld_Utils::FLOAT_32 f(h);
+					//uint16_t half = half_from_float(f.u32);
+					//TheWorld_Utils::MemoryBuffer* data1heights16Buffer = currentData.heights16Buffer;
+					//TheWorld_Utils::MemoryBuffer* data2heights16Buffer = eastData.heights16Buffer;
+					//data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
 
@@ -5709,7 +5687,7 @@ namespace TheWorld_Utils
 			//			
 			//	SW  S	SE
 			if (westData.heights32Buffer != nullptr && westData.heights32Buffer->size() > 0
-				&& westData.heights16Buffer != nullptr && westData.heights16Buffer->size() > 0)
+				/*&& westData.heights16Buffer != nullptr && westData.heights16Buffer->size() > 0*/)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = westData.heights32Buffer;
 				CacheQuadrantData* data1 = &westData;
@@ -5729,13 +5707,13 @@ namespace TheWorld_Utils
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
-					TheWorld_Utils::FLOAT_32 f(h);
-					uint16_t half = half_from_float(f.u32);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
 
-					TheWorld_Utils::MemoryBuffer* data1heights16Buffer = westData.heights16Buffer;
-					TheWorld_Utils::MemoryBuffer* data2heights16Buffer = currentData.heights16Buffer;
-					data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
+					//TheWorld_Utils::FLOAT_32 f(h);
+					//uint16_t half = half_from_float(f.u32);
+					//TheWorld_Utils::MemoryBuffer* data1heights16Buffer = westData.heights16Buffer;
+					//TheWorld_Utils::MemoryBuffer* data2heights16Buffer = currentData.heights16Buffer;
+					//data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
 
@@ -5746,8 +5724,8 @@ namespace TheWorld_Utils
 			//	SW	S	SE
 			if (northwestData.heights32Buffer != nullptr && northwestData.heights32Buffer->size() > 0
 				&& northData.heights32Buffer != nullptr && northData.heights32Buffer->size() > 0
-				&& northwestData.heights16Buffer != nullptr && northwestData.heights16Buffer->size() > 0 
-				&& northData.heights16Buffer != nullptr && northData.heights16Buffer->size() > 0)
+				/*&& northwestData.heights16Buffer != nullptr && northwestData.heights16Buffer->size() > 0
+				&& northData.heights16Buffer != nullptr && northData.heights16Buffer->size() > 0*/)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = northwestData.heights32Buffer;
 				CacheQuadrantData* data1 = &northwestData;
@@ -5767,13 +5745,13 @@ namespace TheWorld_Utils
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
-					TheWorld_Utils::FLOAT_32 f(h);
-					uint16_t half = half_from_float(f.u32);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
 
-					TheWorld_Utils::MemoryBuffer* data1heights16Buffer = northwestData.heights16Buffer;
-					TheWorld_Utils::MemoryBuffer* data2heights16Buffer = northData.heights16Buffer;
-					data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
+					//TheWorld_Utils::FLOAT_32 f(h);
+					//uint16_t half = half_from_float(f.u32);
+					//TheWorld_Utils::MemoryBuffer* data1heights16Buffer = northwestData.heights16Buffer;
+					//TheWorld_Utils::MemoryBuffer* data2heights16Buffer = northData.heights16Buffer;
+					//data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
 
@@ -5784,8 +5762,8 @@ namespace TheWorld_Utils
 			//	SW	S	SE
 			if (northData.heights32Buffer != nullptr && northData.heights32Buffer->size() > 0
 				&& northeastData.heights32Buffer != nullptr && northeastData.heights32Buffer->size() > 0
-				&& northData.heights16Buffer != nullptr && northData.heights16Buffer->size() > 0
-				&& northeastData.heights16Buffer != nullptr && northeastData.heights16Buffer->size() > 0)
+				/*&& northData.heights16Buffer != nullptr && northData.heights16Buffer->size() > 0
+				&& northeastData.heights16Buffer != nullptr && northeastData.heights16Buffer->size() > 0*/)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = northData.heights32Buffer;
 				CacheQuadrantData* data1 = &northData;
@@ -5805,13 +5783,13 @@ namespace TheWorld_Utils
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
-					TheWorld_Utils::FLOAT_32 f(h);
-					uint16_t half = half_from_float(f.u32);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
 
-					TheWorld_Utils::MemoryBuffer* data1heights16Buffer = northData.heights16Buffer;
-					TheWorld_Utils::MemoryBuffer* data2heights16Buffer = northeastData.heights16Buffer;
-					data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
+					//TheWorld_Utils::FLOAT_32 f(h);
+					//uint16_t half = half_from_float(f.u32);
+					//TheWorld_Utils::MemoryBuffer* data1heights16Buffer = northData.heights16Buffer;
+					//TheWorld_Utils::MemoryBuffer* data2heights16Buffer = northeastData.heights16Buffer;
+					//data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
 
@@ -5822,8 +5800,8 @@ namespace TheWorld_Utils
 			//	SW	S	SE
 			if (northwestData.heights32Buffer != nullptr && northwestData.heights32Buffer->size() > 0
 				&& westData.heights32Buffer != nullptr && westData.heights32Buffer->size() > 0
-				&& northwestData.heights16Buffer != nullptr && northwestData.heights16Buffer->size() > 0
-				&& westData.heights16Buffer != nullptr && westData.heights16Buffer->size() > 0)
+				/*&& northwestData.heights16Buffer != nullptr && northwestData.heights16Buffer->size() > 0
+				&& westData.heights16Buffer != nullptr && westData.heights16Buffer->size() > 0*/)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = northwestData.heights32Buffer;
 				CacheQuadrantData* data1 = &northwestData;
@@ -5843,13 +5821,13 @@ namespace TheWorld_Utils
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
-					TheWorld_Utils::FLOAT_32 f(h);
-					uint16_t half = half_from_float(f.u32);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
 
-					TheWorld_Utils::MemoryBuffer* data1heights16Buffer = northwestData.heights16Buffer;
-					TheWorld_Utils::MemoryBuffer* data2heights16Buffer = westData.heights16Buffer;
-					data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
+					//TheWorld_Utils::FLOAT_32 f(h);
+					//uint16_t half = half_from_float(f.u32);
+					//TheWorld_Utils::MemoryBuffer* data1heights16Buffer = northwestData.heights16Buffer;
+					//TheWorld_Utils::MemoryBuffer* data2heights16Buffer = westData.heights16Buffer;
+					//data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
 
@@ -5860,8 +5838,8 @@ namespace TheWorld_Utils
 			//	SW	S	SE
 			if (northeastData.heights32Buffer != nullptr && northeastData.heights32Buffer->size() > 0
 				&& eastData.heights32Buffer != nullptr && eastData.heights32Buffer->size() > 0
-				&& northeastData.heights16Buffer != nullptr && northeastData.heights16Buffer->size() > 0
-				&& eastData.heights16Buffer != nullptr && eastData.heights16Buffer->size() > 0)
+				/*&& northeastData.heights16Buffer != nullptr && northeastData.heights16Buffer->size() > 0
+				&& eastData.heights16Buffer != nullptr && eastData.heights16Buffer->size() > 0*/)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = northeastData.heights32Buffer;
 				CacheQuadrantData* data1 = &northeastData;
@@ -5881,13 +5859,13 @@ namespace TheWorld_Utils
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
-					TheWorld_Utils::FLOAT_32 f(h);
-					uint16_t half = half_from_float(f.u32);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
 
-					TheWorld_Utils::MemoryBuffer* data1heights16Buffer = northeastData.heights16Buffer;
-					TheWorld_Utils::MemoryBuffer* data2heights16Buffer = eastData.heights16Buffer;
-					data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
+					//TheWorld_Utils::FLOAT_32 f(h);
+					//uint16_t half = half_from_float(f.u32);
+					//TheWorld_Utils::MemoryBuffer* data1heights16Buffer = northeastData.heights16Buffer;
+					//TheWorld_Utils::MemoryBuffer* data2heights16Buffer = eastData.heights16Buffer;
+					//data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
 
@@ -5898,8 +5876,8 @@ namespace TheWorld_Utils
 			//	SW	S	SE
 			if (westData.heights32Buffer != nullptr && westData.heights32Buffer->size() > 0
 				&& southwestData.heights32Buffer != nullptr && southwestData.heights32Buffer->size() > 0
-				&& westData.heights16Buffer != nullptr && westData.heights16Buffer->size() > 0
-				&& southwestData.heights16Buffer != nullptr && southwestData.heights16Buffer->size() > 0)
+				/*&& westData.heights16Buffer != nullptr && westData.heights16Buffer->size() > 0
+				&& southwestData.heights16Buffer != nullptr && southwestData.heights16Buffer->size() > 0*/)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = westData.heights32Buffer;
 				CacheQuadrantData* data1 = &westData;
@@ -5919,13 +5897,13 @@ namespace TheWorld_Utils
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
-					TheWorld_Utils::FLOAT_32 f(h);
-					uint16_t half = half_from_float(f.u32);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
 
-					TheWorld_Utils::MemoryBuffer* data1heights16Buffer = westData.heights16Buffer;
-					TheWorld_Utils::MemoryBuffer* data2heights16Buffer = southwestData.heights16Buffer;
-					data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
+					//TheWorld_Utils::FLOAT_32 f(h);
+					//uint16_t half = half_from_float(f.u32);
+					//TheWorld_Utils::MemoryBuffer* data1heights16Buffer = westData.heights16Buffer;
+					//TheWorld_Utils::MemoryBuffer* data2heights16Buffer = southwestData.heights16Buffer;
+					//data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
 
@@ -5936,8 +5914,8 @@ namespace TheWorld_Utils
 			//	SW	S	SE
 			if (eastData.heights32Buffer != nullptr && eastData.heights32Buffer->size() > 0
 				&& southeastData.heights32Buffer != nullptr && southeastData.heights32Buffer->size() > 0
-				&& eastData.heights16Buffer != nullptr && eastData.heights16Buffer->size() > 0
-				&& southeastData.heights16Buffer != nullptr && southeastData.heights16Buffer->size() > 0)
+				/*&& eastData.heights16Buffer != nullptr && eastData.heights16Buffer->size() > 0
+				&& southeastData.heights16Buffer != nullptr && southeastData.heights16Buffer->size() > 0*/)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = eastData.heights32Buffer;
 				CacheQuadrantData* data1 = &eastData;
@@ -5957,13 +5935,13 @@ namespace TheWorld_Utils
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
-					TheWorld_Utils::FLOAT_32 f(h);
-					uint16_t half = half_from_float(f.u32);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
 
-					TheWorld_Utils::MemoryBuffer* data1heights16Buffer = eastData.heights16Buffer;
-					TheWorld_Utils::MemoryBuffer* data2heights16Buffer = southeastData.heights16Buffer;
-					data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
+					//TheWorld_Utils::FLOAT_32 f(h);
+					//uint16_t half = half_from_float(f.u32);
+					//TheWorld_Utils::MemoryBuffer* data1heights16Buffer = eastData.heights16Buffer;
+					//TheWorld_Utils::MemoryBuffer* data2heights16Buffer = southeastData.heights16Buffer;
+					//data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
 
@@ -5974,8 +5952,8 @@ namespace TheWorld_Utils
 			//	SW	|S	SE
 			if (southwestData.heights32Buffer != nullptr && southwestData.heights32Buffer->size() > 0
 				&& southData.heights32Buffer != nullptr && southData.heights32Buffer->size() > 0
-				&& southwestData.heights16Buffer != nullptr && southwestData.heights16Buffer->size() > 0
-				&& southData.heights16Buffer != nullptr && southData.heights16Buffer->size() > 0)
+				/*&& southwestData.heights16Buffer != nullptr && southwestData.heights16Buffer->size() > 0
+				&& southData.heights16Buffer != nullptr && southData.heights16Buffer->size() > 0*/)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = southwestData.heights32Buffer;
 				CacheQuadrantData* data1 = &southwestData;
@@ -5995,13 +5973,13 @@ namespace TheWorld_Utils
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
-					TheWorld_Utils::FLOAT_32 f(h);
-					uint16_t half = half_from_float(f.u32);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
 
-					TheWorld_Utils::MemoryBuffer* data1heights16Buffer = southwestData.heights16Buffer;
-					TheWorld_Utils::MemoryBuffer* data2heights16Buffer = southData.heights16Buffer;
-					data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
+					//TheWorld_Utils::FLOAT_32 f(h);
+					//uint16_t half = half_from_float(f.u32);
+					//TheWorld_Utils::MemoryBuffer* data1heights16Buffer = southwestData.heights16Buffer;
+					//TheWorld_Utils::MemoryBuffer* data2heights16Buffer = southData.heights16Buffer;
+					//data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
 
@@ -6012,8 +5990,8 @@ namespace TheWorld_Utils
 			//	SW	S|	SE
 			if (southData.heights32Buffer != nullptr && southData.heights32Buffer->size() > 0
 				&& southeastData.heights32Buffer != nullptr && southeastData.heights32Buffer->size() > 0
-				&& southData.heights16Buffer != nullptr && southData.heights16Buffer->size() > 0
-				&& southeastData.heights16Buffer != nullptr && southeastData.heights16Buffer->size() > 0)
+				/*&& southData.heights16Buffer != nullptr && southData.heights16Buffer->size() > 0
+				&& southeastData.heights16Buffer != nullptr && southeastData.heights16Buffer->size() > 0*/)
 			{
 				TheWorld_Utils::MemoryBuffer* data1heights32Buffer = southData.heights32Buffer;
 				CacheQuadrantData* data1 = &southData;
@@ -6033,238 +6011,238 @@ namespace TheWorld_Utils
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
-					TheWorld_Utils::FLOAT_32 f(h);
-					uint16_t half = half_from_float(f.u32);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
 
-					TheWorld_Utils::MemoryBuffer* data1heights16Buffer = southData.heights16Buffer;
-					TheWorld_Utils::MemoryBuffer* data2heights16Buffer = southeastData.heights16Buffer;
-					data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
+					//TheWorld_Utils::FLOAT_32 f(h);
+					//uint16_t half = half_from_float(f.u32);
+					//TheWorld_Utils::MemoryBuffer* data1heights16Buffer = southData.heights16Buffer;
+					//TheWorld_Utils::MemoryBuffer* data2heights16Buffer = southeastData.heights16Buffer;
+					//data1heights16Buffer->_deprecated_get_at_ref<uint16_t>(border1X, border1Z, numVerticesPerSize) = data2heights16Buffer->_deprecated_get_at_ref<uint16_t>(border2X, border2Z, numVerticesPerSize) = half;
 				}
 			}
 		}
 
 		float northWestCornerHeight = currentData.heights32Buffer->_deprecated_get_at_ref<float>(0, 0, numVerticesPerSize);
 		if (northData.heights32Buffer != nullptr && northData.heights32Buffer->size() > 0
-			&& northData.heights16Buffer != nullptr && northData.heights16Buffer->size() > 0)
+			/*&& northData.heights16Buffer != nullptr && northData.heights16Buffer->size() > 0*/)
 		{
-			TheWorld_Utils::FLOAT_32 f(northWestCornerHeight);
-			uint16_t half = half_from_float(f.u32);
 			northData.heights32Buffer->_deprecated_get_at_ref<float>(0, maxIndex, numVerticesPerSize) = northWestCornerHeight;
-			northData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(0, maxIndex, numVerticesPerSize) = half;
+			//TheWorld_Utils::FLOAT_32 f(northWestCornerHeight);
+			//uint16_t half = half_from_float(f.u32);
+			//northData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(0, maxIndex, numVerticesPerSize) = half;
 		}
 		if (northwestData.heights32Buffer != nullptr && northwestData.heights32Buffer->size() > 0
-			&& northwestData.heights16Buffer != nullptr && northwestData.heights16Buffer->size() > 0)
+			/*&& northwestData.heights16Buffer != nullptr && northwestData.heights16Buffer->size() > 0*/)
 		{
-			TheWorld_Utils::FLOAT_32 f(northWestCornerHeight);
-			uint16_t half = half_from_float(f.u32);
 			northwestData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, maxIndex, numVerticesPerSize) = northWestCornerHeight;
-			northwestData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex, maxIndex, numVerticesPerSize) = half;
+			//TheWorld_Utils::FLOAT_32 f(northWestCornerHeight);
+			//uint16_t half = half_from_float(f.u32);
+			//northwestData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex, maxIndex, numVerticesPerSize) = half;
 		}
 		if (westData.heights32Buffer != nullptr && westData.heights32Buffer->size() > 0
-			&& westData.heights16Buffer != nullptr && westData.heights16Buffer->size() > 0)
+			/*&& westData.heights16Buffer != nullptr && westData.heights16Buffer->size() > 0*/)
 		{
-			TheWorld_Utils::FLOAT_32 f(northWestCornerHeight);
-			uint16_t half = half_from_float(f.u32);
 			westData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, 0, numVerticesPerSize) = northWestCornerHeight;
-			westData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex, 0, numVerticesPerSize) = half;
+			//TheWorld_Utils::FLOAT_32 f(northWestCornerHeight);
+			//uint16_t half = half_from_float(f.u32);
+			//westData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex, 0, numVerticesPerSize) = half;
 		}
 
 		float northEastCornerHeight = currentData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, 0, numVerticesPerSize);
 		if (northData.heights32Buffer != nullptr && northData.heights32Buffer->size() > 0
-			&& northData.heights16Buffer != nullptr && northData.heights16Buffer->size() > 0)
+			/*&& northData.heights16Buffer != nullptr && northData.heights16Buffer->size() > 0*/)
 		{
-			TheWorld_Utils::FLOAT_32 f(northEastCornerHeight);
-			uint16_t half = half_from_float(f.u32);
 			northData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, maxIndex, numVerticesPerSize) = northEastCornerHeight;
-			northData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex, maxIndex, numVerticesPerSize) = half;
+			//TheWorld_Utils::FLOAT_32 f(northEastCornerHeight);
+			//uint16_t half = half_from_float(f.u32);
+			//northData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex, maxIndex, numVerticesPerSize) = half;
 		}
 		if (northeastData.heights32Buffer != nullptr && northeastData.heights32Buffer->size() > 0
-			&& northeastData.heights16Buffer != nullptr && northeastData.heights16Buffer->size() > 0)
+			/*&& northeastData.heights16Buffer != nullptr && northeastData.heights16Buffer->size() > 0*/)
 		{
-			TheWorld_Utils::FLOAT_32 f(northEastCornerHeight);
-			uint16_t half = half_from_float(f.u32);
 			northeastData.heights32Buffer->_deprecated_get_at_ref<float>(0, maxIndex, numVerticesPerSize) = northEastCornerHeight;
-			northeastData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(0, maxIndex, numVerticesPerSize) = half;
+			//TheWorld_Utils::FLOAT_32 f(northEastCornerHeight);
+			//uint16_t half = half_from_float(f.u32);
+			//northeastData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(0, maxIndex, numVerticesPerSize) = half;
 		}
 		if (eastData.heights32Buffer != nullptr && eastData.heights32Buffer->size() > 0
-			&& eastData.heights16Buffer != nullptr && eastData.heights16Buffer->size() > 0)
+			/*&& eastData.heights16Buffer != nullptr && eastData.heights16Buffer->size() > 0*/)
 		{
-			TheWorld_Utils::FLOAT_32 f(northEastCornerHeight);
-			uint16_t half = half_from_float(f.u32);
 			eastData.heights32Buffer->_deprecated_get_at_ref<float>(0, 0, numVerticesPerSize) = northEastCornerHeight;
-			eastData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(0, 0, numVerticesPerSize) = half;
+			//TheWorld_Utils::FLOAT_32 f(northEastCornerHeight);
+			//uint16_t half = half_from_float(f.u32);
+			//eastData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(0, 0, numVerticesPerSize) = half;
 		}
 
 		float southWestCornerHeight = currentData.heights32Buffer->_deprecated_get_at_ref<float>(0, maxIndex, numVerticesPerSize);
 		if (southData.heights32Buffer != nullptr && southData.heights32Buffer->size() > 0
-			&& southData.heights16Buffer != nullptr && southData.heights16Buffer->size() > 0)
+			/*&& southData.heights16Buffer != nullptr && southData.heights16Buffer->size() > 0*/)
 		{
-			TheWorld_Utils::FLOAT_32 f(southWestCornerHeight);
-			uint16_t half = half_from_float(f.u32);
 			southData.heights32Buffer->_deprecated_get_at_ref<float>(0, 0, numVerticesPerSize) = southWestCornerHeight;
-			southData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(0, 0, numVerticesPerSize) = half;
+			//TheWorld_Utils::FLOAT_32 f(southWestCornerHeight);
+			//uint16_t half = half_from_float(f.u32);
+			//southData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(0, 0, numVerticesPerSize) = half;
 		}
 		if (southwestData.heights32Buffer != nullptr && southwestData.heights32Buffer->size() > 0
-			&& southwestData.heights16Buffer != nullptr && southwestData.heights16Buffer->size() > 0)
+			/*&& southwestData.heights16Buffer != nullptr && southwestData.heights16Buffer->size() > 0*/)
 		{
-			TheWorld_Utils::FLOAT_32 f(southWestCornerHeight);
-			uint16_t half = half_from_float(f.u32);
 			southwestData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, 0, numVerticesPerSize) = southWestCornerHeight;
-			southwestData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex, 0, numVerticesPerSize) = half;
+			//TheWorld_Utils::FLOAT_32 f(southWestCornerHeight);
+			//uint16_t half = half_from_float(f.u32);
+			//southwestData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex, 0, numVerticesPerSize) = half;
 		}
 		if (westData.heights32Buffer != nullptr && westData.heights32Buffer->size() > 0
-			&& westData.heights16Buffer != nullptr && westData.heights16Buffer->size() > 0)
+			/*&& westData.heights16Buffer != nullptr && westData.heights16Buffer->size() > 0*/)
 		{
-			TheWorld_Utils::FLOAT_32 f(southWestCornerHeight);
-			uint16_t half = half_from_float(f.u32);
 			westData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, maxIndex, numVerticesPerSize) = southWestCornerHeight;
-			westData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex, maxIndex, numVerticesPerSize) = half;
+			//TheWorld_Utils::FLOAT_32 f(southWestCornerHeight);
+			//uint16_t half = half_from_float(f.u32);
+			//westData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex, maxIndex, numVerticesPerSize) = half;
 		}
 
 		float southEastCornerHeight = currentData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, maxIndex, numVerticesPerSize);
 		if (southData.heights32Buffer != nullptr && southData.heights32Buffer->size() > 0
-			&& southData.heights16Buffer != nullptr && southData.heights16Buffer->size() > 0)
+			/*&& southData.heights16Buffer != nullptr && southData.heights16Buffer->size() > 0*/)
 		{
-			TheWorld_Utils::FLOAT_32 f(southEastCornerHeight);
-			uint16_t half = half_from_float(f.u32);
 			southData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, 0, numVerticesPerSize) = southEastCornerHeight;
-			southData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex, 0, numVerticesPerSize) = half;
+			//TheWorld_Utils::FLOAT_32 f(southEastCornerHeight);
+			//uint16_t half = half_from_float(f.u32);
+			//southData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex, 0, numVerticesPerSize) = half;
 		}
 		if (southeastData.heights32Buffer != nullptr && southeastData.heights32Buffer->size() > 0
-			&& southeastData.heights16Buffer != nullptr && southeastData.heights16Buffer->size() > 0)
+			/*&& southeastData.heights16Buffer != nullptr && southeastData.heights16Buffer->size() > 0*/)
 		{
-			TheWorld_Utils::FLOAT_32 f(southEastCornerHeight);
-			uint16_t half = half_from_float(f.u32);
 			southeastData.heights32Buffer->_deprecated_get_at_ref<float>(0, 0, numVerticesPerSize) = southEastCornerHeight;
-			southeastData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(0, 0, numVerticesPerSize) = half;
+			//TheWorld_Utils::FLOAT_32 f(southEastCornerHeight);
+			//uint16_t half = half_from_float(f.u32);
+			//southeastData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(0, 0, numVerticesPerSize) = half;
 		}
 		if (eastData.heights32Buffer != nullptr && eastData.heights32Buffer->size() > 0
-			&& eastData.heights16Buffer != nullptr && eastData.heights16Buffer->size() > 0)
+			/*&& eastData.heights16Buffer != nullptr && eastData.heights16Buffer->size() > 0*/)
 		{
-			TheWorld_Utils::FLOAT_32 f(southEastCornerHeight);
-			uint16_t half = half_from_float(f.u32);
 			eastData.heights32Buffer->_deprecated_get_at_ref<float>(0, maxIndex, numVerticesPerSize) = southEastCornerHeight;
-			eastData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(0, maxIndex, numVerticesPerSize) = half;
+			//TheWorld_Utils::FLOAT_32 f(southEastCornerHeight);
+			//uint16_t half = half_from_float(f.u32);
+			//eastData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(0, maxIndex, numVerticesPerSize) = half;
 		}
 
 		return updated;
 	}
 		
-	bool MeshCacheBuffer::calcMinMaxHeight(TheWorld_Utils::QuadrantPos& pos, size_t numVerticesPerSize, TheWorld_Utils::TerrainEdit* terrainEdit, TheWorld_Utils::MemoryBuffer& heights32Buffer)
-	{
-		bool updated = false;
-		
-		float terrainEditMinHeight = FLT_MAX;
-		float terrainEditMaxHeight = -FLT_MAX;
-		float terrainEditEastSideXPlusMinHeight = FLT_MAX;
-		float terrainEditEastSideXPlusMaxHeight = -FLT_MAX;
-		float terrainEditWestSideXMinusMinHeight = FLT_MAX;
-		float terrainEditWestSideXMinusMaxHeight = -FLT_MAX;
-		float terrainEditSouthSideZPlusMinHeight = FLT_MAX;
-		float terrainEditSouthSideZPlusMaxHeight = -FLT_MAX;
-		float terrainEditNorthSideZMinusMinHeight = FLT_MAX;
-		float terrainEditNorthSideZMinusMaxHeight = -FLT_MAX;
-		
-		size_t maxIndex = numVerticesPerSize - 1;
+	//bool MeshCacheBuffer::calcMinMaxHeight(TheWorld_Utils::QuadrantPos& pos, size_t numVerticesPerSize, TheWorld_Utils::TerrainEdit* terrainEdit, TheWorld_Utils::MemoryBuffer& heights32Buffer)
+	//{
+	//	bool updated = false;
+	//	
+	//	float terrainEditMinHeight = FLT_MAX;
+	//	float terrainEditMaxHeight = -FLT_MAX;
+	//	float terrainEditEastSideXPlusMinHeight = FLT_MAX;
+	//	float terrainEditEastSideXPlusMaxHeight = -FLT_MAX;
+	//	float terrainEditWestSideXMinusMinHeight = FLT_MAX;
+	//	float terrainEditWestSideXMinusMaxHeight = -FLT_MAX;
+	//	float terrainEditSouthSideZPlusMinHeight = FLT_MAX;
+	//	float terrainEditSouthSideZPlusMaxHeight = -FLT_MAX;
+	//	float terrainEditNorthSideZMinusMinHeight = FLT_MAX;
+	//	float terrainEditNorthSideZMinusMaxHeight = -FLT_MAX;
+	//	
+	//	size_t maxIndex = numVerticesPerSize - 1;
 
-		for (size_t z = 0; z < numVerticesPerSize; z++)
-		{
-			for (size_t x = 0; x < numVerticesPerSize; x++)
-			{
-				float h = heights32Buffer._deprecated_get_at_ref<float>(x, z, numVerticesPerSize);
-				if (h < terrainEditMinHeight)
-					terrainEditMinHeight = h;
-				if (h > terrainEditMaxHeight)
-					terrainEditMaxHeight = h;
+	//	for (size_t z = 0; z < numVerticesPerSize; z++)
+	//	{
+	//		for (size_t x = 0; x < numVerticesPerSize; x++)
+	//		{
+	//			float h = heights32Buffer._deprecated_get_at_ref<float>(x, z, numVerticesPerSize);
+	//			if (h < terrainEditMinHeight)
+	//				terrainEditMinHeight = h;
+	//			if (h > terrainEditMaxHeight)
+	//				terrainEditMaxHeight = h;
 
-				if (x == 0)
-				{
-					if (h < terrainEditWestSideXMinusMinHeight)
-						terrainEditWestSideXMinusMinHeight = h;
-					if (h > terrainEditWestSideXMinusMaxHeight)
-						terrainEditWestSideXMinusMaxHeight = h;
-				}
+	//			if (x == 0)
+	//			{
+	//				if (h < terrainEditWestSideXMinusMinHeight)
+	//					terrainEditWestSideXMinusMinHeight = h;
+	//				if (h > terrainEditWestSideXMinusMaxHeight)
+	//					terrainEditWestSideXMinusMaxHeight = h;
+	//			}
 
-				if (z == 0)
-				{
-					if (h < terrainEditNorthSideZMinusMinHeight)
-						terrainEditNorthSideZMinusMinHeight = h;
-					if (h > terrainEditNorthSideZMinusMaxHeight)
-						terrainEditNorthSideZMinusMaxHeight = h;
-				}
+	//			if (z == 0)
+	//			{
+	//				if (h < terrainEditNorthSideZMinusMinHeight)
+	//					terrainEditNorthSideZMinusMinHeight = h;
+	//				if (h > terrainEditNorthSideZMinusMaxHeight)
+	//					terrainEditNorthSideZMinusMaxHeight = h;
+	//			}
 
-				if (x == maxIndex)
-				{
-					if (h < terrainEditEastSideXPlusMinHeight)
-						terrainEditEastSideXPlusMinHeight = h;
-					if (h > terrainEditEastSideXPlusMaxHeight)
-						terrainEditEastSideXPlusMaxHeight = h;
-				}
+	//			if (x == maxIndex)
+	//			{
+	//				if (h < terrainEditEastSideXPlusMinHeight)
+	//					terrainEditEastSideXPlusMinHeight = h;
+	//				if (h > terrainEditEastSideXPlusMaxHeight)
+	//					terrainEditEastSideXPlusMaxHeight = h;
+	//			}
 
-				if (z == maxIndex)
-				{
-					if (h < terrainEditSouthSideZPlusMinHeight)
-						terrainEditSouthSideZPlusMinHeight = h;
-					if (h > terrainEditSouthSideZPlusMaxHeight)
-						terrainEditSouthSideZPlusMaxHeight = h;
-				}
-			}
-		}
+	//			if (z == maxIndex)
+	//			{
+	//				if (h < terrainEditSouthSideZPlusMinHeight)
+	//					terrainEditSouthSideZPlusMinHeight = h;
+	//				if (h > terrainEditSouthSideZPlusMaxHeight)
+	//					terrainEditSouthSideZPlusMaxHeight = h;
+	//			}
+	//		}
+	//	}
 
-		if (terrainEdit->minHeight != terrainEditMinHeight)
-		{
-			terrainEdit->minHeight = terrainEditMinHeight;
-			updated = true;
-		}
-		if (terrainEdit->maxHeight != terrainEditMaxHeight)
-		{
-			terrainEdit->maxHeight = terrainEditMaxHeight;
-			updated = true;
-		}
-		if (terrainEdit->eastSideXPlus.minHeight != terrainEditEastSideXPlusMinHeight)
-		{
-			terrainEdit->eastSideXPlus.minHeight = terrainEditEastSideXPlusMinHeight;
-			updated = true;
-		}
-		if (terrainEdit->eastSideXPlus.maxHeight != terrainEditEastSideXPlusMaxHeight)
-		{
-			terrainEdit->eastSideXPlus.maxHeight = terrainEditEastSideXPlusMaxHeight;
-			updated = true;
-		}
-		if (terrainEdit->westSideXMinus.minHeight != terrainEditWestSideXMinusMinHeight)
-		{
-			terrainEdit->westSideXMinus.minHeight = terrainEditWestSideXMinusMinHeight;
-			updated = true;
-		}
-		if (terrainEdit->westSideXMinus.maxHeight != terrainEditWestSideXMinusMaxHeight)
-		{
-			terrainEdit->westSideXMinus.maxHeight = terrainEditWestSideXMinusMaxHeight;
-			updated = true;
-		}
-		if (terrainEdit->southSideZPlus.minHeight != terrainEditSouthSideZPlusMinHeight)
-		{
-			terrainEdit->southSideZPlus.minHeight = terrainEditSouthSideZPlusMinHeight;
-			updated = true;
-		}
-		if (terrainEdit->southSideZPlus.maxHeight != terrainEditSouthSideZPlusMaxHeight)
-		{
-			terrainEdit->southSideZPlus.maxHeight = terrainEditSouthSideZPlusMaxHeight;
-			updated = true;
-		}
-		if (terrainEdit->northSideZMinus.minHeight != terrainEditNorthSideZMinusMinHeight)
-		{
-			terrainEdit->northSideZMinus.minHeight = terrainEditNorthSideZMinusMinHeight;
-			updated = true;
-		}
-		if (terrainEdit->northSideZMinus.maxHeight != terrainEditNorthSideZMinusMaxHeight)
-		{
-			terrainEdit->northSideZMinus.maxHeight = terrainEditNorthSideZMinusMaxHeight;
-			updated = true;
-		}
+	//	if (terrainEdit->minHeight != terrainEditMinHeight)
+	//	{
+	//		terrainEdit->minHeight = terrainEditMinHeight;
+	//		updated = true;
+	//	}
+	//	if (terrainEdit->maxHeight != terrainEditMaxHeight)
+	//	{
+	//		terrainEdit->maxHeight = terrainEditMaxHeight;
+	//		updated = true;
+	//	}
+	//	if (terrainEdit->eastSideXPlus.minHeight != terrainEditEastSideXPlusMinHeight)
+	//	{
+	//		terrainEdit->eastSideXPlus.minHeight = terrainEditEastSideXPlusMinHeight;
+	//		updated = true;
+	//	}
+	//	if (terrainEdit->eastSideXPlus.maxHeight != terrainEditEastSideXPlusMaxHeight)
+	//	{
+	//		terrainEdit->eastSideXPlus.maxHeight = terrainEditEastSideXPlusMaxHeight;
+	//		updated = true;
+	//	}
+	//	if (terrainEdit->westSideXMinus.minHeight != terrainEditWestSideXMinusMinHeight)
+	//	{
+	//		terrainEdit->westSideXMinus.minHeight = terrainEditWestSideXMinusMinHeight;
+	//		updated = true;
+	//	}
+	//	if (terrainEdit->westSideXMinus.maxHeight != terrainEditWestSideXMinusMaxHeight)
+	//	{
+	//		terrainEdit->westSideXMinus.maxHeight = terrainEditWestSideXMinusMaxHeight;
+	//		updated = true;
+	//	}
+	//	if (terrainEdit->southSideZPlus.minHeight != terrainEditSouthSideZPlusMinHeight)
+	//	{
+	//		terrainEdit->southSideZPlus.minHeight = terrainEditSouthSideZPlusMinHeight;
+	//		updated = true;
+	//	}
+	//	if (terrainEdit->southSideZPlus.maxHeight != terrainEditSouthSideZPlusMaxHeight)
+	//	{
+	//		terrainEdit->southSideZPlus.maxHeight = terrainEditSouthSideZPlusMaxHeight;
+	//		updated = true;
+	//	}
+	//	if (terrainEdit->northSideZMinus.minHeight != terrainEditNorthSideZMinusMinHeight)
+	//	{
+	//		terrainEdit->northSideZMinus.minHeight = terrainEditNorthSideZMinusMinHeight;
+	//		updated = true;
+	//	}
+	//	if (terrainEdit->northSideZMinus.maxHeight != terrainEditNorthSideZMinusMaxHeight)
+	//	{
+	//		terrainEdit->northSideZMinus.maxHeight = terrainEditNorthSideZMinusMaxHeight;
+	//		updated = true;
+	//	}
 
-		return updated;
-	}
+	//	return updated;
+	//}
  
 	bool MeshCacheBuffer::blendQuadrantOnNorthSide(TheWorld_Utils::QuadrantPos& pos, bool lastPhase,
 		CacheQuadrantData& data,
@@ -6281,7 +6259,7 @@ namespace TheWorld_Utils
 
 		if (data.terrainEditValues == nullptr || data.terrainEditValues->size() == 0
 			|| data.heights32Buffer == nullptr || data.heights32Buffer->size() == 0
-			|| data.heights16Buffer == nullptr || data.heights16Buffer->size() == 0)
+			/*|| data.heights16Buffer == nullptr || data.heights16Buffer->size() == 0 */ )
 			return updated;
 
 		TerrainEdit* terrainEdit = (TerrainEdit*)data.terrainEditValues->ptr();
@@ -6355,9 +6333,9 @@ namespace TheWorld_Utils
 						}
 						else
 							data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize) += increment;
-						TheWorld_Utils::FLOAT_32 f(data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
-						uint16_t half = half_from_float(f.u32);
-						data.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half;
+						//TheWorld_Utils::FLOAT_32 f(data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
+						//uint16_t half = half_from_float(f.u32);
+						//data.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half;
 
 						if (z == 0 && heightSaved)
 						{
@@ -6365,9 +6343,9 @@ namespace TheWorld_Utils
 						}
 						else
 							northData.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize) -= increment;
-						TheWorld_Utils::FLOAT_32 f1(northData.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize));
-						uint16_t half1 = half_from_float(f1.u32);
-						northData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, maxIndex - z, numVerticesPerSize) = half1;
+						//TheWorld_Utils::FLOAT_32 f1(northData.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize));
+						//uint16_t half1 = half_from_float(f1.u32);
+						//northData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, maxIndex - z, numVerticesPerSize) = half1;
 
 						if (z == 1)
 						{
@@ -6403,15 +6381,15 @@ namespace TheWorld_Utils
 						{
 							float modifiedHeightStep1 = heightStep1 + sin(float(idx) * radiantStepPerVertex) * heightStepFactor1;
 							data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize) -= modifiedHeightStep1;
-							TheWorld_Utils::FLOAT_32 f1(data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
-							uint16_t half1 = half_from_float(f1.u32);
-							data.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half1;
+							//TheWorld_Utils::FLOAT_32 f1(data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
+							//uint16_t half1 = half_from_float(f1.u32);
+							//data.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half1;
 
 							float modifiedHeightStep2 = heightStep2 + sin(float(idx) * radiantStepPerVertex) * heightStepFactor2;
 							northData.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize) -= modifiedHeightStep2;
-							TheWorld_Utils::FLOAT_32 f2(northData.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize));
-							uint16_t half2 = half_from_float(f2.u32);
-							northData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, maxIndex - z, numVerticesPerSize) = half2;
+							//TheWorld_Utils::FLOAT_32 f2(northData.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize));
+							//uint16_t half2 = half_from_float(f2.u32);
+							//northData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, maxIndex - z, numVerticesPerSize) = half2;
 
 							idx++;
 						}
@@ -6441,7 +6419,7 @@ namespace TheWorld_Utils
 
 		if (data.terrainEditValues == nullptr || data.terrainEditValues->size() == 0
 			|| data.heights32Buffer == nullptr || data.heights32Buffer->size() == 0
-			|| data.heights16Buffer == nullptr || data.heights16Buffer->size() == 0)
+			/*|| data.heights16Buffer == nullptr || data.heights16Buffer->size() == 0*/)
 			return updated;
 
 		TerrainEdit* terrainEdit = (TerrainEdit*)data.terrainEditValues->ptr();
@@ -6516,9 +6494,9 @@ namespace TheWorld_Utils
 						}
 						else
 							data.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize) += increment;
-						TheWorld_Utils::FLOAT_32 f(data.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize));
-						uint16_t half = half_from_float(f.u32);
-						data.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, maxIndex - z, numVerticesPerSize) = half;
+						//TheWorld_Utils::FLOAT_32 f(data.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize));
+						//uint16_t half = half_from_float(f.u32);
+						//data.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, maxIndex - z, numVerticesPerSize) = half;
 
 						if (z == 0 && heightSaved)
 						{
@@ -6526,9 +6504,9 @@ namespace TheWorld_Utils
 						}
 						else
 							southData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize) -= increment;
-						TheWorld_Utils::FLOAT_32 f1(southData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
-						uint16_t half1 = half_from_float(f1.u32);
-						southData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half1;
+						//TheWorld_Utils::FLOAT_32 f1(southData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
+						//uint16_t half1 = half_from_float(f1.u32);
+						//southData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half1;
 
 						if (z == 1)
 						{
@@ -6561,15 +6539,15 @@ namespace TheWorld_Utils
 						{
 							float modifiedHeightStep1 = heightStep1 + sin(float(idx) * radiantStepPerVertex) * heightStepFactor1;
 							data.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize) -= modifiedHeightStep1;
-							TheWorld_Utils::FLOAT_32 f1(data.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize));
-							uint16_t half1 = half_from_float(f1.u32);
-							data.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, maxIndex - z, numVerticesPerSize) = half1;
+							//TheWorld_Utils::FLOAT_32 f1(data.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize));
+							//uint16_t half1 = half_from_float(f1.u32);
+							//data.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, maxIndex - z, numVerticesPerSize) = half1;
 
 							float modifiedHeightStep2 = heightStep2 + sin(float(idx) * radiantStepPerVertex) * heightStepFactor2;
 							southData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize) -= modifiedHeightStep2;
-							TheWorld_Utils::FLOAT_32 f2(southData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
-							uint16_t half2 = half_from_float(f2.u32);
-							southData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half2;
+							//TheWorld_Utils::FLOAT_32 f2(southData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
+							//uint16_t half2 = half_from_float(f2.u32);
+							//southData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half2;
 
 							idx++;
 						}
@@ -6599,7 +6577,7 @@ namespace TheWorld_Utils
 
 		if (data.terrainEditValues == nullptr || data.terrainEditValues->size() == 0
 			|| data.heights32Buffer == nullptr || data.heights32Buffer->size() == 0
-			|| data.heights16Buffer == nullptr || data.heights16Buffer->size() == 0)
+			/*|| data.heights16Buffer == nullptr || data.heights16Buffer->size() == 0*/)
 			return updated;
 
 		TerrainEdit* terrainEdit = (TerrainEdit*)data.terrainEditValues->ptr();
@@ -6673,9 +6651,9 @@ namespace TheWorld_Utils
 						}
 						else
 							data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize) += increment;
-						TheWorld_Utils::FLOAT_32 f(data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
-						uint16_t half = half_from_float(f.u32);
-						data.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half;
+						//TheWorld_Utils::FLOAT_32 f(data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
+						//uint16_t half = half_from_float(f.u32);
+						//data.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half;
 
 						if (x == 0 && heightSaved)
 						{
@@ -6683,9 +6661,9 @@ namespace TheWorld_Utils
 						}
 						else
 							westData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize) -= increment;
-						TheWorld_Utils::FLOAT_32 f1(westData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize));
-						uint16_t half1 = half_from_float(f1.u32);
-						westData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex - x, z, numVerticesPerSize) = half1;
+						//TheWorld_Utils::FLOAT_32 f1(westData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize));
+						//uint16_t half1 = half_from_float(f1.u32);
+						//westData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex - x, z, numVerticesPerSize) = half1;
 
 						if (x == 1)
 						{
@@ -6718,15 +6696,15 @@ namespace TheWorld_Utils
 						{
 							float modifiedHeightStep1 = heightStep1 + sin(float(idx) * radiantStepPerVertex) * heightStepFactor1;
 							data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize) -= modifiedHeightStep1;
-							TheWorld_Utils::FLOAT_32 f1(data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
-							uint16_t half1 = half_from_float(f1.u32);
-							data.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half1;
+							//TheWorld_Utils::FLOAT_32 f1(data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
+							//uint16_t half1 = half_from_float(f1.u32);
+							//data.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half1;
 
 							float modifiedHeightStep2 = heightStep2 + sin(float(idx) * radiantStepPerVertex) * heightStepFactor2;
 							westData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize) -= modifiedHeightStep2;
-							TheWorld_Utils::FLOAT_32 f2(westData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize));
-							uint16_t half2 = half_from_float(f2.u32);
-							westData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex - x, z, numVerticesPerSize) = half2;
+							//TheWorld_Utils::FLOAT_32 f2(westData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize));
+							//uint16_t half2 = half_from_float(f2.u32);
+							//westData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex - x, z, numVerticesPerSize) = half2;
 
 							idx++;
 						}
@@ -6756,7 +6734,7 @@ namespace TheWorld_Utils
 
 		if (data.terrainEditValues == nullptr || data.terrainEditValues->size() == 0
 			|| data.heights32Buffer == nullptr || data.heights32Buffer->size() == 0
-			|| data.heights16Buffer == nullptr || data.heights16Buffer->size() == 0)
+			/*|| data.heights16Buffer == nullptr || data.heights16Buffer->size() == 0*/)
 			return updated;
 
 		TerrainEdit* terrainEdit = (TerrainEdit*)data.terrainEditValues->ptr();
@@ -6830,9 +6808,9 @@ namespace TheWorld_Utils
 						}
 						else
 							data.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize) += increment;
-						TheWorld_Utils::FLOAT_32 f(data.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize));
-						uint16_t half = half_from_float(f.u32);
-						data.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex - x, z, numVerticesPerSize) = half;
+						//TheWorld_Utils::FLOAT_32 f(data.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize));
+						//uint16_t half = half_from_float(f.u32);
+						//data.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex - x, z, numVerticesPerSize) = half;
 
 						if (x == 0 && heightSaved)
 						{
@@ -6840,9 +6818,9 @@ namespace TheWorld_Utils
 						}
 						else
 							eastData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize) -= increment;
-						TheWorld_Utils::FLOAT_32 f1(eastData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
-						uint16_t half1 = half_from_float(f1.u32);
-						eastData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half1;
+						//TheWorld_Utils::FLOAT_32 f1(eastData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
+						//uint16_t half1 = half_from_float(f1.u32);
+						//eastData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half1;
 
 						if (x == 1)
 						{
@@ -6875,15 +6853,15 @@ namespace TheWorld_Utils
 						{
 							float modifiedHeightStep1 = heightStep1 + sin(float(idx) * radiantStepPerVertex) * heightStepFactor1;
 							data.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize) -= modifiedHeightStep1;
-							TheWorld_Utils::FLOAT_32 f1(data.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize));
-							uint16_t half1 = half_from_float(f1.u32);
-							data.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex - x, z, numVerticesPerSize) = half1;
+							//TheWorld_Utils::FLOAT_32 f1(data.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize));
+							//uint16_t half1 = half_from_float(f1.u32);
+							//data.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex - x, z, numVerticesPerSize) = half1;
 
 							float modifiedHeightStep2 = heightStep2 + sin(float(idx) * radiantStepPerVertex) * heightStepFactor2;
 							eastData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize) -= modifiedHeightStep2;
-							TheWorld_Utils::FLOAT_32 f2(eastData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
-							uint16_t half2 = half_from_float(f2.u32);
-							eastData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half2;
+							//TheWorld_Utils::FLOAT_32 f2(eastData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
+							//uint16_t half2 = half_from_float(f2.u32);
+							//eastData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half2;
 
 							idx++;
 						}

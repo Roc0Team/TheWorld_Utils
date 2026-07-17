@@ -2118,7 +2118,7 @@ namespace TheWorld_Utils
 		__declspec(dllexport) void setEmptyBuffer(size_t numVerticesPerSize, std::string& meshId, std::string& buffer);
 		__declspec(dllexport) void generateHeightsWithNoise(TheWorld_Utils::QuadrantPos pos, TerrainEdit* terrainEdit, std::vector<float>& vectGridHeights);
 		//__declspec(dllexport) void applyWorldModifier(int level, size_t numVerticesPerSize, float gridStepInWU, float lowerXGridVertex, float lowerZGridVertex, TerrainEdit* terrainEdit, std::vector<float>& vectGridHeights, WorldModifier& wm);
-		static __declspec(dllexport) bool calcMinMaxHeight(TheWorld_Utils::QuadrantPos& pos, size_t numVerticesPerSize, TheWorld_Utils::TerrainEdit* terrainEdit, TheWorld_Utils::MemoryBuffer& heights32Buffer);
+		//static __declspec(dllexport) bool calcMinMaxHeight(TheWorld_Utils::QuadrantPos& pos, size_t numVerticesPerSize, TheWorld_Utils::TerrainEdit* terrainEdit, TheWorld_Utils::MemoryBuffer& heights32Buffer);
 		static __declspec(dllexport) bool blendQuadrant(TheWorld_Utils::QuadrantPos pos, bool lastPhase, bool renewMeshIdOnUpdate,
 			CacheQuadrantData& data,
 			CacheQuadrantData& northData,
