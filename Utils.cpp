@@ -815,8 +815,9 @@ namespace TheWorld_Utils
 		return ret;
 	}
 
-	//constexpr auto QUADRANT_TRACKING_IDX_POS_X = -46;
-	//constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -90;
+	constexpr auto QUADRANT_TRACKING_SINGLE = true;
+	constexpr auto QUADRANT_TRACKING_IDX_POS_X = -53;
+	constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -59;
 
 	constexpr auto QUADRANT_TRACKING_MULTIPLE = false;
 	static std::vector<int> quadrantTrackingPosX = { -45, -45 };
@@ -854,9 +855,15 @@ namespace TheWorld_Utils
 			}
 		}
 
-		return false;
+		if (QUADRANT_TRACKING_SINGLE)
+		{
+			if (m_quadrantPosX == QUADRANT_TRACKING_IDX_POS_X and m_quadrantPosZ == QUADRANT_TRACKING_IDX_POS_Z)
+				return true;
+		}
 		
 		//return (isInitialized() and m_quadrantPosX == QUADRANT_TRACKING_IDX_POS_X and m_quadrantPosZ == QUADRANT_TRACKING_IDX_POS_Z);
+	
+		return false;
 	}
 
 	void QuadrantPos::trackQuadrantForDebug(std::string owner, std::string text, std::string hash) const
@@ -875,7 +882,7 @@ namespace TheWorld_Utils
 	TerrainEdit::TerrainEdit(enum class TerrainEdit::TerrainType terrainType)
 	{
 		size = sizeof(TerrainEdit);
-		needUploadToServer = false;
+		needUploadToServer(false);
 		//normalsNeedRegen(true);
 
 		minHeight = 0;
@@ -917,7 +924,7 @@ namespace TheWorld_Utils
 	{
 		if (size != o.size)
 			return false;
-		if (needUploadToServer != o.needUploadToServer)
+		if (m_needUploadToServer != o.m_needUploadToServer)
 			return false;
 		//if (m_normalsNeedRegen_notUsed != o.m_normalsNeedRegen_notUsed)
 		//	return false;
@@ -1237,7 +1244,7 @@ namespace TheWorld_Utils
 
 	void TerrainEdit::serialize(TheWorld_Utils::MemoryBuffer& buffer)
 	{
-		buffer.reserve(sizeof(TerrainEdit));
+		//buffer.reserve(sizeof(TerrainEdit));
 		buffer.set((BYTE*)this, sizeof(TerrainEdit));
 	}
 
@@ -1613,6 +1620,10 @@ namespace TheWorld_Utils
 	bool MemoryBuffer::empty(void) const
 	{
 		return m_size == 0;
+	}
+	bool MemoryBuffer::notEmpty(void) const
+	{
+		return not empty();
 	}
 	void MemoryBuffer::adjustSize(size_t size)
 	{
@@ -5174,7 +5185,11 @@ namespace TheWorld_Utils
 						TheWorld_Utils::FLOAT_32 f(altitude);
 						*movingHeights16Buffer = half_from_float(f.u32);
 						f.u32 = half_to_float(*movingHeights16Buffer);
-						*movingHeights32Buffer = f.f32;
+						if (*movingHeights32Buffer != f.f32)
+						{
+							*movingHeights32Buffer = f.f32;
+							updated = true;
+						}
 						movingHeights16Buffer++;
 						movingHeights32Buffer++;
 					}
@@ -5302,6 +5317,169 @@ namespace TheWorld_Utils
 
 		return updated;
 	}
+
+	//bool MeshCacheBuffer::calcMinMaxHeightsDebug(TheWorld_Utils::QuadrantPos pos, bool renewMeshIdOnUpdate, CacheQuadrantData& data)
+	//{
+	//	bool updated = false;
+
+	//	size_t numVerticesPerSize = (size_t)pos.getNumVerticesPerSize();
+
+	//	my_assert(data.heights32Buffer != nullptr and data.heights32Buffer->size() == numVerticesPerSize * numVerticesPerSize * sizeof(float));
+	//	my_assert(data.heights16Buffer != nullptr and data.heights16Buffer->size() == numVerticesPerSize * numVerticesPerSize * sizeof(uint16_t));
+	//	my_assert(data.terrainEditValues != nullptr and data.terrainEditValues->size() == sizeof(TerrainEdit));
+
+	//	{
+	//		size_t numVertices = numVerticesPerSize * numVerticesPerSize;
+
+	//		size_t heights16BufferSize = numVertices * sizeof(uint16_t);
+	//		uint16_t* movingHeights16Buffer = (uint16_t*)data.heights16Buffer->ptr();
+
+	//		size_t heights32BufferSize = numVertices * sizeof(float);
+	//		float* movingHeights32Buffer = (float*)data.heights32Buffer->ptr();
+
+	//		{
+	//			TheWorld_Utils::GuardProfiler profiler(std::string("generateDetailDataForQuadrants 2 ") + __FUNCTION__, "Move Heights to float16/float32 buffer");
+	//			for (int z = 0; z < numVerticesPerSize; z++)
+	//				for (int x = 0; x < numVerticesPerSize; x++)
+	//				{
+	//					float altitude = *movingHeights32Buffer;
+	//					TheWorld_Utils::FLOAT_32 f(altitude);
+	//					*movingHeights16Buffer = half_from_float(f.u32);
+	//					
+	//					f.u32 = half_to_float(*movingHeights16Buffer);
+	//					if (*movingHeights32Buffer != f.f32)
+	//					{
+	//						*movingHeights32Buffer = f.f32;
+	//						updated = true;
+	//					}
+	//					
+	//					movingHeights16Buffer++;
+	//					movingHeights32Buffer++;
+	//				}
+	//			PLOG_VERBOSE << "calcMinMaxHeights - " << "Adjusted Heights to float16/float32 buffer to prevent heigth mismatch " << pos.getIdStr() << " " << pos.getName() << " - Elapsed " << profiler.partialDuration() / 1000 << " ms";
+	//		}
+	//	}
+
+	//	//if (data.heights32Buffer == nullptr or data.heights16Buffer == nullptr)
+	//	//	return updated;
+
+	//	//TerrainEdit* terrainEdit = (TerrainEdit*)data.terrainEditValues->ptr();
+
+	//	//float minHeight = FLT_MAX;
+	//	//float maxHeight = -FLT_MAX;
+	//	//float eastSideXPlusMinHeight = FLT_MAX;
+	//	//float eastSideXPlusMaxHeight = -FLT_MAX;
+	//	//float westSideXMinusMinHeight = FLT_MAX;
+	//	//float westSideXMinusMaxHeight = -FLT_MAX;
+	//	//float southSideZPlusMinHeight = FLT_MAX;
+	//	//float southSideZPlusMaxHeight = -FLT_MAX;
+	//	//float northSideZMinusMinHeight = FLT_MAX;
+	//	//float northSideZMinusMaxHeight = -FLT_MAX;
+
+	//	//size_t maxIndex = numVerticesPerSize - 1;
+
+	//	//for (size_t z = 0; z < numVerticesPerSize; z++)
+	//	//{
+	//	//	for (size_t x = 0; x < numVerticesPerSize; x++)
+	//	//	{
+	//	//		float h = data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize);
+	//	//		if (h < minHeight)
+	//	//			minHeight = h;
+	//	//		if (h > maxHeight)
+	//	//			maxHeight = h;
+
+	//	//		if (x == 0)
+	//	//		{
+	//	//			if (h < westSideXMinusMinHeight)
+	//	//				westSideXMinusMinHeight = h;
+	//	//			if (h > westSideXMinusMaxHeight)
+	//	//				westSideXMinusMaxHeight = h;
+	//	//		}
+
+	//	//		if (z == 0)
+	//	//		{
+	//	//			if (h < northSideZMinusMinHeight)
+	//	//				northSideZMinusMinHeight = h;
+	//	//			if (h > northSideZMinusMaxHeight)
+	//	//				northSideZMinusMaxHeight = h;
+	//	//		}
+
+	//	//		if (x == maxIndex)
+	//	//		{
+	//	//			if (h < eastSideXPlusMinHeight)
+	//	//				eastSideXPlusMinHeight = h;
+	//	//			if (h > eastSideXPlusMaxHeight)
+	//	//				eastSideXPlusMaxHeight = h;
+	//	//		}
+
+	//	//		if (z == maxIndex)
+	//	//		{
+	//	//			if (h < southSideZPlusMinHeight)
+	//	//				southSideZPlusMinHeight = h;
+	//	//			if (h > southSideZPlusMaxHeight)
+	//	//				southSideZPlusMaxHeight = h;
+	//	//		}
+	//	//	}
+	//	//}
+
+	//	//if (terrainEdit->minHeight != minHeight)
+	//	//{
+	//	//	terrainEdit->minHeight = minHeight;
+	//	//	updated = true;
+	//	//}
+	//	//if (terrainEdit->maxHeight != maxHeight)
+	//	//{
+	//	//	terrainEdit->maxHeight = maxHeight;
+	//	//	updated = true;
+	//	//}
+	//	//if (terrainEdit->eastSideXPlus.minHeight != eastSideXPlusMinHeight)
+	//	//{
+	//	//	terrainEdit->eastSideXPlus.minHeight = eastSideXPlusMinHeight;
+	//	//	updated = true;
+	//	//}
+	//	//if (terrainEdit->eastSideXPlus.maxHeight != eastSideXPlusMaxHeight)
+	//	//{
+	//	//	terrainEdit->eastSideXPlus.maxHeight = eastSideXPlusMaxHeight;
+	//	//	updated = true;
+	//	//}
+	//	//if (terrainEdit->westSideXMinus.minHeight != westSideXMinusMinHeight)
+	//	//{
+	//	//	terrainEdit->westSideXMinus.minHeight = westSideXMinusMinHeight;
+	//	//	updated = true;
+	//	//}
+	//	//if (terrainEdit->westSideXMinus.maxHeight != westSideXMinusMaxHeight)
+	//	//{
+	//	//	terrainEdit->westSideXMinus.maxHeight = westSideXMinusMaxHeight;
+	//	//	updated = true;
+	//	//}
+	//	//if (terrainEdit->southSideZPlus.minHeight != southSideZPlusMinHeight)
+	//	//{
+	//	//	terrainEdit->southSideZPlus.minHeight = southSideZPlusMinHeight;
+	//	//	updated = true;
+	//	//}
+	//	//if (terrainEdit->southSideZPlus.maxHeight != southSideZPlusMaxHeight)
+	//	//{
+	//	//	terrainEdit->southSideZPlus.maxHeight = southSideZPlusMaxHeight;
+	//	//	updated = true;
+	//	//}
+	//	//if (terrainEdit->northSideZMinus.minHeight != northSideZMinusMinHeight)
+	//	//{
+	//	//	terrainEdit->northSideZMinus.minHeight = northSideZMinusMinHeight;
+	//	//	updated = true;
+	//	//}
+	//	//if (terrainEdit->northSideZMinus.maxHeight != northSideZMinusMaxHeight)
+	//	//{
+	//	//	terrainEdit->northSideZMinus.maxHeight = northSideZMinusMaxHeight;
+	//	//	updated = true;
+	//	//}
+
+	//	//if (renewMeshIdOnUpdate and updated)
+	//	//{
+	//	//	data.meshId = TheWorld_Utils::MeshCacheBuffer::generateNewMeshId();	// update meshId as terrain data updated
+	//	//}
+
+	//	return updated;
+	//}
 
 	bool MeshCacheBuffer::blendQuadrant(TheWorld_Utils::QuadrantPos pos, bool lastPhase, bool renewMeshIdOnUpdate,
 		CacheQuadrantData& data,
@@ -6026,104 +6204,151 @@ namespace TheWorld_Utils
 		if (northData.heights32Buffer != nullptr && northData.heights32Buffer->size() > 0
 			/*&& northData.heights16Buffer != nullptr && northData.heights16Buffer->size() > 0*/)
 		{
-			northData.heights32Buffer->_deprecated_get_at_ref<float>(0, maxIndex, numVerticesPerSize) = northWestCornerHeight;
-			//TheWorld_Utils::FLOAT_32 f(northWestCornerHeight);
-			//uint16_t half = half_from_float(f.u32);
-			//northData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(0, maxIndex, numVerticesPerSize) = half;
+			if (northData.heights32Buffer->_deprecated_get_at_ref<float>(0, maxIndex, numVerticesPerSize) != northWestCornerHeight)
+			{
+				northData.heights32Buffer->_deprecated_get_at_ref<float>(0, maxIndex, numVerticesPerSize) = northWestCornerHeight;
+				updated = northData.heightsUpdated = true;
+				//TheWorld_Utils::FLOAT_32 f(northWestCornerHeight);
+				//uint16_t half = half_from_float(f.u32);
+				//northData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(0, maxIndex, numVerticesPerSize) = half;
+			}
 		}
 		if (northwestData.heights32Buffer != nullptr && northwestData.heights32Buffer->size() > 0
 			/*&& northwestData.heights16Buffer != nullptr && northwestData.heights16Buffer->size() > 0*/)
 		{
-			northwestData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, maxIndex, numVerticesPerSize) = northWestCornerHeight;
-			//TheWorld_Utils::FLOAT_32 f(northWestCornerHeight);
-			//uint16_t half = half_from_float(f.u32);
-			//northwestData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex, maxIndex, numVerticesPerSize) = half;
+			if (northwestData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, maxIndex, numVerticesPerSize) != northWestCornerHeight)
+			{
+				northwestData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, maxIndex, numVerticesPerSize) = northWestCornerHeight;
+				updated = northwestData.heightsUpdated = true;
+				//TheWorld_Utils::FLOAT_32 f(northWestCornerHeight);
+				//uint16_t half = half_from_float(f.u32);
+				//northwestData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex, maxIndex, numVerticesPerSize) = half;
+			}
 		}
 		if (westData.heights32Buffer != nullptr && westData.heights32Buffer->size() > 0
 			/*&& westData.heights16Buffer != nullptr && westData.heights16Buffer->size() > 0*/)
 		{
-			westData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, 0, numVerticesPerSize) = northWestCornerHeight;
-			//TheWorld_Utils::FLOAT_32 f(northWestCornerHeight);
-			//uint16_t half = half_from_float(f.u32);
-			//westData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex, 0, numVerticesPerSize) = half;
+			if (westData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, 0, numVerticesPerSize) != northWestCornerHeight)
+			{
+				westData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, 0, numVerticesPerSize) = northWestCornerHeight;
+				updated = westData.heightsUpdated = true;
+				//TheWorld_Utils::FLOAT_32 f(northWestCornerHeight);
+				//uint16_t half = half_from_float(f.u32);
+				//westData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex, 0, numVerticesPerSize) = half;
+			}
 		}
-
 		float northEastCornerHeight = currentData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, 0, numVerticesPerSize);
 		if (northData.heights32Buffer != nullptr && northData.heights32Buffer->size() > 0
 			/*&& northData.heights16Buffer != nullptr && northData.heights16Buffer->size() > 0*/)
 		{
-			northData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, maxIndex, numVerticesPerSize) = northEastCornerHeight;
-			//TheWorld_Utils::FLOAT_32 f(northEastCornerHeight);
-			//uint16_t half = half_from_float(f.u32);
-			//northData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex, maxIndex, numVerticesPerSize) = half;
+			if (northData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, maxIndex, numVerticesPerSize) != northEastCornerHeight)
+			{
+				northData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, maxIndex, numVerticesPerSize) = northEastCornerHeight;
+				updated = northData.heightsUpdated = true;
+				//TheWorld_Utils::FLOAT_32 f(northEastCornerHeight);
+				//uint16_t half = half_from_float(f.u32);
+				//northData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex, maxIndex, numVerticesPerSize) = half;
+			}
 		}
 		if (northeastData.heights32Buffer != nullptr && northeastData.heights32Buffer->size() > 0
 			/*&& northeastData.heights16Buffer != nullptr && northeastData.heights16Buffer->size() > 0*/)
 		{
-			northeastData.heights32Buffer->_deprecated_get_at_ref<float>(0, maxIndex, numVerticesPerSize) = northEastCornerHeight;
-			//TheWorld_Utils::FLOAT_32 f(northEastCornerHeight);
-			//uint16_t half = half_from_float(f.u32);
-			//northeastData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(0, maxIndex, numVerticesPerSize) = half;
+			if (northeastData.heights32Buffer->_deprecated_get_at_ref<float>(0, maxIndex, numVerticesPerSize) != northEastCornerHeight)
+			{
+				northeastData.heights32Buffer->_deprecated_get_at_ref<float>(0, maxIndex, numVerticesPerSize) = northEastCornerHeight;
+				updated = northeastData.heightsUpdated = true;
+				//TheWorld_Utils::FLOAT_32 f(northEastCornerHeight);
+				//uint16_t half = half_from_float(f.u32);
+				//northeastData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(0, maxIndex, numVerticesPerSize) = half;
+			}
 		}
 		if (eastData.heights32Buffer != nullptr && eastData.heights32Buffer->size() > 0
 			/*&& eastData.heights16Buffer != nullptr && eastData.heights16Buffer->size() > 0*/)
 		{
-			eastData.heights32Buffer->_deprecated_get_at_ref<float>(0, 0, numVerticesPerSize) = northEastCornerHeight;
-			//TheWorld_Utils::FLOAT_32 f(northEastCornerHeight);
-			//uint16_t half = half_from_float(f.u32);
-			//eastData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(0, 0, numVerticesPerSize) = half;
+			if (eastData.heights32Buffer->_deprecated_get_at_ref<float>(0, 0, numVerticesPerSize) != northEastCornerHeight)
+			{
+				eastData.heights32Buffer->_deprecated_get_at_ref<float>(0, 0, numVerticesPerSize) = northEastCornerHeight;
+				updated = eastData.heightsUpdated = true;
+				//TheWorld_Utils::FLOAT_32 f(northEastCornerHeight);
+				//uint16_t half = half_from_float(f.u32);
+				//eastData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(0, 0, numVerticesPerSize) = half;
+			}
 		}
 
 		float southWestCornerHeight = currentData.heights32Buffer->_deprecated_get_at_ref<float>(0, maxIndex, numVerticesPerSize);
 		if (southData.heights32Buffer != nullptr && southData.heights32Buffer->size() > 0
 			/*&& southData.heights16Buffer != nullptr && southData.heights16Buffer->size() > 0*/)
 		{
-			southData.heights32Buffer->_deprecated_get_at_ref<float>(0, 0, numVerticesPerSize) = southWestCornerHeight;
-			//TheWorld_Utils::FLOAT_32 f(southWestCornerHeight);
-			//uint16_t half = half_from_float(f.u32);
-			//southData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(0, 0, numVerticesPerSize) = half;
+			if (southData.heights32Buffer->_deprecated_get_at_ref<float>(0, 0, numVerticesPerSize) != southWestCornerHeight)
+			{
+				southData.heights32Buffer->_deprecated_get_at_ref<float>(0, 0, numVerticesPerSize) = southWestCornerHeight;
+				updated = southData.heightsUpdated = true;
+				//TheWorld_Utils::FLOAT_32 f(southWestCornerHeight);
+				//uint16_t half = half_from_float(f.u32);
+				//southData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(0, 0, numVerticesPerSize) = half;
+			}
 		}
 		if (southwestData.heights32Buffer != nullptr && southwestData.heights32Buffer->size() > 0
 			/*&& southwestData.heights16Buffer != nullptr && southwestData.heights16Buffer->size() > 0*/)
 		{
-			southwestData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, 0, numVerticesPerSize) = southWestCornerHeight;
-			//TheWorld_Utils::FLOAT_32 f(southWestCornerHeight);
-			//uint16_t half = half_from_float(f.u32);
-			//southwestData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex, 0, numVerticesPerSize) = half;
+			if (southwestData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, 0, numVerticesPerSize) != southWestCornerHeight)
+			{
+				southwestData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, 0, numVerticesPerSize) = southWestCornerHeight;
+				updated = southwestData.heightsUpdated = true;
+				//TheWorld_Utils::FLOAT_32 f(southWestCornerHeight);
+				//uint16_t half = half_from_float(f.u32);
+				//southwestData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex, 0, numVerticesPerSize) = half;
+			}
 		}
 		if (westData.heights32Buffer != nullptr && westData.heights32Buffer->size() > 0
 			/*&& westData.heights16Buffer != nullptr && westData.heights16Buffer->size() > 0*/)
 		{
-			westData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, maxIndex, numVerticesPerSize) = southWestCornerHeight;
-			//TheWorld_Utils::FLOAT_32 f(southWestCornerHeight);
-			//uint16_t half = half_from_float(f.u32);
-			//westData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex, maxIndex, numVerticesPerSize) = half;
+			if (westData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, maxIndex, numVerticesPerSize) != southWestCornerHeight)
+			{
+				westData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, maxIndex, numVerticesPerSize) = southWestCornerHeight;
+				updated = westData.heightsUpdated = true;
+				//TheWorld_Utils::FLOAT_32 f(southWestCornerHeight);
+				//uint16_t half = half_from_float(f.u32);
+				//westData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex, maxIndex, numVerticesPerSize) = half;
+			}
 		}
 
 		float southEastCornerHeight = currentData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, maxIndex, numVerticesPerSize);
 		if (southData.heights32Buffer != nullptr && southData.heights32Buffer->size() > 0
 			/*&& southData.heights16Buffer != nullptr && southData.heights16Buffer->size() > 0*/)
 		{
-			southData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, 0, numVerticesPerSize) = southEastCornerHeight;
-			//TheWorld_Utils::FLOAT_32 f(southEastCornerHeight);
-			//uint16_t half = half_from_float(f.u32);
-			//southData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex, 0, numVerticesPerSize) = half;
+			if (southData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, 0, numVerticesPerSize) != southEastCornerHeight)
+			{
+				southData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, 0, numVerticesPerSize) = southEastCornerHeight;
+				updated = southData.heightsUpdated = true;
+				//TheWorld_Utils::FLOAT_32 f(southEastCornerHeight);
+				//uint16_t half = half_from_float(f.u32);
+				//southData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex, 0, numVerticesPerSize) = half;
+			}
 		}
 		if (southeastData.heights32Buffer != nullptr && southeastData.heights32Buffer->size() > 0
 			/*&& southeastData.heights16Buffer != nullptr && southeastData.heights16Buffer->size() > 0*/)
 		{
-			southeastData.heights32Buffer->_deprecated_get_at_ref<float>(0, 0, numVerticesPerSize) = southEastCornerHeight;
-			//TheWorld_Utils::FLOAT_32 f(southEastCornerHeight);
-			//uint16_t half = half_from_float(f.u32);
-			//southeastData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(0, 0, numVerticesPerSize) = half;
+			if (southeastData.heights32Buffer->_deprecated_get_at_ref<float>(0, 0, numVerticesPerSize) != southEastCornerHeight)
+			{
+				southeastData.heights32Buffer->_deprecated_get_at_ref<float>(0, 0, numVerticesPerSize) = southEastCornerHeight;
+				updated = southeastData.heightsUpdated = true;
+				//TheWorld_Utils::FLOAT_32 f(southEastCornerHeight);
+				//uint16_t half = half_from_float(f.u32);
+				//southeastData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(0, 0, numVerticesPerSize) = half;
+			}	
 		}
 		if (eastData.heights32Buffer != nullptr && eastData.heights32Buffer->size() > 0
 			/*&& eastData.heights16Buffer != nullptr && eastData.heights16Buffer->size() > 0*/)
 		{
-			eastData.heights32Buffer->_deprecated_get_at_ref<float>(0, maxIndex, numVerticesPerSize) = southEastCornerHeight;
-			//TheWorld_Utils::FLOAT_32 f(southEastCornerHeight);
-			//uint16_t half = half_from_float(f.u32);
-			//eastData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(0, maxIndex, numVerticesPerSize) = half;
+			if (eastData.heights32Buffer->_deprecated_get_at_ref<float>(0, maxIndex, numVerticesPerSize) != southEastCornerHeight)
+			{
+				eastData.heights32Buffer->_deprecated_get_at_ref<float>(0, maxIndex, numVerticesPerSize) = southEastCornerHeight;
+				updated = eastData.heightsUpdated = true;
+				//TheWorld_Utils::FLOAT_32 f(southEastCornerHeight);
+				//uint16_t half = half_from_float(f.u32);
+				//eastData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(0, maxIndex, numVerticesPerSize) = half;
+			}
 		}
 
 		return updated;

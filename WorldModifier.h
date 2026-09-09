@@ -1,5 +1,10 @@
 #pragma once
 
+#include "Utils.h"
+
+#include <string> 
+#include <ctime>
+
 namespace TheWorld_Utils
 {
 	class WorldModifier;
@@ -8,7 +13,7 @@ namespace TheWorld_Utils
 	{
 		none = -1
 		,elevator = 0
-		//,depressor = 1
+		,depressor = 1
 		//,flattener = 2
 	};
 
@@ -21,17 +26,17 @@ namespace TheWorld_Utils
 			m_level = 0;
 			m_posX = 0.0f;
 			m_posZ = 0.0f;
+			m_AOE = 0.0f;
 			m_type = WMType::none;
-			m_priority = 0;
 		}
 
-		_declspec(dllexport) WorldModifierPos(int level, float posX, float posZ, enum class WMType type, int priority)
+		_declspec(dllexport) WorldModifierPos(int level, float posX, float posZ, float AOE, enum class WMType type)
 		{
 			m_level = level;
 			m_posX = posX;
 			m_posZ = posZ;
+			m_AOE = AOE;
 			m_type = type;
-			m_priority = priority;
 		}
 
 		_declspec(dllexport) WorldModifierPos(const WorldModifierPos& wmp)
@@ -44,8 +49,8 @@ namespace TheWorld_Utils
 			m_level = wmp.m_level;
 			m_posX = wmp.m_posX;
 			m_posZ = wmp.m_posZ;
+			m_AOE = wmp.m_AOE;
 			m_type = wmp.m_type;
-			m_priority = wmp.m_priority;
 		}
 
 		// needed to use an istance of WorldModifierPos as a key in a map (to keep the map sorted by m_posZ and by m_posX for equal m_posZ)
@@ -69,9 +74,9 @@ namespace TheWorld_Utils
 						return false;
 					else
 					{
-						if (m_priority < p.m_priority)
+						if (m_AOE < p.m_AOE)
 							return true;
-						else if (m_priority > p.m_priority)
+						else if (m_AOE > p.m_AOE)
 							return false;
 						else
 							return m_type < p.m_type;
@@ -92,35 +97,23 @@ namespace TheWorld_Utils
 		{
 			return m_posZ;
 		};
+		_declspec(dllexport) float getAOE(void) const
+		{
+			return m_AOE;
+		};
 		_declspec(dllexport) enum class WMType getType(void) const
 		{
 			return m_type;
 		};
-		_declspec(dllexport) int getPriority(void) const
-		{
-			return m_priority;
-		};
+
+		_declspec(dllexport) std::string idStr(void) const;
 
 	private:
 		int m_level;
 		float m_posX;
 		float m_posZ;
+		float m_AOE;
 		enum class WMType m_type;
-		int m_priority;
-	};
-
-	enum class WMFunctionType
-	{
-		none = -1
-		,ConsiderMinMax = 0
-		,ConsiderStrength = 1
-	};
-
-	enum class WMOrder
-	{
-		none = -1
-		,MaxEffectOnWM = 0
-		,MinEffectOnWM = 1
 	};
 
 	class WorldModifier
@@ -132,24 +125,14 @@ namespace TheWorld_Utils
 			*this = wm;
 		}
 
-		_declspec(dllexport) WorldModifier(WorldModifierPos& pos, enum class WMFunctionType functionType, float AOE, float min, float max, enum class WMOrder order, void* fp = nullptr);
+		_declspec(dllexport) WorldModifier(WorldModifierPos& pos);
 		_declspec(dllexport) ~WorldModifier();
-
-		//_declspec(dllexport) void setInternalValues(WorldModifierPos& pos, float radius, float azimuth, float azimuthDegree, float AOE, enum class WMFunctionType functionType, __int64 rowid, float min, float max, enum class WMOrder order, void* fp = nullptr);
 
 		_declspec(dllexport) WorldModifierPos getPos(void) const
 		{
 			return m_pos;
 		};
 
-		//_declspec(dllexport) float getStrength(void) const
-		//{
-		//	return m_strength; 
-		//};
-		_declspec(dllexport) float getAOE(void) const
-		{
-			return m_AOE; 
-		};
 		_declspec(dllexport) float getRadius(void) const
 		{
 			return m_radius; 
@@ -162,58 +145,23 @@ namespace TheWorld_Utils
 		{
 			return m_azimuthDegree; 
 		};
-		_declspec(dllexport) enum class WMFunctionType getFunctionType(void) const
-		{
-			return m_functionType; 
-		};
-
-		_declspec(dllexport) __int64 getRowid(void) const
-		{
-			return m_rowid; 
-		};
-
-		_declspec(dllexport) enum class WMOrder getOrder(void) const
-		{
-			return m_order;
-		};
-
-		_declspec(dllexport) float getMin(void) const
-		{
-			return m_min;
-		};
-
-		_declspec(dllexport) float getMax(void) const
-		{
-			return m_max;
-		};
 
 		void operator=(const WorldModifier& wm)
 		{
 			m_pos = wm.m_pos;
-			//m_strength = wm.m_strength;
-			m_AOE = wm.m_AOE;
 			m_radius = wm.m_radius;
 			m_azimuth = wm.m_azimuth;
 			m_azimuthDegree = wm.m_azimuthDegree;
-			m_functionType = wm.m_functionType;
-			m_rowid = wm.m_rowid;
-			m_order = wm.m_order;
-			m_min = wm.m_min;
-			m_max = wm.m_max;
 		}
 
 	private:
 		WorldModifierPos m_pos;
-		//float m_strength;
-		float m_AOE;
+		
+		std::time_t m_timeStampUTC;
+
 		float m_radius;
 		float m_azimuth;
 		float m_azimuthDegree;
-		enum class WMFunctionType m_functionType;
-		__int64 m_rowid;
-		enum class WMOrder m_order;
-		float m_min;
-		float m_max;
 	};
 }
 

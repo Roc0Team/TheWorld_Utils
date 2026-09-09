@@ -315,6 +315,7 @@ namespace TheWorld_Utils
 			return size_t(numElements);
 		}
 		__declspec(dllexport) bool empty(void) const;
+		__declspec(dllexport) bool notEmpty(void) const;
 		__declspec(dllexport) void clear(std::string lastActor = "");
 		__declspec(dllexport) void adjustSize(size_t size);
 		template <typename T> void adjustSize(size_t numElements)
@@ -1649,7 +1650,7 @@ namespace TheWorld_Utils
 
 		size_t size;
 		enum class TerrainType terrainType;
-		bool needUploadToServer = false;
+		bool m_needUploadToServer = false;
 		bool m_heightsNeedRegen = false;
 		bool m_normalsNeedRegen_notUsed = false;
 		bool m_splatmapNeedRegen_notUsed = false;
@@ -1810,6 +1811,17 @@ namespace TheWorld_Utils
 		bool globalmapNeedRegen(void) const
 		{
 			return m_globalmapNeedRegen;
+		}
+		void needUploadToServer(bool b)
+		{
+			if (b)
+				m_needUploadToServer = b;
+			else
+				m_needUploadToServer = b;
+		}
+		bool needUploadToServer(void) const
+		{
+			return m_needUploadToServer;
 		}
 	};
 
@@ -2130,7 +2142,8 @@ namespace TheWorld_Utils
 			CacheQuadrantData& southwesthData,
 			CacheQuadrantData& southeastData);
 		static __declspec(dllexport) bool calcMinMaxHeights(TheWorld_Utils::QuadrantPos pos, bool renewMeshIdOnUpdate, CacheQuadrantData& data);
-		static __declspec(dllexport) bool debugCheckMinMaxHeight(TheWorld_Utils::QuadrantPos& pos, TheWorld_Utils::TerrainEdit* terrainEdit, 
+		//static __declspec(dllexport) bool calcMinMaxHeightsDebug(TheWorld_Utils::QuadrantPos pos, bool renewMeshIdOnUpdate, CacheQuadrantData& data);
+		static __declspec(dllexport) bool debugCheckMinMaxHeight(TheWorld_Utils::QuadrantPos& pos, TheWorld_Utils::TerrainEdit* terrainEdit,
 			//float& min, float& max, float& northSideMin, float& northSideMax, float& southSideMin, float& southSideMax, float& westSideMin, float& westSideMax, float& eastSideMin, float& eastSideMax, std::string& msg,
 			std::string msg, std::string* meshId = nullptr, TheWorld_Utils::MemoryBuffer* heights16Buffer = nullptr, TheWorld_Utils::MemoryBuffer* heights32Buffer = nullptr);
 
