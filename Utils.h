@@ -48,6 +48,7 @@ constexpr auto THEWORLD_QUADRANT_NAMEDATA_NORTHWESTQUADSPLATMAPTEXEL = "NorthWes
 #define Vector3Z godot::Vector3(0, 0, 1)
 
 #define TRACK_QUADRANT_FOR_DEBUG(text, hash) trackQuadrantForDebug(__FUNCTION__, text, hash)
+#define IS_QUADRANT_TRACKED_FOR_DEBUG isQuadrantTrackedForDebug(__FUNCTION__)
 
 namespace TheWorld_Utils
 {
@@ -1217,11 +1218,6 @@ namespace TheWorld_Utils
 			return uninitialized();
 		}
 
-		bool uninitialized(void) const
-		{
-			return m_initialized == false;
-		}
-
 		QuadrantPos(const QuadrantPos& quadrantPos)
 		{
 			*this = quadrantPos;
@@ -1374,7 +1370,7 @@ namespace TheWorld_Utils
 			return m_initialized;
 		}
 
-		_declspec(dllexport) bool isQuadrantTrackedForDebug(void) const;
+		_declspec(dllexport) bool isQuadrantTrackedForDebug(std::string owner) const;
 		_declspec(dllexport) void trackQuadrantForDebug(std::string owner, std::string text, std::string hash) const;
 
 		std::string getName(void) const
@@ -1402,6 +1398,10 @@ namespace TheWorld_Utils
 			//float gridSizeInWU = (m_numVerticesPerSize - 1) * m_gridStepInWU;
 			//m_name = "Quadrant-" + std::to_string((int)(m_lowerXGridVertex / gridSizeInWU)) + "-" + std::to_string((int)(m_lowerZGridVertex / gridSizeInWU));
 			m_name = "Quadrant " + std::to_string((int)(m_lowerXGridVertex / m_sizeInWU)) + "," + std::to_string((int)(m_lowerZGridVertex / m_sizeInWU));
+		}
+		bool uninitialized(void) const
+		{
+			return m_initialized == false;
 		}
 
 	private:

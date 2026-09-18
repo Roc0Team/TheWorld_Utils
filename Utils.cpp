@@ -816,8 +816,8 @@ namespace TheWorld_Utils
 	}
 
 	constexpr auto QUADRANT_TRACKING_SINGLE = true;
-	constexpr auto QUADRANT_TRACKING_IDX_POS_X = -53;
-	constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -59;
+	constexpr auto QUADRANT_TRACKING_IDX_POS_X = -1;
+	constexpr auto QUADRANT_TRACKING_IDX_POS_Z = 0;
 
 	constexpr auto QUADRANT_TRACKING_MULTIPLE = false;
 	static std::vector<int> quadrantTrackingPosX = { -45, -45 };
@@ -829,41 +829,48 @@ namespace TheWorld_Utils
 	constexpr auto QUADRANT_TRACKING_IDX_MIN_Z = -85;
 	constexpr auto QUADRANT_TRACKING_IDX_MAX_Z = -81;
 
-	bool QuadrantPos::isQuadrantTrackedForDebug(void) const
+	bool QuadrantPos::isQuadrantTrackedForDebug(std::string owner) const
 	{
 		if (not isInitialized())
 			return false;
 
-		if (QUADRANT_TRACKING_MULTIPLE)
+		bool quadrantTrackedForDebug = false;
+			
+		if (QUADRANT_TRACKING_MULTIPLE and not quadrantTrackedForDebug)
 		{
-			if (quadrantTrackingPosX.size() != quadrantTrackingPosZ.size())
-				return false;
-
-			for (size_t i = 0; i < quadrantTrackingPosX.size(); i++)
+			if (quadrantTrackingPosX.size() == quadrantTrackingPosZ.size())
 			{
-				if (m_quadrantPosX == quadrantTrackingPosX[i] && m_quadrantPosZ == quadrantTrackingPosZ[i])
-					return true;
+				for (size_t i = 0; i < quadrantTrackingPosX.size(); i++)
+				{
+					if (m_quadrantPosX == quadrantTrackingPosX[i] && m_quadrantPosZ == quadrantTrackingPosZ[i])
+						quadrantTrackedForDebug = true;
+				}
 			}
 		}
 
-		if (QUADRANT_TRACKING_QUAD)
+		if (QUADRANT_TRACKING_QUAD and not quadrantTrackedForDebug)
 		{
 			if (m_quadrantPosX >= QUADRANT_TRACKING_IDX_MIN_X && m_quadrantPosX <= QUADRANT_TRACKING_IDX_MAX_X and
 				m_quadrantPosZ >= QUADRANT_TRACKING_IDX_MIN_Z && m_quadrantPosZ <= QUADRANT_TRACKING_IDX_MAX_Z)
 			{
-				return true;
+				quadrantTrackedForDebug = true;
 			}
 		}
 
-		if (QUADRANT_TRACKING_SINGLE)
+		if (QUADRANT_TRACKING_SINGLE and not quadrantTrackedForDebug)
 		{
 			if (m_quadrantPosX == QUADRANT_TRACKING_IDX_POS_X and m_quadrantPosZ == QUADRANT_TRACKING_IDX_POS_Z)
-				return true;
+				quadrantTrackedForDebug = true;
 		}
 		
 		//return (isInitialized() and m_quadrantPosX == QUADRANT_TRACKING_IDX_POS_X and m_quadrantPosZ == QUADRANT_TRACKING_IDX_POS_Z);
 	
-		return false;
+		if (quadrantTrackedForDebug)
+		{
+			PLOG_DEBUG << "[" << owner << "] QUADRANT TRACKED FOR DEBUG " << getIdStr();
+		}
+		
+		return quadrantTrackedForDebug;
 	}
 
 	void QuadrantPos::trackQuadrantForDebug(std::string owner, std::string text, std::string hash) const
@@ -873,7 +880,7 @@ namespace TheWorld_Utils
 //#else
 //		return;
 //#endif	
-		if (isQuadrantTrackedForDebug())
+		if (isQuadrantTrackedForDebug(owner))
 		{
 			PLOG_DEBUG << "[" << owner << "] TRACKING QUADRANT " << getIdStr() << (text.size() > 0 ? " - " + text : "") << (hash.size() > 0 ? " - Hash=" + TheWorld_Utils::MeshCacheBuffer::meshIdToPrint(hash) : "");
 		}
@@ -3849,6 +3856,7 @@ namespace TheWorld_Utils
 		float gridStepInWU = pos.getGridStepInWU();
 		float lowerXGridVertex = pos.getLowerXGridVertex();
 		float lowerZGridVertex = pos.getLowerZGridVertex();
+		//lowerXGridVertex = lowerZGridVertex = 0.0f;	// for now, we generate the heights in local coordinates
 
 		vectGridHeights.clear();
 		vectGridHeights.resize(numVerticesPerSize * numVerticesPerSize);
