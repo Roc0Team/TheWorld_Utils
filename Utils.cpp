@@ -886,6 +886,26 @@ namespace TheWorld_Utils
 		}
 	}
 
+	bool QuadrantPos::getNearestGridVertexOffset(float worldPosX, float worldPosZ, size_t& gridX, size_t& gridY)
+	{
+		bool ret = false;
+		gridX = gridY = 0;
+
+		if (isInitialized())
+		{
+			float offsetX = worldPosX - m_lowerXGridVertex;
+			float offsetZ = worldPosZ - m_lowerZGridVertex;
+			if (offsetX >= 0 and offsetX <= m_sizeInWU and offsetZ >= 0 and offsetZ <= m_sizeInWU)
+			{
+				gridX = (size_t)std::round(offsetX / m_gridStepInWU);
+				gridY = (size_t)std::round(offsetZ / m_gridStepInWU);
+				ret = true;
+			}
+		}
+
+		return ret;
+	}
+
 	TerrainEdit::TerrainEdit(enum class TerrainEdit::TerrainType terrainType)
 	{
 		size = sizeof(TerrainEdit);
@@ -3848,7 +3868,78 @@ namespace TheWorld_Utils
 		return bufferMeshId;
 	}
 
-	void MeshCacheBuffer::generateHeightsWithNoise(TheWorld_Utils::QuadrantPos pos, TerrainEdit* terrainEdit, std::vector<float>& vectGridHeights)
+	void MeshCacheBuffer::SmoothHeightmap(TheWorld_Utils::QuadrantPos& pos, std::vector<float>& heightmap, size_t smoothAmplitude, float smoothFactor)
+	{
+		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer SmoothHeightmap 1 ") + __FUNCTION__, "ALL");
+
+		size_t numVerticesPerSize = pos.getNumVerticesPerSize();
+
+		// smoothAmplitude must be less than numVerticesPerSize and odd
+		{
+			if (smoothAmplitude >= numVerticesPerSize)
+				smoothAmplitude = numVerticesPerSize - 1;
+
+			if (smoothAmplitude % 2 == 0)
+			{
+				// smoothAmplitude is even
+				smoothAmplitude--;	// force to be odd
+			}
+
+			if (smoothAmplitude < 0)
+				smoothAmplitude = 1;
+		}
+
+		std::vector<float> tempHeightmap = heightmap; // Create a copy of the original heightmap
+
+		size_t offset = (smoothAmplitude - 1) / 2;
+
+		for (size_t y = offset; y < numVerticesPerSize - offset; y++) {
+			for (size_t x = offset; x < numVerticesPerSize - offset; x++) {
+				// Media del vicinato offset x offset
+				float sum = 0;
+				for (int ky = -int(offset); ky <= int(offset); ky++) {
+					for (int kx = -int(offset); kx <= int(offset); kx++) {
+						sum += tempHeightmap[(y + ky) * numVerticesPerSize + (x + kx)];
+					}
+				}
+				float average = sum / (smoothAmplitude * smoothAmplitude);
+
+				// Applica lo smoothing bilanciando il valore originale
+				heightmap[y * numVerticesPerSize + x] = std::lerp(tempHeightmap[y * numVerticesPerSize + x], average, smoothFactor);
+			}
+		}
+	}
+
+	//// Funzione ipotetica che restituisce un rumore base tra -1.0 e 1.0
+	//float perlinNoise2D(float x, float y);
+
+	//// Genera un'altezza smooth usando le ottave
+	//float getSmoothHeight(float x, float y, FastNoiseLite& noise)
+	//{
+	//	float total = 0.0f;
+	//	float frequency = 1.0f;
+	//	float amplitude = 1.0f;
+	//	float maxValue = 0.0f;  // Usato per normalizzare il risultato
+
+	//	int octaves = noise.SetFractalOctaves
+	//	float lacunarity = 
+	//	float gain = 
+
+	//	for (int i = 0; i < octaves; i++) {
+	//		total += perlinNoise2D(x * frequency, y * frequency) * amplitude;
+
+	//		maxValue += amplitude;
+
+	//		frequency *= lacunarity; // Aumenta la frequenza (es. 2.0: raddoppia il dettaglio)
+	//		amplitude *= gain;       // Riduce l'ampiezza (es. 0.5: dimezza l'impatto del dettaglio)
+	//	}
+
+	//	// Ritorna un valore normalizzato tra -1.0 e 1.0, o scalato per la tua altezza massima
+	//	return total / maxValue;
+	//}
+
+
+	void MeshCacheBuffer::generateHeightsWithNoise(TheWorld_Utils::QuadrantPos& pos, TerrainEdit* terrainEdit, std::vector<float>& heightmap)
 	{
 		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer generateHeights 1 ") + __FUNCTION__, "ALL");
 
@@ -3858,8 +3949,8 @@ namespace TheWorld_Utils
 		float lowerZGridVertex = pos.getLowerZGridVertex();
 		//lowerXGridVertex = lowerZGridVertex = 0.0f;	// for now, we generate the heights in local coordinates
 
-		vectGridHeights.clear();
-		vectGridHeights.resize(numVerticesPerSize * numVerticesPerSize);
+		heightmap.clear();
+		heightmap.resize(numVerticesPerSize * numVerticesPerSize);
 
 		bool adjustHeights = true;
 		
@@ -3900,7 +3991,7 @@ namespace TheWorld_Utils
 				}
 			}
 
-			vectGridHeights = s_vectFlatGridHeights;
+			heightmap = s_vectFlatGridHeights;
 			adjustHeights = false;
 		}
 		else if (terrainEdit->terrainType == TheWorld_Utils::TerrainEdit::TerrainType::empty)
@@ -3933,48 +4024,11 @@ namespace TheWorld_Utils
 				}
 			}
 
-			vectGridHeights = s_vectEmptyGridHeights;
+			heightmap = s_vectEmptyGridHeights;
 			adjustHeights = false;
 		}
 		else
 		{
-			//{
-			//	//TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer generateHeights 1.1 ") + __FUNCTION__, "Generate jag");
-
-			//	TheWorld_Utils::TerrainEdit terrainEdit(TheWorld_Utils::TerrainEdit::TerrainType::jagged_1);
-
-			//	FastNoiseLite noiseLite(terrainEdit.noise.noiseSeed);
-			//	noiseLite.SetNoiseType((enum FastNoiseLite::NoiseType)terrainEdit.noise.noiseType);
-			//	noiseLite.SetFrequency(terrainEdit.noise.frequency);
-			//	noiseLite.SetFractalType((enum FastNoiseLite::FractalType)terrainEdit.noise.fractalType);
-			//	noiseLite.SetFractalOctaves(terrainEdit.noise.fractalOctaves);
-			//	noiseLite.SetFractalLacunarity(terrainEdit.noise.fractalLacunarity);
-			//	noiseLite.SetFractalGain(terrainEdit.noise.fractalGain);
-			//	noiseLite.SetFractalWeightedStrength(terrainEdit.noise.fractalWeightedStrength);
-			//	noiseLite.SetFractalPingPongStrength(terrainEdit.noise.fractalPingPongStrength);
-
-			//	size_t idx = 0;
-			//	for (int z = 0; z < numVerticesPerSize; z++)
-			//		for (int x = 0; x < numVerticesPerSize; x++)
-			//		{
-			//			float altitude = 0.0f;
-
-			//			{
-			//				//TheWorld_Utils::GuardProfiler profiler(std::string("EditGenerate 1.1.2 ") + __FUNCTION__, "GetNoise");
-
-			//				float xf = (lowerXGridVertex + (x * gridStepInWU));
-			//				float zf = (lowerZGridVertex + (z * gridStepInWU));
-			//				altitude = noiseLite.GetNoise(xf, zf);
-			//				// noises are value in range -1 to 1 we need to interpolate with heightsAmplitude
-			//				altitude *= (terrainEdit.noise.heightsAmplitude / 2);
-			//			}
-
-			//			vectGridHeights[idx] = altitude;
-
-			//			idx++;
-			//		}
-			//}
-
 			{
 				//TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer generateHeights 1.2 ") + __FUNCTION__, "Generate Heights");
 
@@ -3996,17 +4050,6 @@ namespace TheWorld_Utils
 				//noiseLite.SetCellularReturnType();
 				//noiseLite.SetCellularJitter()
 
-				terrainEdit->minHeight = FLT_MAX;
-				terrainEdit->maxHeight = -FLT_MAX;
-				terrainEdit->eastSideXPlus.minHeight = FLT_MAX;
-				terrainEdit->eastSideXPlus.maxHeight = -FLT_MAX;
-				terrainEdit->westSideXMinus.minHeight = FLT_MAX;
-				terrainEdit->westSideXMinus.maxHeight = -FLT_MAX;
-				terrainEdit->southSideZPlus.minHeight = FLT_MAX;
-				terrainEdit->southSideZPlus.maxHeight = -FLT_MAX;
-				terrainEdit->northSideZMinus.minHeight = FLT_MAX;
-				terrainEdit->northSideZMinus.maxHeight = -FLT_MAX;
-
 				size_t maxIndex = numVerticesPerSize - 1;
 
 				size_t idx = 0;
@@ -4018,55 +4061,87 @@ namespace TheWorld_Utils
 						{
 							//TheWorld_Utils::GuardProfiler profiler(std::string("EditGenerate 1.2.2 ") + __FUNCTION__, "GetNoise main");
 
-							float xf = abs((lowerXGridVertex + (x * gridStepInWU)) * terrainEdit->noise.scaleFactor_JagIntensity);
-							float zf = abs((lowerZGridVertex + (z * gridStepInWU)) * terrainEdit->noise.scaleFactor_JagIntensity);
+							float scaleFactor_JagIntensity = terrainEdit->noise.scaleFactor_JagIntensity;
+							
+							//float xf = abs((lowerXGridVertex + (x * gridStepInWU)) * scaleFactor_JagIntensity);
+							//float zf = abs((lowerZGridVertex + (z * gridStepInWU)) * scaleFactor_JagIntensity);
+							float xf = abs(lowerXGridVertex + (x * gridStepInWU * scaleFactor_JagIntensity));
+							float zf = abs(lowerZGridVertex + (z * gridStepInWU * scaleFactor_JagIntensity));
 							altitude = noiseLite.GetNoise(xf, zf);
+							
 							// noises are value in range -1 to 1 we need to interpolate with heightsAmplitude
 							altitude *= (float)(terrainEdit->noise.heightsAmplitude / 2);
-
-							if (altitude < terrainEdit->minHeight)
-								terrainEdit->minHeight = altitude;
-							if (altitude > terrainEdit->maxHeight)
-								terrainEdit->maxHeight = altitude;
-
-							if (x == 0)
-							{
-								if (altitude < terrainEdit->westSideXMinus.minHeight)
-									terrainEdit->westSideXMinus.minHeight = altitude;
-								if (altitude > terrainEdit->westSideXMinus.maxHeight)
-									terrainEdit->westSideXMinus.maxHeight = altitude;
-							}
-
-							if (z == 0)
-							{
-								if (altitude < terrainEdit->northSideZMinus.minHeight)
-									terrainEdit->northSideZMinus.minHeight = altitude;
-								if (altitude > terrainEdit->northSideZMinus.maxHeight)
-									terrainEdit->northSideZMinus.maxHeight = altitude;
-							}
-
-							if (x == maxIndex)
-							{
-								if (altitude < terrainEdit->eastSideXPlus.minHeight)
-									terrainEdit->eastSideXPlus.minHeight = altitude;
-								if (altitude > terrainEdit->eastSideXPlus.maxHeight)
-									terrainEdit->eastSideXPlus.maxHeight = altitude;
-							}
-
-							if (z == maxIndex)
-							{
-								if (altitude < terrainEdit->southSideZPlus.minHeight)
-									terrainEdit->southSideZPlus.minHeight = altitude;
-								if (altitude > terrainEdit->southSideZPlus.maxHeight)
-									terrainEdit->southSideZPlus.maxHeight = altitude;
-							}
 						}
 
-						vectGridHeights[idx] += altitude;
+						heightmap[idx] = altitude;
 
 						idx++;
 					}
 			}
+		}
+
+		for (size_t i = 0; i < terrainEdit->extraValues.numBlendingCycles; i++)
+			SmoothHeightmap(pos, heightmap, 5, 1.0);
+
+		{
+			size_t maxIndex = numVerticesPerSize - 1;
+			
+			size_t idx = 0;
+			for (int z = 0; z < numVerticesPerSize; z++)
+				for (int x = 0; x < numVerticesPerSize; x++)
+				{
+					terrainEdit->minHeight = FLT_MAX;
+					terrainEdit->maxHeight = -FLT_MAX;
+					terrainEdit->eastSideXPlus.minHeight = FLT_MAX;
+					terrainEdit->eastSideXPlus.maxHeight = -FLT_MAX;
+					terrainEdit->westSideXMinus.minHeight = FLT_MAX;
+					terrainEdit->westSideXMinus.maxHeight = -FLT_MAX;
+					terrainEdit->southSideZPlus.minHeight = FLT_MAX;
+					terrainEdit->southSideZPlus.maxHeight = -FLT_MAX;
+					terrainEdit->northSideZMinus.minHeight = FLT_MAX;
+					terrainEdit->northSideZMinus.maxHeight = -FLT_MAX;
+
+					float altitude = heightmap[idx];
+					
+					if (altitude < terrainEdit->minHeight)
+						terrainEdit->minHeight = altitude;
+					if (altitude > terrainEdit->maxHeight)
+						terrainEdit->maxHeight = altitude;
+
+					if (x == 0)
+					{
+						if (altitude < terrainEdit->westSideXMinus.minHeight)
+							terrainEdit->westSideXMinus.minHeight = altitude;
+						if (altitude > terrainEdit->westSideXMinus.maxHeight)
+							terrainEdit->westSideXMinus.maxHeight = altitude;
+					}
+
+					if (z == 0)
+					{
+						if (altitude < terrainEdit->northSideZMinus.minHeight)
+							terrainEdit->northSideZMinus.minHeight = altitude;
+						if (altitude > terrainEdit->northSideZMinus.maxHeight)
+							terrainEdit->northSideZMinus.maxHeight = altitude;
+					}
+
+					if (x == maxIndex)
+					{
+						if (altitude < terrainEdit->eastSideXPlus.minHeight)
+							terrainEdit->eastSideXPlus.minHeight = altitude;
+						if (altitude > terrainEdit->eastSideXPlus.maxHeight)
+							terrainEdit->eastSideXPlus.maxHeight = altitude;
+					}
+
+					if (z == maxIndex)
+					{
+						if (altitude < terrainEdit->southSideZPlus.minHeight)
+							terrainEdit->southSideZPlus.minHeight = altitude;
+						if (altitude > terrainEdit->southSideZPlus.maxHeight)
+							terrainEdit->southSideZPlus.maxHeight = altitude;
+					}
+
+					idx++;
+				}
 		}
 
 		if (adjustHeights)
@@ -4088,7 +4163,7 @@ namespace TheWorld_Utils
 				for (int z = 0; z < numVerticesPerSize; z++)
 					for (int x = 0; x < numVerticesPerSize; x++)
 					{
-						vectGridHeights[idx] += corrector;
+						heightmap[idx] += corrector;
 						idx++;
 					}
 

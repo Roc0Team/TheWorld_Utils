@@ -1386,6 +1386,7 @@ namespace TheWorld_Utils
 		{
 			return m_centerZ;
 		};
+		_declspec(dllexport) bool getNearestGridVertexOffset(float worldPosX, float worldPosZ, size_t& gridX, size_t& gridY);
 
 	private:
 		void resetIndexPos(void)
@@ -1406,8 +1407,8 @@ namespace TheWorld_Utils
 
 	private:
 		// ID
-		float m_lowerXGridVertex;	// starting point in the X axis of the quadrant in global coord
-		float m_lowerZGridVertex;	// starting point in the Z axis of the quadrant in global coord
+		float m_lowerXGridVertex;	// starting point in the X axis of the quadrant in world coord
+		float m_lowerZGridVertex;	// starting point in the Z axis of the quadrant in world coord
 		int m_numVerticesPerSize;
 		int m_level;
 		float m_gridStepInWU;
@@ -2128,7 +2129,8 @@ namespace TheWorld_Utils
 		__declspec(dllexport) void setBufferFromCacheQuadrantData(size_t numVerticesPerSize, CacheQuadrantData& cacheQuadrantData, std::string& buffer);
 		__declspec(dllexport) void setEmptyBuffer(size_t numVerticesPerSize, std::string& meshId, TheWorld_Utils::MemoryBuffer& buffer);
 		__declspec(dllexport) void setEmptyBuffer(size_t numVerticesPerSize, std::string& meshId, std::string& buffer);
-		__declspec(dllexport) void generateHeightsWithNoise(TheWorld_Utils::QuadrantPos pos, TerrainEdit* terrainEdit, std::vector<float>& vectGridHeights);
+		__declspec(dllexport) void generateHeightsWithNoise(TheWorld_Utils::QuadrantPos& pos, TerrainEdit* terrainEdit, std::vector<float>& heightmap);
+		__declspec(dllexport) void SmoothHeightmap(TheWorld_Utils::QuadrantPos& pos, std::vector<float>& heightmap, size_t smoothAmplitude = 3, float smoothFactor = 0.5f);
 		//__declspec(dllexport) void applyWorldModifier(int level, size_t numVerticesPerSize, float gridStepInWU, float lowerXGridVertex, float lowerZGridVertex, TerrainEdit* terrainEdit, std::vector<float>& vectGridHeights, WorldModifier& wm);
 		//static __declspec(dllexport) bool calcMinMaxHeight(TheWorld_Utils::QuadrantPos& pos, size_t numVerticesPerSize, TheWorld_Utils::TerrainEdit* terrainEdit, TheWorld_Utils::MemoryBuffer& heights32Buffer);
 		static __declspec(dllexport) bool blendQuadrant(TheWorld_Utils::QuadrantPos pos, bool lastPhase, bool renewMeshIdOnUpdate,
