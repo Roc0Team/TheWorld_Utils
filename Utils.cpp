@@ -4080,6 +4080,15 @@ namespace TheWorld_Utils
 			}
 		}
 
+		{	// DEBUG
+			// POS -55, -58
+			// vertices (0-2048):	heightmap[y * numVerticesPerSize + x]
+			//		1210 1259 h 6296
+			//		1210 1260 h 6296
+			//		1210 1261 h 6296
+			//		1210 1262 h 6300
+		}	// DEBUG
+
 		for (size_t i = 0; i < terrainEdit->extraValues.numBlendingCycles; i++)
 			SmoothHeightmap(pos, heightmap, 5, 1.0);
 
