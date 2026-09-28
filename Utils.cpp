@@ -816,8 +816,10 @@ namespace TheWorld_Utils
 	}
 
 	constexpr auto QUADRANT_TRACKING_SINGLE = true;
-	constexpr auto QUADRANT_TRACKING_IDX_POS_X = -1;
-	constexpr auto QUADRANT_TRACKING_IDX_POS_Z = 0;
+	//constexpr auto QUADRANT_TRACKING_IDX_POS_X = -1;
+	//constexpr auto QUADRANT_TRACKING_IDX_POS_Z = 0;
+	constexpr auto QUADRANT_TRACKING_IDX_POS_X = -55;
+	constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -58;
 
 	constexpr auto QUADRANT_TRACKING_MULTIPLE = false;
 	static std::vector<int> quadrantTrackingPosX = { -45, -45 };
@@ -4069,8 +4071,9 @@ namespace TheWorld_Utils
 							float zf = abs(lowerZGridVertex + (z * gridStepInWU * scaleFactor_JagIntensity));
 							altitude = noiseLite.GetNoise(xf, zf);
 							
-							// noises are value in range -1 to 1 we need to interpolate with heightsAmplitude
-							altitude *= (float)(terrainEdit->noise.heightsAmplitude / 2);
+							// noises are value in range -1 to 1 we need to multiply by heightsAmplitude to have an altitude coherent with the terrain type.
+							// multiplying by gridStepInWU / 2.0f is a way to scale the noise based on the grid resolution, ensuring that the noise effect is maintained varying the gridstep.
+							altitude *= (float)(terrainEdit->noise.heightsAmplitude / 2) * (gridStepInWU / 2.0f);
 						}
 
 						heightmap[idx] = altitude;
@@ -4080,17 +4083,84 @@ namespace TheWorld_Utils
 			}
 		}
 
-		{	// DEBUG
+		// DEBUG
+		{
 			// POS -55, -58
-			// vertices (0-2048):	heightmap[y * numVerticesPerSize + x]
-			//		1210 1259 h 6296
-			//		1210 1260 h 6296
-			//		1210 1261 h 6296
-			//		1210 1262 h 6300
-		}	// DEBUG
+			// vertices (0-2048):	heightmap[z * numVerticesPerSize + x]
+			//		x=1210 z=1258 h=269.159576 ????
+			//		x=1210 z=1259 h=270.523071 6296
+			//		x=1210 z=1260 h=271.935760 6296
+			//		x=1210 z=1261 h=273.366913 6296
+			//		x=1210 z=1262 h=274.783417 6300
+			if (pos.IS_QUADRANT_TRACKED_FOR_DEBUG)
+			{
+				struct debug_pos
+				{
+					size_t x;
+					size_t z;
+					float h;
+					float h_16normalized;
+					debug_pos(size_t x, size_t z, float h)
+					{
+						this->x = x;
+						this->z = z;
+						this->h = h;
+						//uint16_t u16 = TheWorld_Utils::MeshCacheBuffer::halfFromFloat(h);
+						//this->h_16normalized = TheWorld_Utils::MeshCacheBuffer::halfToFloat_1(u16);
+						Eigen::half f16 = static_cast<Eigen::half>(h);
+						this->h_16normalized = static_cast<float>(f16);
+					}
+				};
+				std::vector<struct debug_pos> debug_positions;
+				for (size_t z = 1258; z <= 1262; z++)
+					for (size_t x = 1208; x <= 1212; x++)
+					{
+						debug_positions.push_back(struct debug_pos(x, z, heightmap[z * numVerticesPerSize + x]));
+					}
+			}
+		}
+		// DEBUG
 
 		for (size_t i = 0; i < terrainEdit->extraValues.numBlendingCycles; i++)
 			SmoothHeightmap(pos, heightmap, 5, 1.0);
+
+		// DEBUG
+		{
+			// POS -55, -58
+			// vertices (0-2048):	heightmap[z * numVerticesPerSize + x]
+			//		x=1210 z=1258 h=269.159576 ==> h=269.176086 ????
+			//		x=1210 z=1259 h=270.523071 ==> h=270.560638 6296
+			//		x=1210 z=1260 h=271.935760 ==> h=271.964020 6296
+			//		x=1210 z=1261 h=273.366913 ==> h=273.385284 6296
+			//		x=1210 z=1262 h=274.783417 ==> h=274.823730 6300
+			if (pos.IS_QUADRANT_TRACKED_FOR_DEBUG)
+			{
+				struct debug_pos
+				{
+					size_t x;
+					size_t z;
+					float h;
+					float h_16normalized;
+					debug_pos(size_t x, size_t z, float h)
+					{
+						this->x = x;
+						this->z = z;
+						this->h = h;
+						//uint16_t u16 = TheWorld_Utils::MeshCacheBuffer::halfFromFloat(h);
+						//this->h_16normalized = TheWorld_Utils::MeshCacheBuffer::halfToFloat_1(u16);
+						Eigen::half f16 = static_cast<Eigen::half>(h);
+						this->h_16normalized = static_cast<float>(f16);
+					}
+				};
+				std::vector<struct debug_pos> debug_positions;
+				for (size_t z = 1258; z <= 1262; z++)
+					for (size_t x = 1208; x <= 1212; x++)
+					{
+						debug_positions.push_back(struct debug_pos(x, z, heightmap[z * numVerticesPerSize + x]));
+					}
+			}
+		}
+		// DEBUG
 
 		{
 			size_t maxIndex = numVerticesPerSize - 1;
@@ -4190,6 +4260,44 @@ namespace TheWorld_Utils
 
 				terrainEdit->northSideZMinus.minHeight += corrector;
 				terrainEdit->northSideZMinus.maxHeight += corrector;
+
+				// DEBUG
+				{
+					// POS -55, -58
+					// vertices (0-2048):	heightmap[z * numVerticesPerSize + x]
+					//		x=1210 z=1258 h=269.159576 ==> h=269.176086 ==> h=6292.76758 (h16=6292.00000 ==> h16=6292.00000) ????
+					//		x=1210 z=1259 h=270.523071 ==> h=270.560638 ==> h=6294.15186 (h16=6296.00000 ==> h16=6296.00000) 6296
+					//		x=1210 z=1260 h=271.935760 ==> h=271.964020 ==> h=6295.55518 (h16=6296.00000 ==> h16=6296.00000) 6296
+					//		x=1210 z=1261 h=273.366913 ==> h=273.385284 ==> h=6296.97656 (h16=6296.00000 ==> h16=6296.00000) 6296
+					//		x=1210 z=1262 h=274.783417 ==> h=274.823730 ==> h=6298.41504 (h16=6296.00000 ==> h16=6300.00000) 6300
+					if (pos.IS_QUADRANT_TRACKED_FOR_DEBUG)
+					{
+						struct debug_pos
+						{
+							size_t x;
+							size_t z;
+							float h;
+							float h_16normalized;
+							debug_pos(size_t x, size_t z, float h)
+							{
+								this->x = x;
+								this->z = z;
+								this->h = h;
+								//uint16_t u16 = TheWorld_Utils::MeshCacheBuffer::halfFromFloat(h);
+								//this->h_16normalized = TheWorld_Utils::MeshCacheBuffer::halfToFloat_1(u16);
+								Eigen::half f16 = static_cast<Eigen::half>(h);
+								this->h_16normalized = static_cast<float>(f16);
+							}
+						};
+						std::vector<struct debug_pos> debug_positions;
+						for (size_t z = 1258; z <= 1262; z++)
+							for (size_t x = 1208; x <= 1212; x++)
+							{
+								debug_positions.push_back(struct debug_pos(x, z, heightmap[z * numVerticesPerSize + x]));
+							}
+					}
+				}
+				// DEBUG
 			}
 		}
 	}
