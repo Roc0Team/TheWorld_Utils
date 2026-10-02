@@ -836,7 +836,9 @@ namespace TheWorld_Utils
 	constexpr auto QUADRANT_TRACKING_SINGLE = true;
 	//constexpr auto QUADRANT_TRACKING_IDX_POS_X = -1;
 	//constexpr auto QUADRANT_TRACKING_IDX_POS_Z = 0;
-	constexpr auto QUADRANT_TRACKING_IDX_POS_X = -55;
+	//constexpr auto QUADRANT_TRACKING_IDX_POS_X = -55;
+	//constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -58;
+	constexpr auto QUADRANT_TRACKING_IDX_POS_X = -53;
 	constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -58;
 
 	constexpr auto QUADRANT_TRACKING_MULTIPLE = false;
