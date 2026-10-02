@@ -42,14 +42,32 @@ namespace fs = std::filesystem;
 
 namespace TheWorld_Utils
 {
-	bool MeshCacheBuffer::s_cacheQuadrantFormat1 = true;
-	bool MeshCacheBuffer::cacheQuadrantFormat0(void)
+	bool MeshCacheBuffer::s_newCacheQuadrantFormat1 = true;
+	bool MeshCacheBuffer::newCacheQuadrantFormat0(void)
 	{
-		return !s_cacheQuadrantFormat1;
+		return !s_newCacheQuadrantFormat1;
 	}
-	bool MeshCacheBuffer::cacheQuadrantFormat1(void)
+	bool MeshCacheBuffer::newCacheQuadrantFormat1(void)
 	{
-		return s_cacheQuadrantFormat1;
+		return s_newCacheQuadrantFormat1;
+	}
+
+	enum class MeshCacheBuffer::HeightsFormatInQuadrantBuffer MeshCacheBuffer::s_heightsFormatInNewSavedQuadrant = MeshCacheBuffer::HeightsFormatInQuadrantBuffer::UInt16;
+	void MeshCacheBuffer::setHeightsFormatInNewSavedQuadrant(enum class HeightsFormatInQuadrantBuffer heightsFormat)
+	{
+		s_heightsFormatInNewSavedQuadrant = heightsFormat;
+	}
+	bool MeshCacheBuffer::heightsFloat16InNewSavedQuadrant(void)
+	{
+		return s_heightsFormatInNewSavedQuadrant == HeightsFormatInQuadrantBuffer::Float16;
+	}
+	bool MeshCacheBuffer::heightsUInt16InNewSavedQuadrant(void)
+	{
+		return s_heightsFormatInNewSavedQuadrant == HeightsFormatInQuadrantBuffer::UInt16;
+	}
+	bool MeshCacheBuffer::heightsFloat32InNewSavedQuadrant(void)
+	{
+		return s_heightsFormatInNewSavedQuadrant == HeightsFormatInQuadrantBuffer::Float32;
 	}
 
 	std::string getModuleLoadPath(void)
@@ -1446,7 +1464,7 @@ namespace TheWorld_Utils
 
 	void TerrainEdit::adjustValues(TerrainEdit* northSideZMinus, TerrainEdit* southSideZPlus, TerrainEdit* westSideXMinus, TerrainEdit* eastSideXPlus)
 	{
-		if (!noise.desideredMinHeigthMandatory)
+		if (!noise.desideredMinHeightMandatory)
 		{
 			int num = 0;
 			float averageHeight = 0;
@@ -1594,6 +1612,12 @@ namespace TheWorld_Utils
 		m_size += size;
 	}
 
+	void MemoryBuffer::resize(size_t newLen)
+	{
+		reserve(newLen);
+		adjustSize(newLen);
+	}
+
 	void MemoryBuffer::reserve(size_t newLen)
 	{
 		//size_t newLen = size;
@@ -1681,12 +1705,12 @@ namespace TheWorld_Utils
 		v.assign((float*)m_ptr, (float*)m_ptr + numElements);
 	}
 
-	void MemoryBuffer::populateUint16Vector(std::vector<uint16_t>& v) const
-	{
-		size_t numElements = size() / sizeof(uint16_t);
-		my_assert(size() == numElements * sizeof(uint16_t));
-		v.assign((uint16_t*)m_ptr, (uint16_t*)m_ptr + numElements);
-	}
+	//void MemoryBuffer::populateUint16Vector(std::vector<uint16_t>& v) const
+	//{
+	//	size_t numElements = size() / sizeof(uint16_t);
+	//	my_assert(size() == numElements * sizeof(uint16_t));
+	//	v.assign((uint16_t*)m_ptr, (uint16_t*)m_ptr + numElements);
+	//}
 
 	void MemoryBuffer::serializeToBufferAndTruncate(BYTE* in, size_t size, size_t& offset)
 	{
@@ -2968,14 +2992,14 @@ namespace TheWorld_Utils
 		size_t size;
 
 		// get size of a size_t
-		size_t size_t_size = sizeof(size_t);
+		//size_t size_t_size = sizeof(size_t);
 
 		FILE* inFile = nullptr;
 		errno_t err = fopen_s(&inFile, cacheFilePath.c_str(), "rb");
 		if (err != 0)
 			throw(GDN_TheWorld_Exception(__FUNCTION__, std::string("Open " + cacheFilePath + " in errore - Err=" + std::to_string(err)).c_str()));
 
-		if (fread(shortBuffer, size_t_size, 1, inFile) != 1)
+		if (fread(shortBuffer, sizeof(size_t), 1, inFile) != 1)
 		{
 			fclose(inFile);
 			throw(GDN_TheWorld_Exception(__FUNCTION__, std::string("Read error 2!").c_str()));
@@ -2990,7 +3014,7 @@ namespace TheWorld_Utils
 		}
 
 		// read the serialized size of the mesh id
-		if (fread(shortBuffer, size_t_size, 1, inFile) != 1)
+		if (fread(shortBuffer, sizeof(size_t), 1, inFile) != 1)
 		{
 			fclose(inFile);
 			throw(GDN_TheWorld_Exception(__FUNCTION__, std::string("Read error 2!").c_str()));
@@ -3010,7 +3034,7 @@ namespace TheWorld_Utils
 		if (terrainEdit != nullptr)
 		{
 			// read the serialized size of TerrainEdit
-			if (fread(shortBuffer, size_t_size, 1, inFile) != 1)
+			if (fread(shortBuffer, sizeof(size_t), 1, inFile) != 1)
 			{
 				fclose(inFile);
 				throw(GDN_TheWorld_Exception(__FUNCTION__, std::string("Read error 2!").c_str()));
@@ -3073,7 +3097,7 @@ namespace TheWorld_Utils
 		return "WORLD QUADRANT " + m_mapName + " " + pos.getIdStr() + " Hash=" + meshIdToPrint(m_meshId);
 	}
 
-	bool MeshCacheBuffer::refreshMapsFromDisk(size_t numVerticesPerSize, float gridStepInWU, std::string _meshId, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool overrideEmptyMaps)
+	bool MeshCacheBuffer::refreshMapsFromDisk(size_t numVerticesPerSize, float gridStepInWU, std::string _meshId, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float32HeightsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool overrideEmptyMaps)
 	{
 		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromDisk 1 ") + __FUNCTION__, "ALL");
 
@@ -3104,7 +3128,7 @@ namespace TheWorld_Utils
 			{
 				TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromDisk 1.3 ") + __FUNCTION__, "refreshMapsFromBuffer");
 
-				refreshMapsFromBuffer(tempBuffer, _meshId, terrainEditValues, minAltitude, maxAltitude, float16HeigthsBuffer, float32HeigthsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, namedDataBuffer, false, overrideEmptyMaps);
+				refreshMapsFromBuffer(tempBuffer, _meshId, terrainEditValues, minAltitude, maxAltitude, float32HeightsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, namedDataBuffer, false, overrideEmptyMaps);
 			}
 
 			empty = true;
@@ -3113,7 +3137,7 @@ namespace TheWorld_Utils
 		{
 			TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromDisk 1.4  ") + __FUNCTION__, "refreshMapsFromBuffer");
 			std::string meshIdFromBuffer;
-			refreshMapsFromBuffer(buffer, meshIdFromBuffer, terrainEditValues, minAltitude, maxAltitude, float16HeigthsBuffer, float32HeigthsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, namedDataBuffer, false, overrideEmptyMaps);
+			refreshMapsFromBuffer(buffer, meshIdFromBuffer, terrainEditValues, minAltitude, maxAltitude, float32HeightsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, namedDataBuffer, false, overrideEmptyMaps);
 			//assert(_meshId.size() == 0 || meshIdFromBuffer == _meshId);
 			if (_meshId.size() > 0 && meshIdFromBuffer != _meshId)
 			{
@@ -3125,7 +3149,10 @@ namespace TheWorld_Utils
 		return empty;
 	}
 
-	bool MeshCacheBuffer::refreshMapsFromBuffer(const BYTE* buffer, const size_t bufferSize, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache, bool overrideEmptyMaps)
+	/*
+	* Buffers are serialized in MeshCacheBuffer::setBufferFromCacheQuadrantData
+	*/
+	bool MeshCacheBuffer::refreshMapsFromBuffer(const BYTE* buffer, const size_t bufferSize, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float32HeightsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache, bool overrideEmptyMaps)
 	{
 		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromBuffer 1 ") + __FUNCTION__, "ALL");
 
@@ -3138,15 +3165,15 @@ namespace TheWorld_Utils
 			return dummyBuffer;
 		}
 
-		size_t uint16_t_size = sizeof(uint16_t);	// the size of an half ==> float_16
-		size_t float_size = sizeof(float);
+		//size_t uint16_t_size = sizeof(uint16_t);	// the size of an half ==> float_16
+		//size_t float_size = sizeof(float);
 
 		size_t size = 0;
 
 		const char* movingStreamBuffer = (const char*)buffer;
 		const char* endOfBuffer = movingStreamBuffer + bufferSize;
 
-#define BUFFER_FORMAT_VERSION_0 (bufferFormat == '0')
+//#define BUFFER_FORMAT_VERSION_0 (bufferFormat == '0')	// Default buffer format, without the size of float16 and float32 height maps
 #define BUFFER_FORMAT_VERSION_1 (bufferFormat == '1')
 		char bufferFormat = *movingStreamBuffer;
 
@@ -3179,7 +3206,7 @@ namespace TheWorld_Utils
 
 		TheWorld_Utils::QuadrantPos pos = getQuadrantPos();
 		PLOG_VERBOSE << "Refreshing maps for quadrant " << pos.getIdStr() << " hash=" << TheWorld_Utils::MeshCacheBuffer::meshIdToPrint1(meshIdFromBuffer);
-		pos.TRACK_QUADRANT_FOR_DEBUG("Refreshing maps", meshIdFromBuffer);
+		//pos.TRACK_QUADRANT_FOR_DEBUG("Refreshing maps", meshIdFromBuffer);
 
 		if (vectSize > 0)
 		{
@@ -3189,17 +3216,29 @@ namespace TheWorld_Utils
 			maxAltitude = TheWorld_Utils::deserializeFromByteStream<float>((BYTE*)movingStreamBuffer, size);
 			movingStreamBuffer += size;
 
-			size_t float16HeightMapSize = vectSize * uint16_t_size;
+			bool heightsAsFloat16InBuffer = true;
+
+			size_t float16HeightMapSize = vectSize * sizeof(uint16_t);	// default value, for backward compatibility with old BUFFER_FORMAT_VERSION_0 buffers (if heights are uint16 there is one spare dummy height at the beginning and its value express the format of the heightmap)
 			if (BUFFER_FORMAT_VERSION_1)
 			{
 				float16HeightMapSize = TheWorld_Utils::deserializeFromByteStream<size_t>((BYTE*)movingStreamBuffer, size);
 				movingStreamBuffer += size;
-				my_assert(float16HeightMapSize == vectSize * uint16_t_size);
+				if (float16HeightMapSize == (vectSize + 1) * sizeof(uint16_t))	// backward compatibility with old BUFFER_FORMAT_VERSION_1 buffers (if heights are uint16 there is one spare dummy height at the beginning and its value express the format of the heightmap)
+				{
+					uint16_t heightmap16Format = TheWorld_Utils::deserializeFromByteStream<uint16_t>((BYTE*)movingStreamBuffer, size);	// fetch first height
+					movingStreamBuffer += size;																							// and bypass it
+					my_assert(heightmap16Format == uint16_t(HeightsFormatInQuadrantBuffer::Float16) or heightmap16Format == uint16_t(HeightsFormatInQuadrantBuffer::UInt16));
+					if (heightmap16Format == uint16_t(HeightsFormatInQuadrantBuffer::Float16))
+						heightsAsFloat16InBuffer = true;
+					else
+						heightsAsFloat16InBuffer = false;
+					float16HeightMapSize = vectSize * sizeof(uint16_t);					// adjust size of the heightmap to exclude the first height
+				}
+				else
+					my_assert(float16HeightMapSize == 0 or float16HeightMapSize == vectSize * sizeof(uint16_t));
 			}
-			if (overrideEmptyMaps or float16HeigthsBuffer.empty())
-			{
-				float16HeigthsBuffer.set((BYTE*)movingStreamBuffer, float16HeightMapSize);
-			}
+			TheWorld_Utils::MemoryBuffer float16HeightsBuffer;
+			float16HeightsBuffer.set((BYTE*)movingStreamBuffer, float16HeightMapSize);
 			movingStreamBuffer += float16HeightMapSize;
 
 			//// DEBUG
@@ -3209,42 +3248,66 @@ namespace TheWorld_Utils
 			//	{
 			//		TerrainEdit terrainEdit;
 			//		terrainEdit.deserialize(terrainEditValues);
-			//		bool b = TheWorld_Utils::MeshCacheBuffer::debugCheckMinMaxHeight(pos, &terrainEdit, "refreshMapsFromBuffer", &meshIdFromBuffer, &float16HeigthsBuffer, nullptr);
+			//		bool b = TheWorld_Utils::MeshCacheBuffer::debugCheckMinMaxHeight(pos, &terrainEdit, "refreshMapsFromBuffer", &meshIdFromBuffer, &float16HeightsBuffer, nullptr);
 			//	}
 			//}
 			//// DEBUG
 
-			size_t float32HeightMapSize = vectSize * float_size;
+			size_t float32HeightMapSize = vectSize * sizeof(float);		// default value, for backward compatibility with old BUFFER_FORMAT_VERSION_0 buffers (if heights are uint16 there is one spare dummy height at the beginning and its value express the format of the heightmap)
 			if (BUFFER_FORMAT_VERSION_1)
 			{
 				float32HeightMapSize = TheWorld_Utils::deserializeFromByteStream<size_t>((BYTE*)movingStreamBuffer, size);
 				movingStreamBuffer += size;
-				my_assert(float32HeightMapSize == 0 or float32HeightMapSize == vectSize * float_size);
+				my_assert(float32HeightMapSize == 0 or float32HeightMapSize == vectSize * sizeof(float));
 			}
 			if (float32HeightMapSize == 0)
 			{
-				TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromBuffer 1.1 ") + __FUNCTION__, "calc heights 32");
-				float32HeightMapSize = vectSize * float_size;
-				float32HeigthsBuffer.reserve(float32HeightMapSize);
-				float32HeigthsBuffer.adjustSize(float32HeightMapSize);
-				float* pFloat32 = (float*)float32HeigthsBuffer.ptr();
-				uint16_t* pFloat16 = (uint16_t*)float16HeigthsBuffer.ptr();
-				size_t numVerticesPerSize = (size_t)sqrt((double)vectSize);
-				for (int i = 0; i < vectSize; i++)
+				if (float16HeightsBuffer.size() == 0)
 				{
-					//// DEBUG
-					//if (i == numVerticesPerSize * (numVerticesPerSize - 1) and getQuadrantPos().isQuadrantTrackedForDebug())	// first index of last row of the quadrant
-					//{
-					//	TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromBuffer 1.1 ") + __FUNCTION__, "dummy");
-					//}
-					//// DEBUG
-					pFloat32[i] = TheWorld_Utils::MeshCacheBuffer::halfToFloat_1(pFloat16[i]);
+					//float32HeightsBuffer.clear(__FUNCTION__);
+					my_assert(false);
+				}
+				else
+				{
+					if (heightsAsFloat16InBuffer)
+					{
+						// heightmap16Format == uint16_t(HeightsFormatInQuadrantBuffer::Float16
+						TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromBuffer 1.1 ") + __FUNCTION__, "calc heights 32 from float16");
+						float32HeightMapSize = vectSize * sizeof(float);
+						float32HeightsBuffer.reserve(float32HeightMapSize);
+						float32HeightsBuffer.adjustSize(float32HeightMapSize);
+						float* pFloat32 = float32HeightsBuffer.ptr<float>();
+						uint16_t* pFloat16 = float16HeightsBuffer.ptr<uint16_t>();
+						//size_t numVerticesPerSize = (size_t)sqrt((double)vectSize);
+						for (int i = 0; i < vectSize; i++)
+						{
+							pFloat32[i] = TheWorld_Utils::MeshCacheBuffer::halfToFloat(pFloat16[i]);
+						}
+					}
+					else
+					{
+						// heightmap16Format == uint16_t(HeightsFormatInQuadrantBuffer::UInt16
+						TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshMapsFromBuffer 1.1 ") + __FUNCTION__, "calc heights 32 from uint16 heights");
+						float32HeightMapSize = vectSize * sizeof(float);
+						float32HeightsBuffer.reserve(float32HeightMapSize);
+						float32HeightsBuffer.adjustSize(float32HeightMapSize);
+						float* pFloat32 = float32HeightsBuffer.ptr<float>();
+						uint16_t* pFloat16 = float16HeightsBuffer.ptr<uint16_t>();
+						//size_t numVerticesPerSize = (size_t)sqrt((double)vectSize);
+						for (int i = 0; i < vectSize; i++)
+						{
+							pFloat32[i] = TheWorld_Utils::MeshCacheBuffer::uint16HeightToFloat(pFloat16[i]);
+						}
+					}
 				}
 			}
 			else
 			{
-				float32HeigthsBuffer.set((BYTE*)movingStreamBuffer, float32HeightMapSize);
-				movingStreamBuffer += float32HeightMapSize;
+				if (overrideEmptyMaps or float32HeightsBuffer.empty())
+				{
+					float32HeightsBuffer.set((BYTE*)movingStreamBuffer, float32HeightMapSize);
+					movingStreamBuffer += float32HeightMapSize;
+				}
 			}
 
 			size_t normalMapSize = vectSize * sizeof(struct TheWorld_Utils::_RGB);
@@ -3431,8 +3494,7 @@ namespace TheWorld_Utils
 			minAltitude = maxAltitude = 0;
 			if (overrideEmptyMaps)
 			{
-				float16HeigthsBuffer.clear(__FUNCTION__);
-				float32HeigthsBuffer.clear(__FUNCTION__);
+				float32HeightsBuffer.clear(__FUNCTION__);
 				normalsBuffer.clear(__FUNCTION__);
 				splatmapBuffer.clear(__FUNCTION__);
 				colormapBuffer.clear(__FUNCTION__);
@@ -3444,19 +3506,19 @@ namespace TheWorld_Utils
 		return dummyBuffer;
 	}
 
-	bool MeshCacheBuffer::refreshMapsFromBuffer(TheWorld_Utils::MemoryBuffer& buffer, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache, bool overrideEmptyMaps)
+	bool MeshCacheBuffer::refreshMapsFromBuffer(TheWorld_Utils::MemoryBuffer& buffer, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float32HeightsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache, bool overrideEmptyMaps)
 	{
-		return refreshMapsFromBuffer(buffer.ptr(), buffer.size(), meshIdFromBuffer, terrainEditValues, minAltitude, maxAltitude, float16HeigthsBuffer, float32HeigthsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, namedDataBuffer, updateCache, overrideEmptyMaps);
+		return refreshMapsFromBuffer(buffer.ptr(), buffer.size(), meshIdFromBuffer, terrainEditValues, minAltitude, maxAltitude, float32HeightsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, namedDataBuffer, updateCache, overrideEmptyMaps);
 	}
 
-	bool MeshCacheBuffer::refreshMapsFromBuffer(std::string& buffer, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float16HeigthsBuffer, TheWorld_Utils::MemoryBuffer& float32HeigthsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache, bool overrideEmptyMaps)
+	bool MeshCacheBuffer::refreshMapsFromBuffer(std::string& buffer, std::string& meshIdFromBuffer, TheWorld_Utils::MemoryBuffer& terrainEditValues, float& minAltitude, float& maxAltitude, TheWorld_Utils::MemoryBuffer& float32HeightsBuffer, TheWorld_Utils::MemoryBuffer& normalsBuffer, TheWorld_Utils::MemoryBuffer& splatmapBuffer, TheWorld_Utils::MemoryBuffer& colormapBuffer, TheWorld_Utils::MemoryBuffer& globalmapBuffer, TheWorld_Utils::NamedDataBuffer& namedDataBuffer, bool updateCache, bool overrideEmptyMaps)
 	{
-		return refreshMapsFromBuffer((BYTE*)buffer.c_str(), buffer.size(), meshIdFromBuffer, terrainEditValues, minAltitude, maxAltitude, float16HeigthsBuffer, float32HeigthsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, namedDataBuffer, updateCache, overrideEmptyMaps);
+		return refreshMapsFromBuffer((BYTE*)buffer.c_str(), buffer.size(), meshIdFromBuffer, terrainEditValues, minAltitude, maxAltitude, float32HeightsBuffer, normalsBuffer, splatmapBuffer, colormapBuffer, globalmapBuffer, namedDataBuffer, updateCache, overrideEmptyMaps);
 	}
 
 	bool MeshCacheBuffer::refreshCacheQuadrantDataFromBuffer(const BYTE* buffer, const size_t bufferSize, CacheQuadrantData& cacheQuadrantData, bool updateCache, bool overrideEmptyMaps)
 	{
-		return refreshMapsFromBuffer(buffer, bufferSize, cacheQuadrantData.meshId, *cacheQuadrantData.terrainEditValues, cacheQuadrantData.minHeight, cacheQuadrantData.maxHeight, *cacheQuadrantData.heights16Buffer, *cacheQuadrantData.heights32Buffer, *cacheQuadrantData.normalsBuffer, *cacheQuadrantData.splatmapBuffer, *cacheQuadrantData.colormapBuffer, *cacheQuadrantData.globalmapBuffer, *cacheQuadrantData.namedDataBuffer, updateCache, overrideEmptyMaps);
+		return refreshMapsFromBuffer(buffer, bufferSize, cacheQuadrantData.meshId, *cacheQuadrantData.terrainEditValues, cacheQuadrantData.minHeight, cacheQuadrantData.maxHeight, *cacheQuadrantData.heights32Buffer, *cacheQuadrantData.normalsBuffer, *cacheQuadrantData.splatmapBuffer, *cacheQuadrantData.colormapBuffer, *cacheQuadrantData.globalmapBuffer, *cacheQuadrantData.namedDataBuffer, updateCache, overrideEmptyMaps);
 	}
 
 	bool MeshCacheBuffer::refreshCacheQuadrantDataFromBuffer(TheWorld_Utils::MemoryBuffer& buffer, CacheQuadrantData& cacheQuadrantData, bool updateCache, bool overrideEmptyMaps)
@@ -3568,9 +3630,9 @@ namespace TheWorld_Utils
 			//throw(GDN_TheWorld_Exception(__FUNCTION__, std::string("not found current quadrant in cache").c_str()));
 		}
 
-		size_t size_t_size = sizeof(size_t);	// get size of a size_t
-		size_t uint16_t_size = sizeof(uint16_t);	// the size of an half ==> float_16
-		size_t float_size = sizeof(float);
+		//size_t size_t_size = sizeof(size_t);	// get size of a size_t
+		//size_t uint16_t_size = sizeof(uint16_t);	// the size of an half ==> float_16
+		//size_t float_size = sizeof(float);
 
 		FILE* inFile = nullptr;
 		errno_t err = fopen_s(&inFile, cacheFilePath.c_str(), "rb");
@@ -3578,7 +3640,7 @@ namespace TheWorld_Utils
 			throw(GDN_TheWorld_Exception(__FUNCTION__, std::string("Open " + cacheFilePath + " in errore - Err=" + std::to_string(err)).c_str()));
 
 		// read the buffer size
-		if (fread(shortBuffer, size_t_size, 1, inFile) != 1)
+		if (fread(shortBuffer, sizeof(size_t), 1, inFile) != 1)
 		{
 			fclose(inFile);
 			throw(GDN_TheWorld_Exception(__FUNCTION__, std::string("Read error 2!").c_str()));
@@ -3593,7 +3655,7 @@ namespace TheWorld_Utils
 		}
 
 		// read the serialized size of the mesh id
-		if (fread(shortBuffer, size_t_size, 1, inFile) != 1)
+		if (fread(shortBuffer, sizeof(size_t), 1, inFile) != 1)
 		{
 			fclose(inFile);
 			throw(GDN_TheWorld_Exception(__FUNCTION__, std::string("Read error 2!").c_str()));
@@ -3622,7 +3684,7 @@ namespace TheWorld_Utils
 		if (terrainEdit != nullptr)
 		{
 			// read the serialized size of TerrainEdit
-			if (fread(shortBuffer, size_t_size, 1, inFile) != 1)
+			if (fread(shortBuffer, sizeof(size_t), 1, inFile) != 1)
 			{
 				fclose(inFile);
 				throw(GDN_TheWorld_Exception(__FUNCTION__, std::string("Read error 2!").c_str()));
@@ -3661,7 +3723,7 @@ namespace TheWorld_Utils
 		}
 
 		// bypass buffer size
-		if (fread(shortBuffer, size_t_size, 1, inFile) != 1)
+		if (fread(shortBuffer, sizeof(size_t), 1, inFile) != 1)
 		{
 			fclose(inFile);
 			throw(GDN_TheWorld_Exception(__FUNCTION__, std::string("Read error 2!").c_str()));
@@ -3737,8 +3799,8 @@ namespace TheWorld_Utils
 		char* movingStreamBuffer = (char*)buffer;
 		size_t size = 0;
 
-#define BUFFER_FORMAT_VERSION_0 (bufferFormat == '0')
-#define BUFFER_FORMAT_VERSION_1 (bufferFormat == '1')
+//#define BUFFER_FORMAT_VERSION_0 (bufferFormat == '0')
+//#define BUFFER_FORMAT_VERSION_1 (bufferFormat == '1')
 		char bufferFormat = *movingStreamBuffer;
 		movingStreamBuffer++;	// bypass buffer format "0"/"1"
 
@@ -3766,7 +3828,7 @@ namespace TheWorld_Utils
 
 		TheWorld_Utils::QuadrantPos pos = getQuadrantPos();
 		PLOG_VERBOSE << "Quadrant " << pos.getIdStr() << " saving to " << (workDir ? "work " : "") << "disk cache with hash[" << TheWorld_Utils::MeshCacheBuffer::meshIdToPrint1(writtenMeshId) << "]";
-		pos.TRACK_QUADRANT_FOR_DEBUG("Saved to disk cache", writtenMeshId);
+		//pos.TRACK_QUADRANT_FOR_DEBUG("Saved to disk cache", writtenMeshId);
 
 		TerrainEdit _writtenTerrainEdit;
 		{
@@ -3810,11 +3872,11 @@ namespace TheWorld_Utils
 		//			movingStreamBuffer += size;
 		//			my_assert(float16HeightMapSize == vectSize * sizeof(uint16_t));
 		//		}
-		//		TheWorld_Utils::MemoryBuffer float16HeigthsBuffer;
-		//		float16HeigthsBuffer.set((BYTE*)movingStreamBuffer, float16HeightMapSize);
+		//		TheWorld_Utils::MemoryBuffer float16HeightsBuffer;
+		//		float16HeightsBuffer.set((BYTE*)movingStreamBuffer, float16HeightMapSize);
 		//		movingStreamBuffer += float16HeightMapSize;
 
-		//		bool b = TheWorld_Utils::MeshCacheBuffer::debugCheckMinMaxHeight(pos, &_writtenTerrainEdit, "writeBufferToDiskCache",  & writtenMeshId, &float16HeigthsBuffer, nullptr);
+		//		bool b = TheWorld_Utils::MeshCacheBuffer::debugCheckMinMaxHeight(pos, &_writtenTerrainEdit, "writeBufferToDiskCache",  & writtenMeshId, &float16HeightsBuffer, nullptr);
 		//	}
 		//}
 		//// DEBUG
@@ -3949,7 +4011,7 @@ namespace TheWorld_Utils
 		float gridStepInWU = pos.getGridStepInWU();
 		float lowerXGridVertex = pos.getLowerXGridVertex();
 		float lowerZGridVertex = pos.getLowerZGridVertex();
-		//lowerXGridVertex = lowerZGridVertex = 0.0f;	// for now, we generate the heights in local coordinates
+		//lowerXGridVertex = lowerZGridVertex = 0.0f;	// DEBUG for now, we generate the heights in local coordinates
 
 		heightmap.clear();
 		heightmap.resize(numVerticesPerSize * numVerticesPerSize);
@@ -3961,6 +4023,9 @@ namespace TheWorld_Utils
 		static std::recursive_mutex s_mtxEmptyBuffer;
 		static std::vector<float> s_vectEmptyGridHeights;
 
+		/*
+		* Generating Heights for flat or empty terrain types, we can optimize by using a precomputed buffer of heights, since all heights are the same. This avoids unnecessary calculations and improves performance.
+		*/
 		if (terrainEdit->terrainType == TheWorld_Utils::TerrainEdit::TerrainType::flat)
 		{
 			//TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer generateHeights 1.2 ") + __FUNCTION__, "Generate flat Heights");
@@ -4031,6 +4096,7 @@ namespace TheWorld_Utils
 		}
 		else
 		{
+			// generating heights using noise for other terrain types
 			{
 				//TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer generateHeights 1.2 ") + __FUNCTION__, "Generate Heights");
 
@@ -4083,85 +4149,91 @@ namespace TheWorld_Utils
 			}
 		}
 
-		// DEBUG
-		{
-			// POS -55, -58
-			// vertices (0-2048):	heightmap[z * numVerticesPerSize + x]
-			//		x=1210 z=1258 h=269.159576 ????
-			//		x=1210 z=1259 h=270.523071 6296
-			//		x=1210 z=1260 h=271.935760 6296
-			//		x=1210 z=1261 h=273.366913 6296
-			//		x=1210 z=1262 h=274.783417 6300
-			if (pos.IS_QUADRANT_TRACKED_FOR_DEBUG)
-			{
-				struct debug_pos
-				{
-					size_t x;
-					size_t z;
-					float h;
-					float h_16normalized;
-					debug_pos(size_t x, size_t z, float h)
-					{
-						this->x = x;
-						this->z = z;
-						this->h = h;
-						//uint16_t u16 = TheWorld_Utils::MeshCacheBuffer::halfFromFloat(h);
-						//this->h_16normalized = TheWorld_Utils::MeshCacheBuffer::halfToFloat_1(u16);
-						Eigen::half f16 = static_cast<Eigen::half>(h);
-						this->h_16normalized = static_cast<float>(f16);
-					}
-				};
-				std::vector<struct debug_pos> debug_positions;
-				for (size_t z = 1258; z <= 1262; z++)
-					for (size_t x = 1208; x <= 1212; x++)
-					{
-						debug_positions.push_back(struct debug_pos(x, z, heightmap[z * numVerticesPerSize + x]));
-					}
-			}
-		}
-		// DEBUG
+		//// DEBUG
+		//{
+		//	// POS -55, -58
+		//	// vertices (0-2048):	heightmap[z * numVerticesPerSize + x]
+		//	//		x=1210 z=1258 h=269.159576 ????
+		//	//		x=1210 z=1259 h=270.523071 6296
+		//	//		x=1210 z=1260 h=271.935760 6296
+		//	//		x=1210 z=1261 h=273.366913 6296
+		//	//		x=1210 z=1262 h=274.783417 6300
+		//	if (pos.IS_QUADRANT_TRACKED_FOR_DEBUG)
+		//	{
+		//		struct debug_pos
+		//		{
+		//			size_t x;
+		//			size_t z;
+		//			float h;
+		//			float h_16normalized;
+		//			debug_pos(size_t x, size_t z, float h)
+		//			{
+		//				this->x = x;
+		//				this->z = z;
+		//				this->h = h;
+		//				//uint16_t u16 = TheWorld_Utils::MeshCacheBuffer::halfFromFloat(h);
+		//				//this->h_16normalized = TheWorld_Utils::MeshCacheBuffer::halfToFloat_1(u16);
+		//				Eigen::half f16 = static_cast<Eigen::half>(h);
+		//				this->h_16normalized = static_cast<float>(f16);
+		//			}
+		//		};
+		//		std::vector<struct debug_pos> debug_positions;
+		//		for (size_t z = 1258; z <= 1262; z++)
+		//			for (size_t x = 1208; x <= 1212; x++)
+		//			{
+		//				debug_positions.push_back(struct debug_pos(x, z, heightmap[z * numVerticesPerSize + x]));
+		//			}
+		//	}
+		//}
+		//// DEBUG
 
-		for (size_t i = 0; i < terrainEdit->extraValues.numBlendingCycles; i++)
-			SmoothHeightmap(pos, heightmap, 5, 1.0);
+		/*
+		* smooth the heightmap to reduce noise and create a more natural terrain appearance. The number of blending cycles can be adjusted based on the desired level of smoothness.
+		*/
+		//for (size_t i = 0; i < terrainEdit->extraValues.numBlendingCycles; i++)
+		//	SmoothHeightmap(pos, heightmap, 5, 1.0);
 
-		// DEBUG
-		{
-			// POS -55, -58
-			// vertices (0-2048):	heightmap[z * numVerticesPerSize + x]
-			//		x=1210 z=1258 h=269.159576 ==> h=269.176086 ????
-			//		x=1210 z=1259 h=270.523071 ==> h=270.560638 6296
-			//		x=1210 z=1260 h=271.935760 ==> h=271.964020 6296
-			//		x=1210 z=1261 h=273.366913 ==> h=273.385284 6296
-			//		x=1210 z=1262 h=274.783417 ==> h=274.823730 6300
-			if (pos.IS_QUADRANT_TRACKED_FOR_DEBUG)
-			{
-				struct debug_pos
-				{
-					size_t x;
-					size_t z;
-					float h;
-					float h_16normalized;
-					debug_pos(size_t x, size_t z, float h)
-					{
-						this->x = x;
-						this->z = z;
-						this->h = h;
-						//uint16_t u16 = TheWorld_Utils::MeshCacheBuffer::halfFromFloat(h);
-						//this->h_16normalized = TheWorld_Utils::MeshCacheBuffer::halfToFloat_1(u16);
-						Eigen::half f16 = static_cast<Eigen::half>(h);
-						this->h_16normalized = static_cast<float>(f16);
-					}
-				};
-				std::vector<struct debug_pos> debug_positions;
-				for (size_t z = 1258; z <= 1262; z++)
-					for (size_t x = 1208; x <= 1212; x++)
-					{
-						debug_positions.push_back(struct debug_pos(x, z, heightmap[z * numVerticesPerSize + x]));
-					}
-			}
-		}
-		// DEBUG
+		//// DEBUG
+		//{
+		//	// POS -55, -58
+		//	// vertices (0-2048):	heightmap[z * numVerticesPerSize + x]
+		//	//		x=1210 z=1258 h=269.159576 ==> h=269.176086 ????
+		//	//		x=1210 z=1259 h=270.523071 ==> h=270.560638 6296
+		//	//		x=1210 z=1260 h=271.935760 ==> h=271.964020 6296
+		//	//		x=1210 z=1261 h=273.366913 ==> h=273.385284 6296
+		//	//		x=1210 z=1262 h=274.783417 ==> h=274.823730 6300
+		//	if (pos.IS_QUADRANT_TRACKED_FOR_DEBUG)
+		//	{
+		//		struct debug_pos
+		//		{
+		//			size_t x;
+		//			size_t z;
+		//			float h;
+		//			float h_16normalized;
+		//			debug_pos(size_t x, size_t z, float h)
+		//			{
+		//				this->x = x;
+		//				this->z = z;
+		//				this->h = h;
+		//				//uint16_t u16 = TheWorld_Utils::MeshCacheBuffer::halfFromFloat(h);
+		//				//this->h_16normalized = TheWorld_Utils::MeshCacheBuffer::halfToFloat_1(u16);
+		//				Eigen::half f16 = static_cast<Eigen::half>(h);
+		//				this->h_16normalized = static_cast<float>(f16);
+		//			}
+		//		};
+		//		std::vector<struct debug_pos> debug_positions;
+		//		for (size_t z = 1258; z <= 1262; z++)
+		//			for (size_t x = 1208; x <= 1212; x++)
+		//			{
+		//				debug_positions.push_back(struct debug_pos(x, z, heightmap[z * numVerticesPerSize + x]));
+		//			}
+		//	}
+		//}
+		//// DEBUG
 
+		/*
+		* Recalc min/max heights for the whole terrain and for each side of the quadrant, since we have generated new heights.
+		*/
 		{
 			size_t maxIndex = numVerticesPerSize - 1;
 			
@@ -4223,6 +4295,9 @@ namespace TheWorld_Utils
 				}
 		}
 
+		/*
+		* adjust height according to desidered min height and post generate elevation, if needed
+		*/
 		if (adjustHeights)
 		{
 			//TheWorld_Utils::GuardProfiler profiler(std::string("EditGenerate 1.3 ") + __FUNCTION__, "Adjust desidered min height");
@@ -4261,44 +4336,58 @@ namespace TheWorld_Utils
 				terrainEdit->northSideZMinus.minHeight += corrector;
 				terrainEdit->northSideZMinus.maxHeight += corrector;
 
-				// DEBUG
-				{
-					// POS -55, -58
-					// vertices (0-2048):	heightmap[z * numVerticesPerSize + x]
-					//		x=1210 z=1258 h=269.159576 ==> h=269.176086 ==> h=6292.76758 (h16=6292.00000 ==> h16=6292.00000) ????
-					//		x=1210 z=1259 h=270.523071 ==> h=270.560638 ==> h=6294.15186 (h16=6296.00000 ==> h16=6296.00000) 6296
-					//		x=1210 z=1260 h=271.935760 ==> h=271.964020 ==> h=6295.55518 (h16=6296.00000 ==> h16=6296.00000) 6296
-					//		x=1210 z=1261 h=273.366913 ==> h=273.385284 ==> h=6296.97656 (h16=6296.00000 ==> h16=6296.00000) 6296
-					//		x=1210 z=1262 h=274.783417 ==> h=274.823730 ==> h=6298.41504 (h16=6296.00000 ==> h16=6300.00000) 6300
-					if (pos.IS_QUADRANT_TRACKED_FOR_DEBUG)
-					{
-						struct debug_pos
-						{
-							size_t x;
-							size_t z;
-							float h;
-							float h_16normalized;
-							debug_pos(size_t x, size_t z, float h)
-							{
-								this->x = x;
-								this->z = z;
-								this->h = h;
-								//uint16_t u16 = TheWorld_Utils::MeshCacheBuffer::halfFromFloat(h);
-								//this->h_16normalized = TheWorld_Utils::MeshCacheBuffer::halfToFloat_1(u16);
-								Eigen::half f16 = static_cast<Eigen::half>(h);
-								this->h_16normalized = static_cast<float>(f16);
-							}
-						};
-						std::vector<struct debug_pos> debug_positions;
-						for (size_t z = 1258; z <= 1262; z++)
-							for (size_t x = 1208; x <= 1212; x++)
-							{
-								debug_positions.push_back(struct debug_pos(x, z, heightmap[z * numVerticesPerSize + x]));
-							}
-					}
-				}
-				// DEBUG
+				//// DEBUG
+				//{
+				//	// POS -55, -58
+				//	// vertices (0-2048):	heightmap[z * numVerticesPerSize + x]
+				//	//		x=1210 z=1258 h=269.159576 ==> h=269.176086 ==> h=6292.76758 (h16=6292.00000 ==> h16=6292.00000) ????
+				//	//		x=1210 z=1259 h=270.523071 ==> h=270.560638 ==> h=6294.15186 (h16=6296.00000 ==> h16=6296.00000) 6296
+				//	//		x=1210 z=1260 h=271.935760 ==> h=271.964020 ==> h=6295.55518 (h16=6296.00000 ==> h16=6296.00000) 6296
+				//	//		x=1210 z=1261 h=273.366913 ==> h=273.385284 ==> h=6296.97656 (h16=6296.00000 ==> h16=6296.00000) 6296
+				//	//		x=1210 z=1262 h=274.783417 ==> h=274.823730 ==> h=6298.41504 (h16=6296.00000 ==> h16=6300.00000) 6300
+				//	if (pos.IS_QUADRANT_TRACKED_FOR_DEBUG)
+				//	{
+				//		struct debug_pos
+				//		{
+				//			size_t x;
+				//			size_t z;
+				//			float h;
+				//			float h_16normalized;
+				//			debug_pos(size_t x, size_t z, float h)
+				//			{
+				//				this->x = x;
+				//				this->z = z;
+				//				this->h = h;
+				//				//uint16_t u16 = TheWorld_Utils::MeshCacheBuffer::halfFromFloat(h);
+				//				//this->h_16normalized = TheWorld_Utils::MeshCacheBuffer::halfToFloat_1(u16);
+				//				Eigen::half f16 = static_cast<Eigen::half>(h);
+				//				this->h_16normalized = static_cast<float>(f16);
+				//			}
+				//		};
+				//		std::vector<struct debug_pos> debug_positions;
+				//		for (size_t z = 1258; z <= 1262; z++)
+				//			for (size_t x = 1208; x <= 1212; x++)
+				//			{
+				//				debug_positions.push_back(struct debug_pos(x, z, heightmap[z * numVerticesPerSize + x]));
+				//			}
+				//	}
+				//}
+				//// DEBUG
 			}
+		}
+
+
+		if (heightsFloat16InNewSavedQuadrant())
+		{
+			// simulating the conversion to float16 and back to float32, to ensure that the heights in the heightmap vector are stored as they will be saved int the buffer.
+			for (int idx = 0; idx < numVerticesPerSize * numVerticesPerSize; idx++)
+				heightmap[idx] = halfToFloat(halfFromFloat(heightmap[idx]));
+		}
+		else if (heightsUInt16InNewSavedQuadrant())
+		{
+			// simulating the conversion to uint16 heights and back to float32, to ensure that the heights in the heightmap vector are stored as they will be saved int the buffer.
+			for (int idx = 0; idx < numVerticesPerSize * numVerticesPerSize; idx++)
+				heightmap[idx] = uint16HeightToFloat(uint16HeightFromFloat(heightmap[idx]));
 		}
 	}
 		
@@ -4537,9 +4626,12 @@ namespace TheWorld_Utils
 		buffer.assign((char*)_buffer.ptr(), _buffer.size());
 	}
 
+	/*
+	* Buffers are de-serialized in MeshCacheBuffer::refreshMapsFromBuffer
+	*/
 	void MeshCacheBuffer::setBufferFromCacheQuadrantData(size_t numVerticesPerSize, CacheQuadrantData& cacheQuadrantData, TheWorld_Utils::MemoryBuffer& buffer)
 	{
-		if (TheWorld_Utils::MeshCacheBuffer::cacheQuadrantFormat1())
+		if (TheWorld_Utils::MeshCacheBuffer::newCacheQuadrantFormat1())
 			setBufferFromCacheQuadrantData_Format1(numVerticesPerSize, cacheQuadrantData, buffer);
 		else
 			throw(GDN_TheWorld_Exception(__FUNCTION__, "Unsupported cache quadrant format"));
@@ -4551,8 +4643,7 @@ namespace TheWorld_Utils
 
 		size_t size = 0;
 
-		size_t numHeights16 = cacheQuadrantData.heights16Buffer != nullptr ? cacheQuadrantData.heights16Buffer->size() / sizeof(uint16_t) : 0;
-		my_assert(cacheQuadrantData.heights16Buffer == nullptr || cacheQuadrantData.heights16Buffer->size() == numHeights16 * sizeof(uint16_t));
+		size_t numHeights = 0;
 		size_t numHeights32 = cacheQuadrantData.heights32Buffer != nullptr ? cacheQuadrantData.heights32Buffer->size() / sizeof(float) : 0;
 		my_assert(cacheQuadrantData.heights32Buffer == nullptr || cacheQuadrantData.heights32Buffer->size() == numHeights32 * sizeof(float));
 		size_t numNormals = cacheQuadrantData.normalsBuffer != nullptr ? cacheQuadrantData.normalsBuffer->size() / sizeof(TheWorld_Utils::_RGB) : 0;
@@ -4564,8 +4655,6 @@ namespace TheWorld_Utils
 		//size_t numGlobalmapVertices = cacheQuadrantData.globalmapBuffer != nullptr ? cacheQuadrantData.globalmapBuffer->size() / sizeof(TheWorld_Utils::_RGB) : 0;
 		//my_assert(cacheQuadrantData.globalmapBuffer == nullptr || cacheQuadrantData.globalmapBuffer->size() == numGlobalmapVertices * sizeof(TheWorld_Utils::_RGB));
 
-		//my_assert(numHeights16 == numHeights32);
-		my_assert(numHeights16 == 0 || numHeights16 == numVerticesPerSize * numVerticesPerSize);
 		my_assert(numHeights32 == 0 || numHeights32 == numVerticesPerSize * numVerticesPerSize);
 		my_assert(numNormals == 0 || numNormals == numVerticesPerSize * numVerticesPerSize);
 		my_assert(numSplatmapVertices == 0 || numSplatmapVertices == numVerticesPerSize * numVerticesPerSize || numSplatmapVertices == numVerticesPerSize * 4);
@@ -4573,54 +4662,204 @@ namespace TheWorld_Utils
 		//my_assert(numGlobalmapVertices == 0 || numGlobalmapVertices == numVerticesPerSize * numVerticesPerSize);
 
 		static std::recursive_mutex s_mtxEmptyBuffer;
+		static TheWorld_Utils::MemoryBuffer s_emptyUInt16HeightsBuffer;
 		static TheWorld_Utils::MemoryBuffer s_emptyFloat16HeightsBuffer;
-		TheWorld_Utils::MemoryBuffer* _float16HeightsBuffer = cacheQuadrantData.heights16Buffer;
+		static TheWorld_Utils::MemoryBuffer s_emptyFloat32HeightsBuffer;
+		TheWorld_Utils::MemoryBuffer height16HeightsBuffer;
+		TheWorld_Utils::MemoryBuffer* _height16HeightsBuffer = nullptr;
 		TheWorld_Utils::MemoryBuffer* _float32HeightsBuffer = cacheQuadrantData.heights32Buffer;
 		TheWorld_Utils::MemoryBuffer* _normalsBuffer = cacheQuadrantData.normalsBuffer;
 		TheWorld_Utils::MemoryBuffer* _splatmapBuffer = cacheQuadrantData.splatmapBuffer;
 
-		if (numHeights16 == 0)
+		size_t height16HeightmapSize = 0;
+		size_t float32HeightmapSize = 0;
+
+		if (numHeights32 == 0)
 		{
+			// generating empty heights buffer for quadrants that don't have any height data (for example, empty quadrants)
 			TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer setBufferFromCacheQuadrantData_Format1 1.1 ") + __FUNCTION__, "gen empty quadrants heights");
 
-			_float16HeightsBuffer = &s_emptyFloat16HeightsBuffer;
-
-			numHeights16 = numVerticesPerSize * numVerticesPerSize;
-			numHeights32 = 0;
-
+			numHeights = numVerticesPerSize * numVerticesPerSize;
+			
+			if (heightsFloat16InNewSavedQuadrant())
 			{
-				std::lock_guard<std::recursive_mutex> lock(s_mtxEmptyBuffer);
-				
-				size_t float16HeightsBufferSize = numVerticesPerSize * numVerticesPerSize * sizeof(uint16_t);
+				// generating empty float16 heights buffer for quadrants that don't have any height data (for example, empty quadrants)
+				// Must be set _height16HeightsBuffer and height16HeightmapSize
 
-				if (s_emptyFloat16HeightsBuffer.size() == 0)
+				_height16HeightsBuffer = &s_emptyFloat16HeightsBuffer;
+
 				{
-					s_emptyFloat16HeightsBuffer.reserve(float16HeightsBufferSize);
-					uint16_t* float16HeightsBufferPtr = (uint16_t*)s_emptyFloat16HeightsBuffer.ptr();
+					std::lock_guard<std::recursive_mutex> lock(s_mtxEmptyBuffer);
 
-					TheWorld_Utils::FLOAT_32 f(EMPTY_QUADRANTS_TERRAIN_HEIGHT);
-					uint16_t emptyHalf = half_from_float(f.u32);
-					{		// first impl.
+					size_t float16HeightsBufferSize = (numHeights + 1) * sizeof(uint16_t);		// in height16 buffers first byte is the heights format in the buffer (0=uint16, 1=float16)
+
+					if (s_emptyFloat16HeightsBuffer.size() == 0)
+					{
+						s_emptyFloat16HeightsBuffer.resize(float16HeightsBufferSize);
+						uint16_t* float16HeightsBufferPtr = (uint16_t*)s_emptyFloat16HeightsBuffer.ptr();
+
+						*float16HeightsBufferPtr = uint16_t(HeightsFormatInQuadrantBuffer::Float16);		// in height16 buffers first byte is the heights format in the buffer (0=uint16, 1=float16)
+						float16HeightsBufferPtr++;
+
+						uint16_t emptyHalf = TheWorld_Utils::MeshCacheBuffer::halfFromFloat(EMPTY_QUADRANTS_TERRAIN_HEIGHT);
 						for (size_t z = 0; z < numVerticesPerSize; z++)
 							for (size_t x = 0; x < numVerticesPerSize; x++)
 							{
 								*float16HeightsBufferPtr = emptyHalf;
 								float16HeightsBufferPtr++;
 							}
-					}
 
-					assert((BYTE*)float16HeightsBufferPtr - s_emptyFloat16HeightsBuffer.ptr() == float16HeightsBufferSize);
-					s_emptyFloat16HeightsBuffer.adjustSize(float16HeightsBufferSize);
+						assert((BYTE*)float16HeightsBufferPtr - s_emptyFloat16HeightsBuffer.ptr() == float16HeightsBufferSize);
+					}
+					else
+					{
+						assert(float16HeightsBufferSize == _height16HeightsBuffer->size());
+					}
 				}
-				else
+
+				height16HeightmapSize = _height16HeightsBuffer->size();
+			}
+			else if (heightsUInt16InNewSavedQuadrant())
+			{
+				// generating empty uint16 heights buffer for quadrants that don't have any height data (for example, empty quadrants)
+				// Must be set _height16HeightsBuffer and height16HeightmapSize
+				
+				_height16HeightsBuffer = &s_emptyUInt16HeightsBuffer;
+
 				{
-					assert(float16HeightsBufferSize == _float16HeightsBuffer->size());
+					std::lock_guard<std::recursive_mutex> lock(s_mtxEmptyBuffer);
+
+					size_t uint16HeightsBufferSize = (numHeights + 1) * sizeof(uint16_t);			// in height16 buffers first byte is the heights format in the buffer (0=uint16, 1=float16)
+
+					if (s_emptyUInt16HeightsBuffer.size() == 0)
+					{
+						s_emptyUInt16HeightsBuffer.resize(uint16HeightsBufferSize);
+						uint16_t* uint16HeightsBufferPtr = (uint16_t*)s_emptyUInt16HeightsBuffer.ptr();
+
+						*uint16HeightsBufferPtr = uint16_t(HeightsFormatInQuadrantBuffer::UInt16);		// in height16 buffers first byte is the heights format in the buffer (0=uint16, 1=float16)
+						uint16HeightsBufferPtr++;
+
+						uint16_t emptyUInt16Height = TheWorld_Utils::MeshCacheBuffer::uint16HeightFromFloat(EMPTY_QUADRANTS_TERRAIN_HEIGHT);
+						for (size_t z = 0; z < numVerticesPerSize; z++)
+							for (size_t x = 0; x < numVerticesPerSize; x++)
+							{
+								*uint16HeightsBufferPtr = emptyUInt16Height;
+								uint16HeightsBufferPtr++;
+							}
+
+						assert((BYTE*)uint16HeightsBufferPtr - s_emptyUInt16HeightsBuffer.ptr() == uint16HeightsBufferSize);
+					}
+					else
+					{
+						assert(uint16HeightsBufferSize == _height16HeightsBuffer->size());
+					}
 				}
+
+				height16HeightmapSize = _height16HeightsBuffer->size();
+			}
+			else if (heightsFloat32InNewSavedQuadrant())
+			{
+				// generating empty float32 heights buffer for quadrants that don't have any height data (for example, empty quadrants)
+				// Must be set _float32HeightsBuffer and float32HeightmapSize
+				
+				_float32HeightsBuffer = &s_emptyFloat32HeightsBuffer;
+
+				{
+					std::lock_guard<std::recursive_mutex> lock(s_mtxEmptyBuffer);
+
+					size_t float32HeightsBufferSize = numHeights * sizeof(float);
+
+					if (s_emptyFloat32HeightsBuffer.size() == 0)
+					{
+						s_emptyFloat32HeightsBuffer.resize(float32HeightsBufferSize);
+						memset(s_emptyFloat32HeightsBuffer.ptr(), 0, float32HeightsBufferSize);		// initializing all float to zero (positive-zero float has all bit to zero)
+					}
+					else
+					{
+						assert(float32HeightsBufferSize == _float32HeightsBuffer->size());
+					}
+				}
+
+				float32HeightmapSize = _float32HeightsBuffer->size();
+			}
+			else
+			{
+				my_assert(false);
+			}
+		}
+		else
+		{
+			my_assert(numHeights32 == numVerticesPerSize * numVerticesPerSize);
+
+			numHeights = numHeights32;
+
+			if (heightsFloat16InNewSavedQuadrant())
+			{
+				// generating float16 heights buffer from float 32 heights for quadrants that have height data (for example, non-empty quadrants)
+				// Must be set _height16HeightsBuffer and height16HeightmapSize
+
+				_height16HeightsBuffer = &height16HeightsBuffer;
+
+				size_t float16HeightsBufferSize = (numHeights + 1) * sizeof(uint16_t);			// in float16 buffers first byte is the heights format in the buffer (0=uint16, 1=float16)
+				_height16HeightsBuffer->reserve(float16HeightsBufferSize);
+				_height16HeightsBuffer->adjustSize(float16HeightsBufferSize);
+				uint16_t* float16HeightsBufferPtr = _height16HeightsBuffer->ptr<uint16_t>();
+				
+				*float16HeightsBufferPtr = uint16_t(HeightsFormatInQuadrantBuffer::Float16);		// in float16 buffers first byte is the heights format in the buffer (0=uint16, 1=float16)
+				float16HeightsBufferPtr++;
+				
+				float* float32HeightsBufferPtr = _float32HeightsBuffer->ptr<float>();
+				BYTE* endOf32HeightsBufferPtr = (BYTE*)float32HeightsBufferPtr + _float32HeightsBuffer->size();
+				while (float32HeightsBufferPtr < (float*)endOf32HeightsBufferPtr)
+				{
+					uint16_t f16 = TheWorld_Utils::MeshCacheBuffer::halfFromFloat(*float32HeightsBufferPtr);
+					*float16HeightsBufferPtr = f16;
+					float32HeightsBufferPtr++;
+					float16HeightsBufferPtr++;
+				}
+				my_assert((BYTE*)float16HeightsBufferPtr - _height16HeightsBuffer->ptr() == float16HeightsBufferSize);
+
+				height16HeightmapSize = _height16HeightsBuffer->size();
+			}
+			else if (heightsUInt16InNewSavedQuadrant())
+			{
+				// generating uint16 heights buffer from float 32 heights for quadrants that have height data (for example, non-empty quadrants)
+				// Must be set _height16HeightsBuffer and height16HeightmapSize
+
+				_height16HeightsBuffer = &height16HeightsBuffer;
+
+				size_t height16HeightsBufferSize = (numHeights + 1) * sizeof(uint16_t);			// in uint16 buffers first byte is the heights format in the buffer (0=uint16, 1=float16)
+				_height16HeightsBuffer->reserve(height16HeightsBufferSize);
+				_height16HeightsBuffer->adjustSize(height16HeightsBufferSize);
+				uint16_t* height16HeightsBufferPtr = _height16HeightsBuffer->ptr<uint16_t>();
+
+				*height16HeightsBufferPtr = uint16_t(HeightsFormatInQuadrantBuffer::UInt16);		// in uint16 buffers first byte is the heights format in the buffer (0=uint16, 1=float16)
+				height16HeightsBufferPtr++;
+
+				float* float32HeightsBufferPtr = _float32HeightsBuffer->ptr<float>();
+				BYTE* endOf32HeightsBufferPtr = (BYTE*)float32HeightsBufferPtr + _float32HeightsBuffer->size();
+				while (float32HeightsBufferPtr < (float*)endOf32HeightsBufferPtr)
+				{
+					uint16_t uint16Height = TheWorld_Utils::MeshCacheBuffer::uint16HeightFromFloat(*float32HeightsBufferPtr);
+					*height16HeightsBufferPtr = uint16Height;
+					float32HeightsBufferPtr++;
+					height16HeightsBufferPtr++;
+				}
+				my_assert((BYTE*)height16HeightsBufferPtr - _height16HeightsBuffer->ptr() == height16HeightsBufferSize);
+				height16HeightmapSize = _height16HeightsBuffer->size();
+			}
+			else if (heightsFloat32InNewSavedQuadrant())
+			{
+				// Must be set float32HeightmapSize (_float32HeightsBuffer is already set with the buffer of the input quadrant)
+
+				float32HeightmapSize = _float32HeightsBuffer->size();
+			}
+			else
+			{
+				my_assert(false);
 			}
 		}
 
-		size_t float16HeightmapSize = numHeights16 * sizeof(uint16_t);
-		size_t float32HeightmapSize = numHeights32 * sizeof(float);
 		size_t normalmapSize = numNormals > 0 ? numNormals * sizeof(TheWorld_Utils::_RGB) : 0;
 		size_t splatmapSize = numSplatmapVertices > 0 ? numSplatmapVertices * sizeof(TheWorld_Utils::_RGBA) : 0;
 		size_t colormapSize = numColormapVertices > 0 ? numColormapVertices * sizeof(TheWorld_Utils::_RGBA) : 0;
@@ -4628,7 +4867,6 @@ namespace TheWorld_Utils
 		size_t namedDataBufferSerializedSize = cacheQuadrantData.namedDataBuffer == nullptr ? 0 : cacheQuadrantData.namedDataBuffer->serializedSize();
 
 		// Forcing not to save 32 heights and normals in the buffer to save memory, cache disk space and bandwidth (they must be generated on the fly by heights 16 and normals directly by the shader)
-		float32HeightmapSize = 0;	// for now we don't want to use float32 heights in cache quadrant buffers, we will generate them on the fly when needed - refreshing quadrant data from buffer during load from disk or from server time (we want to save memory and bandwidth)
 		normalmapSize = 0;			// for now we don't want to use normals in cache quadrant buffers, we will generate them on the fly when needed (we want to save memory and bandwidth)
 		colormapSize = 0;			// colormaps are not used atm
 
@@ -4639,7 +4877,7 @@ namespace TheWorld_Utils
 			+ sizeof(size_t)		/* numheights */
 			+ sizeof(float)			/*min_altitude*/
 			+ sizeof(float)			/*max_altitude*/
-			+ sizeof(size_t) + float16HeightmapSize
+			+ sizeof(size_t) + height16HeightmapSize
 			+ sizeof(size_t) + float32HeightmapSize
 			+ sizeof(size_t) + normalmapSize
 			+ sizeof(size_t) + splatmapSize
@@ -4669,9 +4907,6 @@ namespace TheWorld_Utils
 			{
 				TerrainEdit terrainData;
 				terrainData.deserialize(*cacheQuadrantData.terrainEditValues);
-				//if (numHeights16 > 0 && terrainData.terrainType == TerrainEdit::TerrainType::empty)
-				//	terrainData.heightsNeedRegen(false);	// OCCHIO !!! Prevent from regenerating heights when we have a cache quadrant with type empty
-				//memcpy(_streamBuffer, cacheQuadrantData.terrainEditValues->ptr(), terrainEditValueSize);
 				memcpy(_streamBuffer, &terrainData, terrainEditValueSize);
 				_streamBuffer += terrainEditValueSize;
 				cacheQuadrantData.minHeight = terrainData.minHeight;
@@ -4679,7 +4914,7 @@ namespace TheWorld_Utils
 			}
 		}
 
-		TheWorld_Utils::serializeToByteStream<size_t>(numHeights16, _streamBuffer, size);
+		TheWorld_Utils::serializeToByteStream<size_t>(numHeights, _streamBuffer, size);
 		_streamBuffer += size;
 
 		TheWorld_Utils::serializeToByteStream<float>(cacheQuadrantData.minHeight, _streamBuffer, size);
@@ -4688,15 +4923,15 @@ namespace TheWorld_Utils
 		TheWorld_Utils::serializeToByteStream<float>(cacheQuadrantData.maxHeight, _streamBuffer, size);
 		_streamBuffer += size;
 
-		TheWorld_Utils::serializeToByteStream<size_t>(float16HeightmapSize, _streamBuffer, size);
+		TheWorld_Utils::serializeToByteStream<size_t>(height16HeightmapSize, _streamBuffer, size);
 		_streamBuffer += size;
 
-		if (float16HeightmapSize > 0)
+		if (height16HeightmapSize > 0)
 		{
 			TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer setBufferFromCacheQuadrantData_Format1 1.3 ") + __FUNCTION__, "copy heights 16");
 
-			memcpy(_streamBuffer, _float16HeightsBuffer->ptr(), float16HeightmapSize);
-			_streamBuffer += float16HeightmapSize;
+			memcpy(_streamBuffer, _height16HeightsBuffer->ptr(), height16HeightmapSize);
+			_streamBuffer += height16HeightmapSize;
 		}
 
 		TheWorld_Utils::serializeToByteStream<size_t>(float32HeightmapSize, _streamBuffer, size);
@@ -4793,13 +5028,13 @@ namespace TheWorld_Utils
 		cacheQuadrantData.minHeight = 0.0f;
 		cacheQuadrantData.maxHeight = 0.0f;
 		cacheQuadrantData.terrainEditValues = &terrainEditValuesBuffer;
-		TheWorld_Utils::MemoryBuffer emptyFloat16HeightsBuffer;
+		//TheWorld_Utils::MemoryBuffer emptyFloat16HeightsBuffer;
 		TheWorld_Utils::MemoryBuffer emptyFloat32HeightsBuffer;
 		TheWorld_Utils::MemoryBuffer emptyNormalBuffer;
 		TheWorld_Utils::MemoryBuffer emptySplatmapBuffer;
 		TheWorld_Utils::MemoryBuffer emptyColormapBuffer;
 		TheWorld_Utils::MemoryBuffer emptyGlobalmapBuffer;
-		cacheQuadrantData.heights16Buffer = &emptyFloat16HeightsBuffer;
+		//cacheQuadrantData.heights16Buffer = &emptyFloat16HeightsBuffer;
 		cacheQuadrantData.heights32Buffer = &emptyFloat32HeightsBuffer;
 		cacheQuadrantData.normalsBuffer = &emptyNormalBuffer;
 		cacheQuadrantData.splatmapBuffer = &emptySplatmapBuffer;
@@ -4926,31 +5161,65 @@ namespace TheWorld_Utils
 	
 	uint16_t MeshCacheBuffer::halfFromFloat(float _f)
 	{
-		TheWorld_Utils::FLOAT_32 f(_f);
-		return halfFromFloat(f.u32);
+		//TheWorld_Utils::FLOAT_32 f(_f);
+		//return halfFromFloat(f.u32);
+		Eigen::half h16 = static_cast<Eigen::half>(_f);
+		uint16_t raw_bits = Eigen::numext::bit_cast<uint16_t>(h16);
+		return raw_bits;
+		//this->h_16normalized = static_cast<float>(f16);
 	}
 		
-	uint16_t MeshCacheBuffer::halfFromFloat(uint32_t _f)
+	//uint16_t MeshCacheBuffer::halfFromFloat(uint32_t _f)
+	//{
+	//	// https://github.com/macton/ps3-archive.git thanks to Mike Acton
+	//	return half_from_float(_f);
+	//}
+	
+	//uint32_t MeshCacheBuffer::halfToFloat(uint16_t raw_bits)
+	//{
+	//	//// https://github.com/macton/ps3-archive.git thanks to Mike Acton
+	//	//return half_to_float(_f);
+	//	Eigen::half h16 = Eigen::numext::bit_cast<Eigen::half>(raw_bits);
+	//	float f = static_cast<float>(h16);
+	//	return f;
+	//}
+	
+	float MeshCacheBuffer::halfToFloat(uint16_t raw_bits)
 	{
-		// https://github.com/macton/ps3-archive.git thanks to Mike Acton
-		return half_from_float(_f);
+		//// https://github.com/macton/ps3-archive.git thanks to Mike Acton
+		//TheWorld_Utils::FLOAT_32 f;
+		//f.u32 = (half_to_float(_f));
+		//return f.f32;
+		Eigen::half h16 = Eigen::numext::bit_cast<Eigen::half>(raw_bits);
+		float f = static_cast<float>(h16);
+		return f;
 	}
-	uint32_t MeshCacheBuffer::halfToFloat(uint16_t _f)
+	
+	uint16_t MeshCacheBuffer::uint16HeightFromFloat(float h)
 	{
-		// https://github.com/macton/ps3-archive.git thanks to Mike Acton
-		return half_to_float(_f);
+		int16_t rounded = int16_t(std::round(h * 3.0f));
+		uint16_t bias = 32767;
+		return std::clamp<uint16_t>(rounded + bias, MeshCacheBuffer::UINT16_HEIGHT_MIN, MeshCacheBuffer::UINT16_HEIGHT_MAX);
 	}
-	float MeshCacheBuffer::halfToFloat_1(uint16_t _f)
+
+	float MeshCacheBuffer::uint16HeightToFloat(uint16_t h)
 	{
-		// https://github.com/macton/ps3-archive.git thanks to Mike Acton
-		TheWorld_Utils::FLOAT_32 f;
-		f.u32 = (half_to_float(_f));
-		return f.f32;
+		uint16_t bias = 32767;
+		return (float(h) - float(bias)) / 3.0f;
+	}
+
+	float MeshCacheBuffer::uint16HeightMinFloat(void)
+	{
+		return MeshCacheBuffer::uint16HeightToFloat(MeshCacheBuffer::UINT16_HEIGHT_MIN);		// -10922.3330
+	}
+	float MeshCacheBuffer::uint16HeightMaxFloat(void)
+	{
+		return MeshCacheBuffer::uint16HeightToFloat(MeshCacheBuffer::UINT16_HEIGHT_MAX);		// 10922.6670
 	}
 
 	void MeshCacheBuffer::setDummyBuffer(std::string meshId, std::string& buffer, TheWorld_Utils::TerrainEdit* terrainEdit)
 	{
-		if (TheWorld_Utils::MeshCacheBuffer::cacheQuadrantFormat1())
+		if (TheWorld_Utils::MeshCacheBuffer::newCacheQuadrantFormat1())
 			setDummyBuffer_Format1(meshId, buffer, terrainEdit);
 		else
 			throw(GDN_TheWorld_Exception(__FUNCTION__, "Unsupported cache quadrant format"));
@@ -5054,308 +5323,251 @@ namespace TheWorld_Utils
 		m_meshId = meshId;
 	}
 
-	void MeshCacheBuffer::setDummyBuffer_Format0(std::string meshId, std::string& buffer)
-	{
-		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer setDummyBuffer_Format0_deprecated 1 ") + __FUNCTION__, "ALL");
+	//bool MeshCacheBuffer::debugCheckMinMaxHeight(TheWorld_Utils::QuadrantPos& pos, TheWorld_Utils::TerrainEdit* terrainEdit,
+	//	//float& minHeight, float& maxHeight, float& northSideMin, float& northSideMax, float& southSideMin, float& southSideMax, float& westSideMin, float& westSideMax, float& eastSideMin, float& eastSideMax, 
+	//	std::string msgHeader, std::string* meshId, TheWorld_Utils::MemoryBuffer* heights16Buffer, TheWorld_Utils::MemoryBuffer* heights32Buffer)
+	//{
+	//	std::string _msg;
 
-		size_t size = 0;
+	//	std::string _meshId = meshId == nullptr ? "" : *meshId;
+	//	
+	//	//if (not pos.isQuadrantTrackedForDebug())
+	//	//	return true;
+	//	
+	//	bool match = true;
 
-		size_t vectSize = 0;
-		size_t terrainEditValuesBufferSize = 0, float16HeightmapSize = 0, float32HeightmapSize = 0, normalmapSize = 0;
-		size_t streamBufferSize = 1 /* buffer format "0"/"1" */
-			+ sizeof(size_t) + meshId.length()
-			+ sizeof(size_t) + terrainEditValuesBufferSize
-			+ sizeof(size_t) /* numheights */ + sizeof(float) /*min_altitude*/ + sizeof(float) /*max_altitude*/ + float16HeightmapSize + float32HeightmapSize + normalmapSize;
+	//	size_t numVerticesPerSize = (size_t)pos.getNumVerticesPerSize();
 
-		BYTE* startOfStreamBuffer = nullptr;
-		BYTE* _streamBuffer = nullptr;
+	//	if (match)
+	//	{
+	//		if (heights32Buffer == nullptr and heights16Buffer == nullptr)
+	//		{
+	//			_msg += "checkMinMaxHeight: both heights32Buffer and heights16Buffer are null";
+	//			match = false;
+	//		}
+	//	}
 
-		{
-			//TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer setBufferFromHeights 1.1 ") + __FUNCTION__, "calloc");
+	//	if (match)
+	//	{
+	//		if (heights32Buffer != nullptr)
+	//		{
+	//			if (match)
+	//			{
+	//				if (heights32Buffer->size() == 0)
+	//				{
+	//					_msg += "checkMinMaxHeight: heights32Buffer is empty";
+	//					match = false;
+	//				}
+	//			}
+	//			if (match)
+	//			{
+	//				if (heights32Buffer->size() != (numVerticesPerSize * numVerticesPerSize * sizeof(float)))
+	//				{
+	//					_msg += "checkMinMaxHeight: heights32Buffer has incorrect size";
+	//					match = false;
+	//				}
+	//			}
+	//		}
+	//	}
 
-			_streamBuffer = startOfStreamBuffer = (BYTE*)calloc(1, streamBufferSize);
-			if (startOfStreamBuffer == nullptr)
-				throw(std::exception((std::string(__FUNCTION__) + std::string(" Allocation error")).c_str()));
-		}
+	//	if (match)
+	//	{
+	//		if (heights16Buffer != nullptr)
+	//		{
+	//			if (match)
+	//			{
+	//				if (heights16Buffer->size() == 0)
+	//				{
+	//					_msg += "checkMinMaxHeight: heights16Buffer is empty";
+	//					match = false;
+	//				}
+	//			}
+	//			if (match)
+	//			{
+	//				if (heights16Buffer->size() != (numVerticesPerSize * numVerticesPerSize * sizeof(uint16_t)))
+	//				{
+	//					_msg += "checkMinMaxHeight: heights16Buffer has incorrect size";
+	//					match = false;
+	//				}
+	//			}
+	//		}
+	//	}
 
-		{
-			//TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer setBufferFromHeights 1.2 ") + __FUNCTION__, "meshId/edit values");
+	//	if (match)
+	//	{
+	//		size_t maxIndex = numVerticesPerSize - 1;
 
-			memcpy(_streamBuffer, "0", 1);
-			_streamBuffer++;
+	//		float minHeight = FLT_MAX, maxHeight = -FLT_MAX;
+	//		float northSideMin = FLT_MAX, northSideMax = -FLT_MAX;
+	//		float southSideMin = FLT_MAX, southSideMax = -FLT_MAX;
+	//		float westSideMin = FLT_MAX, westSideMax = -FLT_MAX;
+	//		float eastSideMin = FLT_MAX, eastSideMax = -FLT_MAX;
 
-			TheWorld_Utils::serializeToByteStream<size_t>(meshId.length(), _streamBuffer, size);
-			_streamBuffer += size;
+	//		for (size_t z = 0; z < numVerticesPerSize; z++)
+	//		{
+	//			for (size_t x = 0; x < numVerticesPerSize; x++)
+	//			{
+	//				float h32 = FLT_MAX, h16 = FLT_MAX, h = FLT_MAX;
+	//				if (heights32Buffer != nullptr)
+	//					h32 = heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize);
+	//				if (heights16Buffer != nullptr)
+	//					h16 = TheWorld_Utils::MeshCacheBuffer::halfToFloat_1(heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, z, numVerticesPerSize));
+	//				if (h32 != FLT_MAX and h16 != FLT_MAX)
+	//				{
+	//					if (h32 != h16)
+	//					{
+	//						_msg += "h32 not equal h16";
+	//						match = false;
+	//						break;
+	//					}
+	//					h = h32;
+	//				}
+	//				else if (h32 != FLT_MAX)
+	//					h = h32;
+	//				else if (h16 != FLT_MAX)
+	//					h = h16;
+	//				else
+	//				{
+	//					_msg += "both h32 and h16 are FLT_MAX";
+	//					match = false;
+	//					break;
+	//				}
 
-			memcpy(_streamBuffer, meshId.c_str(), meshId.length());
-			_streamBuffer += meshId.length();
+	//				if (h < minHeight)
+	//					minHeight = h;
+	//				if (h > maxHeight)
+	//					maxHeight = h;
 
-			TheWorld_Utils::serializeToByteStream<size_t>(terrainEditValuesBufferSize, _streamBuffer, size);
-			_streamBuffer += size;
-		}
+	//				if (x == 0)
+	//				{
+	//					if (h < westSideMin)
+	//						westSideMin = h;
+	//					if (h > westSideMax)
+	//						westSideMax = h;
+	//				}
 
-		size = 0;
-		TheWorld_Utils::serializeToByteStream<size_t>(vectSize, _streamBuffer, size);
-		_streamBuffer += size;
+	//				if (z == 0)
+	//				{
+	//					if (h < northSideMin)
+	//						northSideMin = h;
+	//					if (h > northSideMax)
+	//						northSideMax = h;
+	//				}
 
-		{
-			//TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer setBufferFromHeights 1.4 ") + __FUNCTION__, "copy out buffer");
-			buffer = std::string((char*)startOfStreamBuffer, streamBufferSize);
-		}
+	//				if (x == maxIndex)
+	//				{
+	//					if (h < eastSideMin)
+	//						eastSideMin = h;
+	//					if (h > eastSideMax)
+	//						eastSideMax = h;
+	//				}
 
-		{
-			//TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer setBufferFromHeights 1.5 ") + __FUNCTION__, "free");
-			free(startOfStreamBuffer);
-		}
+	//				if (z == maxIndex)
+	//				{
+	//					if (h < southSideMin)
+	//						southSideMin = h;
+	//					if (h > southSideMax)
+	//						southSideMax = h;
+	//				}
+	//			}
 
-		m_meshId = meshId;
-	}
+	//			if (not match)
+	//				break;
+	//		}
 
-	bool MeshCacheBuffer::debugCheckMinMaxHeight(TheWorld_Utils::QuadrantPos& pos, TheWorld_Utils::TerrainEdit* terrainEdit,
-		//float& minHeight, float& maxHeight, float& northSideMin, float& northSideMax, float& southSideMin, float& southSideMax, float& westSideMin, float& westSideMax, float& eastSideMin, float& eastSideMax, 
-		std::string msgHeader, std::string* meshId, TheWorld_Utils::MemoryBuffer* heights16Buffer, TheWorld_Utils::MemoryBuffer* heights32Buffer)
-	{
-		std::string _msg;
+	//		if (match)
+	//		{
+	//			if (terrainEdit->minHeight != minHeight)
+	//			{
+	//				_msg += (std::string("minHeight terrainEdit ") + std::to_string(terrainEdit->minHeight) + " != recalc " + std::to_string(minHeight) + " ");
+	//				match = false;
+	//			}
+	//			if (terrainEdit->maxHeight != maxHeight)
+	//			{
+	//				_msg += (std::string("maxHeight terrainEdit ") + std::to_string(terrainEdit->maxHeight) + " != recalc " + std::to_string(maxHeight) + " ");
+	//				match = false;
+	//			}
+	//			if (terrainEdit->northSideZMinus.minHeight != northSideMin or terrainEdit->northSideZMinus.maxHeight != northSideMax)
+	//			{
+	//				_msg += " - N ";
+	//				if (terrainEdit->northSideZMinus.minHeight != northSideMin)
+	//				{
+	//					_msg += (std::string("minHeight terrainEdit ") + std::to_string(terrainEdit->northSideZMinus.minHeight) + " != recalc " + std::to_string(northSideMin) + " ");
+	//					match = false;
+	//				}
+	//				if (terrainEdit->northSideZMinus.maxHeight != northSideMax)
+	//				{
+	//					_msg += (std::string("maxHeight terrainEdit ") + std::to_string(terrainEdit->northSideZMinus.maxHeight) + " != recalc " + std::to_string(northSideMax) + " ");
+	//					match = false;
+	//				}
+	//			}
+	//			if (terrainEdit->southSideZPlus.minHeight != southSideMin or terrainEdit->southSideZPlus.maxHeight != southSideMax)
+	//			{
+	//				_msg += " - S ";
+	//				if (terrainEdit->southSideZPlus.minHeight != southSideMin)
+	//				{
+	//					_msg += (std::string("minHeight terrainEdit ") + std::to_string(terrainEdit->southSideZPlus.minHeight) + " != recalc " + std::to_string(southSideMin) + " ");
+	//					match = false;
+	//				}
+	//				if (terrainEdit->southSideZPlus.maxHeight != southSideMax)
+	//				{
+	//					_msg += (std::string("maxHeight terrainEdit ") + std::to_string(terrainEdit->southSideZPlus.maxHeight) + " != recalc " + std::to_string(southSideMax) + " ");
+	//					match = false;
+	//				}
+	//			}
+	//			if (terrainEdit->westSideXMinus.minHeight != westSideMin or terrainEdit->westSideXMinus.maxHeight != westSideMax)
+	//			{
+	//				_msg += " - W ";
+	//				if (terrainEdit->westSideXMinus.minHeight != westSideMin)
+	//				{
+	//					_msg += (std::string("minHeight terrainEdit ") + std::to_string(terrainEdit->westSideXMinus.minHeight) + " != recalc " + std::to_string(westSideMin) + " ");
+	//					match = false;
+	//				}
+	//				if (terrainEdit->westSideXMinus.maxHeight != westSideMax)
+	//				{
+	//					_msg += (std::string("maxHeight terrainEdit ") + std::to_string(terrainEdit->westSideXMinus.maxHeight) + " != recalc " + std::to_string(westSideMax) + " ");
+	//					match = false;
+	//				}
+	//			}
+	//			if (terrainEdit->eastSideXPlus.minHeight != eastSideMin or terrainEdit->eastSideXPlus.maxHeight != eastSideMax)
+	//			{
+	//				_msg += " - E ";
+	//				if (terrainEdit->eastSideXPlus.minHeight != eastSideMin)
+	//				{
+	//					_msg += (std::string("minHeight terrainEdit ") + std::to_string(terrainEdit->eastSideXPlus.minHeight) + " != recalc " + std::to_string(eastSideMin) + " ");
+	//					match = false;
+	//				}
+	//				if (terrainEdit->eastSideXPlus.maxHeight != eastSideMax)
+	//				{
+	//					_msg += (std::string("maxHeight terrainEdit ") + std::to_string(terrainEdit->eastSideXPlus.maxHeight) + " != recalc " + std::to_string(eastSideMax) + " ");
+	//					match = false;
+	//				}
+	//			}
+	//		}
+	//	}
 
-		std::string _meshId = meshId == nullptr ? "" : *meshId;
-		
-		//if (not pos.isQuadrantTrackedForDebug())
-		//	return true;
-		
-		bool match = true;
+	//	//// DEBUG
+	//	//if (match)
+	//	//{
+	//	//	pos.TRACK_QUADRANT_FOR_DEBUG(msgHeader + " - MinMax MATCHING", _meshId);
+	//	//}
+	//	//else
+	//	//{
+	//	//	std::string s = "MinMax " + std::to_string(terrainEdit->minHeight) + "/" + std::to_string(terrainEdit->maxHeight)
+	//	//		+ " N=" + std::to_string(terrainEdit->northSideZMinus.minHeight) + "/" + std::to_string(terrainEdit->northSideZMinus.maxHeight)
+	//	//		+ " S=" + std::to_string(terrainEdit->southSideZPlus.minHeight) + "/" + std::to_string(terrainEdit->southSideZPlus.maxHeight)
+	//	//		+ " E=" + std::to_string(terrainEdit->eastSideXPlus.minHeight) + "/" + std::to_string(terrainEdit->eastSideXPlus.maxHeight)
+	//	//		+ " W=" + std::to_string(terrainEdit->westSideXMinus.minHeight) + "/" + std::to_string(terrainEdit->westSideXMinus.maxHeight);
+	//	//	pos.TRACK_QUADRANT_FOR_DEBUG(s, _meshId);
+	//	//	pos.TRACK_QUADRANT_FOR_DEBUG(msgHeader + " - MinMax MISMATCH - " + _msg, _meshId);
+	//	//}
+	//	//// DEBUG
 
-		size_t numVerticesPerSize = (size_t)pos.getNumVerticesPerSize();
-
-		if (match)
-		{
-			if (heights32Buffer == nullptr and heights16Buffer == nullptr)
-			{
-				_msg += "checkMinMaxHeight: both heights32Buffer and heights16Buffer are null";
-				match = false;
-			}
-		}
-
-		if (match)
-		{
-			if (heights32Buffer != nullptr)
-			{
-				if (match)
-				{
-					if (heights32Buffer->size() == 0)
-					{
-						_msg += "checkMinMaxHeight: heights32Buffer is empty";
-						match = false;
-					}
-				}
-				if (match)
-				{
-					if (heights32Buffer->size() != (numVerticesPerSize * numVerticesPerSize * sizeof(float)))
-					{
-						_msg += "checkMinMaxHeight: heights32Buffer has incorrect size";
-						match = false;
-					}
-				}
-			}
-		}
-
-		if (match)
-		{
-			if (heights16Buffer != nullptr)
-			{
-				if (match)
-				{
-					if (heights16Buffer->size() == 0)
-					{
-						_msg += "checkMinMaxHeight: heights16Buffer is empty";
-						match = false;
-					}
-				}
-				if (match)
-				{
-					if (heights16Buffer->size() != (numVerticesPerSize * numVerticesPerSize * sizeof(uint16_t)))
-					{
-						_msg += "checkMinMaxHeight: heights16Buffer has incorrect size";
-						match = false;
-					}
-				}
-			}
-		}
-
-		if (match)
-		{
-			size_t maxIndex = numVerticesPerSize - 1;
-
-			float minHeight = FLT_MAX, maxHeight = -FLT_MAX;
-			float northSideMin = FLT_MAX, northSideMax = -FLT_MAX;
-			float southSideMin = FLT_MAX, southSideMax = -FLT_MAX;
-			float westSideMin = FLT_MAX, westSideMax = -FLT_MAX;
-			float eastSideMin = FLT_MAX, eastSideMax = -FLT_MAX;
-
-			for (size_t z = 0; z < numVerticesPerSize; z++)
-			{
-				for (size_t x = 0; x < numVerticesPerSize; x++)
-				{
-					float h32 = FLT_MAX, h16 = FLT_MAX, h = FLT_MAX;
-					if (heights32Buffer != nullptr)
-						h32 = heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize);
-					if (heights16Buffer != nullptr)
-						h16 = TheWorld_Utils::MeshCacheBuffer::halfToFloat_1(heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, z, numVerticesPerSize));
-					if (h32 != FLT_MAX and h16 != FLT_MAX)
-					{
-						if (h32 != h16)
-						{
-							_msg += "h32 not equal h16";
-							match = false;
-							break;
-						}
-						h = h32;
-					}
-					else if (h32 != FLT_MAX)
-						h = h32;
-					else if (h16 != FLT_MAX)
-						h = h16;
-					else
-					{
-						_msg += "both h32 and h16 are FLT_MAX";
-						match = false;
-						break;
-					}
-
-					if (h < minHeight)
-						minHeight = h;
-					if (h > maxHeight)
-						maxHeight = h;
-
-					if (x == 0)
-					{
-						if (h < westSideMin)
-							westSideMin = h;
-						if (h > westSideMax)
-							westSideMax = h;
-					}
-
-					if (z == 0)
-					{
-						if (h < northSideMin)
-							northSideMin = h;
-						if (h > northSideMax)
-							northSideMax = h;
-					}
-
-					if (x == maxIndex)
-					{
-						if (h < eastSideMin)
-							eastSideMin = h;
-						if (h > eastSideMax)
-							eastSideMax = h;
-					}
-
-					if (z == maxIndex)
-					{
-						if (h < southSideMin)
-							southSideMin = h;
-						if (h > southSideMax)
-							southSideMax = h;
-					}
-				}
-
-				if (not match)
-					break;
-			}
-
-			if (match)
-			{
-				if (terrainEdit->minHeight != minHeight)
-				{
-					_msg += (std::string("minHeight terrainEdit ") + std::to_string(terrainEdit->minHeight) + " != recalc " + std::to_string(minHeight) + " ");
-					match = false;
-				}
-				if (terrainEdit->maxHeight != maxHeight)
-				{
-					_msg += (std::string("maxHeight terrainEdit ") + std::to_string(terrainEdit->maxHeight) + " != recalc " + std::to_string(maxHeight) + " ");
-					match = false;
-				}
-				if (terrainEdit->northSideZMinus.minHeight != northSideMin or terrainEdit->northSideZMinus.maxHeight != northSideMax)
-				{
-					_msg += " - N ";
-					if (terrainEdit->northSideZMinus.minHeight != northSideMin)
-					{
-						_msg += (std::string("minHeight terrainEdit ") + std::to_string(terrainEdit->northSideZMinus.minHeight) + " != recalc " + std::to_string(northSideMin) + " ");
-						match = false;
-					}
-					if (terrainEdit->northSideZMinus.maxHeight != northSideMax)
-					{
-						_msg += (std::string("maxHeight terrainEdit ") + std::to_string(terrainEdit->northSideZMinus.maxHeight) + " != recalc " + std::to_string(northSideMax) + " ");
-						match = false;
-					}
-				}
-				if (terrainEdit->southSideZPlus.minHeight != southSideMin or terrainEdit->southSideZPlus.maxHeight != southSideMax)
-				{
-					_msg += " - S ";
-					if (terrainEdit->southSideZPlus.minHeight != southSideMin)
-					{
-						_msg += (std::string("minHeight terrainEdit ") + std::to_string(terrainEdit->southSideZPlus.minHeight) + " != recalc " + std::to_string(southSideMin) + " ");
-						match = false;
-					}
-					if (terrainEdit->southSideZPlus.maxHeight != southSideMax)
-					{
-						_msg += (std::string("maxHeight terrainEdit ") + std::to_string(terrainEdit->southSideZPlus.maxHeight) + " != recalc " + std::to_string(southSideMax) + " ");
-						match = false;
-					}
-				}
-				if (terrainEdit->westSideXMinus.minHeight != westSideMin or terrainEdit->westSideXMinus.maxHeight != westSideMax)
-				{
-					_msg += " - W ";
-					if (terrainEdit->westSideXMinus.minHeight != westSideMin)
-					{
-						_msg += (std::string("minHeight terrainEdit ") + std::to_string(terrainEdit->westSideXMinus.minHeight) + " != recalc " + std::to_string(westSideMin) + " ");
-						match = false;
-					}
-					if (terrainEdit->westSideXMinus.maxHeight != westSideMax)
-					{
-						_msg += (std::string("maxHeight terrainEdit ") + std::to_string(terrainEdit->westSideXMinus.maxHeight) + " != recalc " + std::to_string(westSideMax) + " ");
-						match = false;
-					}
-				}
-				if (terrainEdit->eastSideXPlus.minHeight != eastSideMin or terrainEdit->eastSideXPlus.maxHeight != eastSideMax)
-				{
-					_msg += " - E ";
-					if (terrainEdit->eastSideXPlus.minHeight != eastSideMin)
-					{
-						_msg += (std::string("minHeight terrainEdit ") + std::to_string(terrainEdit->eastSideXPlus.minHeight) + " != recalc " + std::to_string(eastSideMin) + " ");
-						match = false;
-					}
-					if (terrainEdit->eastSideXPlus.maxHeight != eastSideMax)
-					{
-						_msg += (std::string("maxHeight terrainEdit ") + std::to_string(terrainEdit->eastSideXPlus.maxHeight) + " != recalc " + std::to_string(eastSideMax) + " ");
-						match = false;
-					}
-				}
-			}
-		}
-
-		// DEBUG
-		if (match)
-		{
-			pos.TRACK_QUADRANT_FOR_DEBUG(msgHeader + " - MinMax MATCHING", _meshId);
-		}
-		else
-		{
-			std::string s = "MinMax " + std::to_string(terrainEdit->minHeight) + "/" + std::to_string(terrainEdit->maxHeight)
-				+ " N=" + std::to_string(terrainEdit->northSideZMinus.minHeight) + "/" + std::to_string(terrainEdit->northSideZMinus.maxHeight)
-				+ " S=" + std::to_string(terrainEdit->southSideZPlus.minHeight) + "/" + std::to_string(terrainEdit->southSideZPlus.maxHeight)
-				+ " E=" + std::to_string(terrainEdit->eastSideXPlus.minHeight) + "/" + std::to_string(terrainEdit->eastSideXPlus.maxHeight)
-				+ " W=" + std::to_string(terrainEdit->westSideXMinus.minHeight) + "/" + std::to_string(terrainEdit->westSideXMinus.maxHeight);
-			pos.TRACK_QUADRANT_FOR_DEBUG(s, _meshId);
-			pos.TRACK_QUADRANT_FOR_DEBUG(msgHeader + " - MinMax MISMATCH - " + _msg, _meshId);
-		}
-		// DEBUG
-
-		if (match)
-			return match;
-		else
-			return match;
-	}
+	//	if (match)
+	//		return match;
+	//	else
+	//		return match;
+	//}
 
 	bool MeshCacheBuffer::calcMinMaxHeights(TheWorld_Utils::QuadrantPos pos, bool renewMeshIdOnUpdate, CacheQuadrantData& data)
 	{
@@ -5364,38 +5576,38 @@ namespace TheWorld_Utils
 		size_t numVerticesPerSize = (size_t)pos.getNumVerticesPerSize();
 
 		my_assert(data.heights32Buffer != nullptr and data.heights32Buffer->size() == numVerticesPerSize * numVerticesPerSize * sizeof(float));
-		my_assert(data.heights16Buffer != nullptr and data.heights16Buffer->size() == numVerticesPerSize * numVerticesPerSize * sizeof(uint16_t));
 		my_assert(data.terrainEditValues != nullptr and data.terrainEditValues->size() == sizeof(TerrainEdit));
 
-		{
-			size_t numVertices = numVerticesPerSize * numVerticesPerSize;
+		//my_assert(data.heights16Buffer != nullptr and data.heights16Buffer->size() == numVerticesPerSize * numVerticesPerSize * sizeof(uint16_t));
+		//{
+		//	size_t numVertices = numVerticesPerSize * numVerticesPerSize;
 
-			size_t heights16BufferSize = numVertices * sizeof(uint16_t);
-			uint16_t* movingHeights16Buffer = (uint16_t*)data.heights16Buffer->ptr();
+		//	size_t heights16BufferSize = numVertices * sizeof(uint16_t);
+		//	uint16_t* movingHeights16Buffer = (uint16_t*)data.heights16Buffer->ptr();
 
-			size_t heights32BufferSize = numVertices * sizeof(float);
-			float* movingHeights32Buffer = (float*)data.heights32Buffer->ptr();
-			
-			{
-				TheWorld_Utils::GuardProfiler profiler(std::string("generateDetailDataForQuadrants 2 ") + __FUNCTION__, "Move Heights to float16/float32 buffer");
-				for (int z = 0; z < numVerticesPerSize; z++)
-					for (int x = 0; x < numVerticesPerSize; x++)
-					{
-						float altitude = *movingHeights32Buffer;
-						TheWorld_Utils::FLOAT_32 f(altitude);
-						*movingHeights16Buffer = half_from_float(f.u32);
-						f.u32 = half_to_float(*movingHeights16Buffer);
-						if (*movingHeights32Buffer != f.f32)
-						{
-							*movingHeights32Buffer = f.f32;
-							updated = true;
-						}
-						movingHeights16Buffer++;
-						movingHeights32Buffer++;
-					}
-				PLOG_VERBOSE << "calcMinMaxHeights - " << "Adjusted Heights to float16/float32 buffer to prevent heigth mismatch " << pos.getIdStr() << " " << pos.getName() << " - Elapsed " << profiler.partialDuration() / 1000 << " ms";
-			}
-		}
+		//	size_t heights32BufferSize = numVertices * sizeof(float);
+		//	float* movingHeights32Buffer = (float*)data.heights32Buffer->ptr();
+		//	
+		//	{
+		//		TheWorld_Utils::GuardProfiler profiler(std::string("generateDetailDataForQuadrants 2 ") + __FUNCTION__, "Move Heights to float16/float32 buffer");
+		//		for (int z = 0; z < numVerticesPerSize; z++)
+		//			for (int x = 0; x < numVerticesPerSize; x++)
+		//			{
+		//				float altitude = *movingHeights32Buffer;
+		//				TheWorld_Utils::FLOAT_32 f(altitude);
+		//				*movingHeights16Buffer = half_from_float(f.u32);
+		//				f.u32 = half_to_float(*movingHeights16Buffer);
+		//				if (*movingHeights32Buffer != f.f32)
+		//				{
+		//					*movingHeights32Buffer = f.f32;
+		//					updated = true;
+		//				}
+		//				movingHeights16Buffer++;
+		//				movingHeights32Buffer++;
+		//			}
+		//		PLOG_VERBOSE << "calcMinMaxHeights - " << "Adjusted Heights to float16/float32 buffer to prevent height mismatch " << pos.getIdStr() << " " << pos.getName() << " - Elapsed " << profiler.partialDuration() / 1000 << " ms";
+		//	}
+		//}
 		
 		//if (data.heights32Buffer == nullptr or data.heights16Buffer == nullptr)
 		//	return updated;
@@ -5556,7 +5768,7 @@ namespace TheWorld_Utils
 	//					movingHeights16Buffer++;
 	//					movingHeights32Buffer++;
 	//				}
-	//			PLOG_VERBOSE << "calcMinMaxHeights - " << "Adjusted Heights to float16/float32 buffer to prevent heigth mismatch " << pos.getIdStr() << " " << pos.getName() << " - Elapsed " << profiler.partialDuration() / 1000 << " ms";
+	//			PLOG_VERBOSE << "calcMinMaxHeights - " << "Adjusted Heights to float16/float32 buffer to prevent height mismatch " << pos.getIdStr() << " " << pos.getName() << " - Elapsed " << profiler.partialDuration() / 1000 << " ms";
 	//		}
 	//	}
 

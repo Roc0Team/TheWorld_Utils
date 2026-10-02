@@ -303,7 +303,7 @@ namespace TheWorld_Utils
 			noise.heightsAmplitude = 100;
 			noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
-			noise.desideredMinHeigthMandatory = true;
+			noise.desideredMinHeightMandatory = true;
 
 			//extraValues.numBlendingCycles = 2;
 
@@ -366,7 +366,7 @@ namespace TheWorld_Utils
 			noise.heightsAmplitude = 100;
 			noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
-			noise.desideredMinHeigthMandatory = false;
+			noise.desideredMinHeightMandatory = false;
 
 			//extraValues.numBlendingCycles = 2;
 			extraValues.amplitudeBlendFactor = 0.5;
@@ -406,7 +406,7 @@ namespace TheWorld_Utils
 			noise.heightsAmplitude = 100;
 			noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
-			noise.desideredMinHeigthMandatory = true;
+			noise.desideredMinHeightMandatory = true;
 
 			//extraValues.numBlendingCycles = 2;
 
@@ -445,7 +445,7 @@ namespace TheWorld_Utils
 			noise.heightsAmplitude = 100;
 			noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
-			noise.desideredMinHeigthMandatory = false;
+			noise.desideredMinHeightMandatory = false;
 
 			//extraValues.numBlendingCycles = 2;
 			extraValues.amplitudeBlendFactor = 0.5;
@@ -484,7 +484,7 @@ namespace TheWorld_Utils
 			noise.heightsAmplitude = 1000;
 			noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
-			noise.desideredMinHeigthMandatory = true;
+			noise.desideredMinHeightMandatory = true;
 
 			//extraValues.numBlendingCycles = 2;
 
@@ -522,7 +522,7 @@ namespace TheWorld_Utils
 			noise.heightsAmplitude = 1000;
 			noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
-			noise.desideredMinHeigthMandatory = true;
+			noise.desideredMinHeightMandatory = true;
 
 			//extraValues.numBlendingCycles = 2;
 
@@ -560,7 +560,7 @@ namespace TheWorld_Utils
 			noise.heightsAmplitude = 2000;
 			noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
-			noise.desideredMinHeigthMandatory = true;
+			noise.desideredMinHeightMandatory = true;
 
 			//extraValues.numBlendingCycles = 2;
 
@@ -600,7 +600,7 @@ namespace TheWorld_Utils
 			noise.scaleFactor_JagIntensity = 1.0f / 1.5f;
 			//noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
-			noise.desideredMinHeigthMandatory = true;
+			noise.desideredMinHeightMandatory = true;
 
 			//extraValues.numBlendingCycles = 2;
 
@@ -640,7 +640,7 @@ namespace TheWorld_Utils
 			noise.scaleFactor_JagIntensity = 1.0f / 1.5f;
 			//noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
-			noise.desideredMinHeigthMandatory = false;
+			noise.desideredMinHeightMandatory = false;
 
 			//extraValues.numBlendingCycles = 2;
 			extraValues.amplitudeBlendFactor = 0.5;
@@ -681,7 +681,7 @@ namespace TheWorld_Utils
 			noise.scaleFactor_JagIntensity = 1.0f / 1.5f;
 			//noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
-			noise.desideredMinHeigthMandatory = true;
+			noise.desideredMinHeightMandatory = true;
 
 			//extraValues.numBlendingCycles = 2;
 
@@ -721,7 +721,7 @@ namespace TheWorld_Utils
 			noise.scaleFactor_JagIntensity = 1.0f / 1.5f;
 			//noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
-			noise.desideredMinHeigthMandatory = false;
+			noise.desideredMinHeightMandatory = false;
 
 			//extraValues.numBlendingCycles = 2;
 			extraValues.amplitudeBlendFactor = 0.5;
@@ -761,7 +761,7 @@ namespace TheWorld_Utils
 			noise.scaleFactor_JagIntensity = 1.0f / 3.0f;
 			//noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
-			noise.desideredMinHeigthMandatory = true;
+			noise.desideredMinHeightMandatory = true;
 
 			//extraValues.numBlendingCycles = 2;
 
@@ -800,7 +800,7 @@ namespace TheWorld_Utils
 			noise.scaleFactor_JagIntensity = 1.0f / 3.0f;
 			//noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
-			noise.desideredMinHeigthMandatory = false;
+			noise.desideredMinHeightMandatory = false;
 
 			//extraValues.numBlendingCycles = 2;
 			extraValues.amplitudeBlendFactor = 0.5;
@@ -840,7 +840,7 @@ namespace TheWorld_Utils
 			noise.scaleFactor_JagIntensity = 1.0f / 3.0f;
 			//noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
-			noise.desideredMinHeigthMandatory = true;
+			noise.desideredMinHeightMandatory = true;
 
 			//extraValues.numBlendingCycles = 2;
 
@@ -879,7 +879,7 @@ namespace TheWorld_Utils
 			noise.scaleFactor_JagIntensity = 1.0f / 3.0f;
 			//noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
-			noise.desideredMinHeigthMandatory = false;
+			noise.desideredMinHeightMandatory = false;
 
 			//extraValues.numBlendingCycles = 2;
 			extraValues.amplitudeBlendFactor = 0.5;
@@ -919,7 +919,7 @@ namespace TheWorld_Utils
 			noise.scaleFactor_JagIntensity = 1.0f / 3.0f;
 			//noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
-			noise.desideredMinHeigthMandatory = true;
+			noise.desideredMinHeightMandatory = true;
 
 			//extraValues.numBlendingCycles = 2;
 
@@ -958,7 +958,7 @@ namespace TheWorld_Utils
 			noise.scaleFactor_JagIntensity = 1.0f / 3.0f;
 			//noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
-			noise.desideredMinHeigthMandatory = false;
+			noise.desideredMinHeightMandatory = false;
 
 			//extraValues.numBlendingCycles = 2;
 			extraValues.amplitudeBlendFactor = 0.5;
@@ -997,7 +997,7 @@ namespace TheWorld_Utils
 			noise.heightsAmplitude = 2000;
 			noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = -1000.0f;
-			noise.desideredMinHeigthMandatory = true;
+			noise.desideredMinHeightMandatory = true;
 
 			//extraValues.numBlendingCycles = 2;
 
@@ -1035,7 +1035,7 @@ namespace TheWorld_Utils
 			noise.heightsAmplitude = 2000;
 			noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = -2000.0f;
-			noise.desideredMinHeigthMandatory = true;
+			noise.desideredMinHeightMandatory = true;
 
 			//extraValues.numBlendingCycles = 2;
 			extraValues.amplitudeBlendFactor = 0.5;
@@ -1074,7 +1074,7 @@ namespace TheWorld_Utils
 			noise.heightsAmplitude = 2000;
 			noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = -3000.0f;
-			noise.desideredMinHeigthMandatory = true;
+			noise.desideredMinHeightMandatory = true;
 
 			//extraValues.numBlendingCycles = 2;
 			extraValues.amplitudeBlendFactor = 0.5;
@@ -1113,7 +1113,7 @@ namespace TheWorld_Utils
 			noise.heightsAmplitude = 2000;
 			noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = -4000.0f;
-			noise.desideredMinHeigthMandatory = true;
+			noise.desideredMinHeightMandatory = true;
 
 			//extraValues.numBlendingCycles = 2;
 			extraValues.amplitudeBlendFactor = 0.5;
@@ -1154,7 +1154,7 @@ namespace TheWorld_Utils
 			noise.heightsAmplitude = 0;
 			noise.scaleFactor_JagIntensity = 1.0f;
 			noise.desideredMinHeight = 0.0f;
-			noise.desideredMinHeigthMandatory = false;
+			noise.desideredMinHeightMandatory = false;
 		}
 		break;
 		}
