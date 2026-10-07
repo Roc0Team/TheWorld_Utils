@@ -339,6 +339,7 @@ namespace TheWorld_Utils
 		__declspec(dllexport) void operator=(const MemoryBuffer& o);
 		__declspec(dllexport) void operator=(const std::string& o);
 		__declspec(dllexport) bool operator==(const MemoryBuffer& o) const;
+		__declspec(dllexport) bool equals(const MemoryBuffer& o) const;
 		template <typename T> __declspec(dllexport) void getNorthBorder(size_t numElementsPerBorder, MemoryBuffer& border)
 		{
 			size_t borderSize = numElementsPerBorder * sizeof(T);
@@ -1228,7 +1229,7 @@ namespace TheWorld_Utils
 			*this = quadrantPos;
 		}
 
-		// x, z pos a point contained in the quadrant in global coord: calculating starting point of the quadrant in global coord
+		// x, z coords of a point contained in the quadrant in global coord: calculating starting point of the quadrant in global coord
 		QuadrantPos(float x, float z, int level, int numVerticesPerSize, float gridStepInWU)
 		{
 			m_numVerticesPerSize = numVerticesPerSize;
@@ -1244,6 +1245,7 @@ namespace TheWorld_Utils
 			m_centerZ = m_lowerZGridVertex + (m_sizeInWU / 2);
 		}
 
+		// x, z index of the quadrant
 		QuadrantPos(int x, int z, int level, int numVerticesPerSize, float gridStepInWU)
 		{
 			m_numVerticesPerSize = numVerticesPerSize;
@@ -1555,6 +1557,10 @@ namespace TheWorld_Utils
 			if (abs(maxHeight - o.maxHeight) > tolerance)
 				return false;
 			return true;
+		}
+		std::string toString(void) const
+		{
+			return "minHeight=" + std::to_string(minHeight) + ", maxHeight=" + std::to_string(maxHeight);
 		}
 	};
 
@@ -1975,6 +1981,8 @@ namespace TheWorld_Utils
 		__declspec(dllexport) static bool heightsFloat16InNewSavedQuadrant(void);
 		__declspec(dllexport) static bool heightsUInt16InNewSavedQuadrant(void);
 		__declspec(dllexport) static bool heightsFloat32InNewSavedQuadrant(void);
+		__declspec(dllexport) static float adaptHeightToNewSavedQuadrantFormat(float height);
+		__declspec(dllexport) static float adaptHeightToNewSavedQuadrantFormat(float height, bool& changed);
 
 		class CacheQuadrantData
 		{

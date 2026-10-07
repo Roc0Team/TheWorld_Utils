@@ -70,6 +70,37 @@ namespace TheWorld_Utils
 		return s_heightsFormatInNewSavedQuadrant == HeightsFormatInQuadrantBuffer::Float32;
 	}
 
+	float MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(float height)
+	{
+		bool changed = false;
+		return adaptHeightToNewSavedQuadrantFormat(height, changed);
+	}
+
+	float MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(float height, bool& changed)
+	{
+		changed = false;
+		float newHeight;
+
+		if (MeshCacheBuffer::heightsFloat16InNewSavedQuadrant())
+		{
+			newHeight = MeshCacheBuffer::halfToFloat(MeshCacheBuffer::halfFromFloat(height));
+			if (newHeight != height)
+				changed = true;
+		}
+		else if (MeshCacheBuffer::heightsUInt16InNewSavedQuadrant())
+		{
+			newHeight = MeshCacheBuffer::uint16HeightToFloat(MeshCacheBuffer::uint16HeightFromFloat(height));
+			if (newHeight != height)
+				changed = true;
+		}
+		else if (MeshCacheBuffer::heightsFloat32InNewSavedQuadrant())
+		{
+			// No conversion needed for Float32
+			newHeight = height;	
+		}
+		return newHeight;
+	}
+
 	std::string getModuleLoadPath(void)
 	{
 		char path[MAX_PATH];
@@ -838,8 +869,8 @@ namespace TheWorld_Utils
 	//constexpr auto QUADRANT_TRACKING_IDX_POS_Z = 0;
 	//constexpr auto QUADRANT_TRACKING_IDX_POS_X = -55;
 	//constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -58;
-	constexpr auto QUADRANT_TRACKING_IDX_POS_X = -53;
-	constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -58;
+	constexpr auto QUADRANT_TRACKING_IDX_POS_X = -62;
+	constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -69;
 
 	constexpr auto QUADRANT_TRACKING_MULTIPLE = false;
 	static std::vector<int> quadrantTrackingPosX = { -45, -45 };
@@ -1549,6 +1580,11 @@ namespace TheWorld_Utils
 		if (m_size != o.m_size)
 			return false;
 		return memcmp(m_ptr, o.m_ptr, m_size) == 0;
+	}
+
+	bool MemoryBuffer::equals(const MemoryBuffer& o) const
+	{
+		return *this == o;
 	}
 
 	void MemoryBuffer::allocationSlotSize(size_t _allocationSlotSize)
@@ -5634,6 +5670,13 @@ namespace TheWorld_Utils
 			for (size_t x = 0; x < numVerticesPerSize; x++)
 			{
 				float h = data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize);
+				bool changed = false;
+				h = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(h, changed);
+				if (changed)
+				{
+					data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize) = h;
+					updated = true;
+				}
 				if (h < minHeight)
 					minHeight = h;
 				if (h > maxHeight)
@@ -6191,6 +6234,7 @@ namespace TheWorld_Utils
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
+					h = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(h);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
 
 					//TheWorld_Utils::FLOAT_32 f(h);
@@ -6227,6 +6271,7 @@ namespace TheWorld_Utils
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
+					h = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(h);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
 
 					//TheWorld_Utils::FLOAT_32 f(h);
@@ -6263,6 +6308,7 @@ namespace TheWorld_Utils
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
+					h = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(h);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
 
 					//TheWorld_Utils::FLOAT_32 f(h);
@@ -6299,6 +6345,7 @@ namespace TheWorld_Utils
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
+					h = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(h);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
 
 					//TheWorld_Utils::FLOAT_32 f(h);
@@ -6337,6 +6384,7 @@ namespace TheWorld_Utils
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
+					h = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(h);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
 
 					//TheWorld_Utils::FLOAT_32 f(h);
@@ -6375,6 +6423,7 @@ namespace TheWorld_Utils
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
+					h = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(h);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
 
 					//TheWorld_Utils::FLOAT_32 f(h);
@@ -6413,6 +6462,7 @@ namespace TheWorld_Utils
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
+					h = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(h);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
 
 					//TheWorld_Utils::FLOAT_32 f(h);
@@ -6451,6 +6501,7 @@ namespace TheWorld_Utils
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
+					h = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(h);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
 
 					//TheWorld_Utils::FLOAT_32 f(h);
@@ -6489,6 +6540,7 @@ namespace TheWorld_Utils
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
+					h = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(h);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
 
 					//TheWorld_Utils::FLOAT_32 f(h);
@@ -6527,6 +6579,7 @@ namespace TheWorld_Utils
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
+					h = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(h);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
 
 					//TheWorld_Utils::FLOAT_32 f(h);
@@ -6565,6 +6618,7 @@ namespace TheWorld_Utils
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
+					h = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(h);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
 
 					//TheWorld_Utils::FLOAT_32 f(h);
@@ -6603,6 +6657,7 @@ namespace TheWorld_Utils
 				{
 					updated = data1->heightsUpdated = data2->heightsUpdated = true;
 					float h = (nearBorderH1 + nearBorderH2) / 2;
+					h = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(h);
 					data1heights32Buffer->_deprecated_get_at_ref<float>(border1X, border1Z, numVerticesPerSize) = data2heights32Buffer->_deprecated_get_at_ref<float>(border2X, border2Z, numVerticesPerSize) = h;
 
 					//TheWorld_Utils::FLOAT_32 f(h);
@@ -6614,7 +6669,12 @@ namespace TheWorld_Utils
 			}
 		}
 
+		bool changed = false;
+
 		float northWestCornerHeight = currentData.heights32Buffer->_deprecated_get_at_ref<float>(0, 0, numVerticesPerSize);
+		northWestCornerHeight = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(northWestCornerHeight, changed);
+		if (changed)
+			updated = currentData.heightsUpdated = true;
 		if (northData.heights32Buffer != nullptr && northData.heights32Buffer->size() > 0
 			/*&& northData.heights16Buffer != nullptr && northData.heights16Buffer->size() > 0*/)
 		{
@@ -6622,9 +6682,6 @@ namespace TheWorld_Utils
 			{
 				northData.heights32Buffer->_deprecated_get_at_ref<float>(0, maxIndex, numVerticesPerSize) = northWestCornerHeight;
 				updated = northData.heightsUpdated = true;
-				//TheWorld_Utils::FLOAT_32 f(northWestCornerHeight);
-				//uint16_t half = half_from_float(f.u32);
-				//northData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(0, maxIndex, numVerticesPerSize) = half;
 			}
 		}
 		if (northwestData.heights32Buffer != nullptr && northwestData.heights32Buffer->size() > 0
@@ -6652,6 +6709,9 @@ namespace TheWorld_Utils
 			}
 		}
 		float northEastCornerHeight = currentData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, 0, numVerticesPerSize);
+		northEastCornerHeight = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(northEastCornerHeight, changed);
+		if (changed)
+			updated = currentData.heightsUpdated = true;
 		if (northData.heights32Buffer != nullptr && northData.heights32Buffer->size() > 0
 			/*&& northData.heights16Buffer != nullptr && northData.heights16Buffer->size() > 0*/)
 		{
@@ -6690,6 +6750,9 @@ namespace TheWorld_Utils
 		}
 
 		float southWestCornerHeight = currentData.heights32Buffer->_deprecated_get_at_ref<float>(0, maxIndex, numVerticesPerSize);
+		southWestCornerHeight = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(southWestCornerHeight, changed);
+		if (changed)
+			updated = currentData.heightsUpdated = true;
 		if (southData.heights32Buffer != nullptr && southData.heights32Buffer->size() > 0
 			/*&& southData.heights16Buffer != nullptr && southData.heights16Buffer->size() > 0*/)
 		{
@@ -6728,6 +6791,9 @@ namespace TheWorld_Utils
 		}
 
 		float southEastCornerHeight = currentData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, maxIndex, numVerticesPerSize);
+		southEastCornerHeight = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(southEastCornerHeight, changed);
+		if (changed)
+			updated = currentData.heightsUpdated = true;
 		if (southData.heights32Buffer != nullptr && southData.heights32Buffer->size() > 0
 			/*&& southData.heights16Buffer != nullptr && southData.heights16Buffer->size() > 0*/)
 		{
@@ -6933,7 +6999,7 @@ namespace TheWorld_Utils
 
 		if (northData.heights32Buffer != nullptr && northTerrainEdit != nullptr /* && (terrainEdit->northSideZMinus.needBlend || northTerrainEdit->southSideZPlus.needBlend)*/)
 		{
-			// moving on north side: every x with z = 0 
+			// moving on north side: all the x values with z = 0 
 			for (size_t x = 0; x < numVerticesPerSize; x++)
 			{
 				float heightGapForEachQuandrantOnBorder = abs(data.heights32Buffer->_deprecated_get_at_ref<float>(x, 0, numVerticesPerSize) - northData.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex, numVerticesPerSize)) / 2;
@@ -6967,24 +7033,16 @@ namespace TheWorld_Utils
 							increment = 0.0f;
 
 						if (z == 0 && heightSaved)
-						{
 							data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize) = saveHeight;
-						}
 						else
 							data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize) += increment;
-						//TheWorld_Utils::FLOAT_32 f(data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
-						//uint16_t half = half_from_float(f.u32);
-						//data.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half;
+						data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize) = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
 
 						if (z == 0 && heightSaved)
-						{
 							northData.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize) = saveHeight;
-						}
 						else
 							northData.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize) -= increment;
-						//TheWorld_Utils::FLOAT_32 f1(northData.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize));
-						//uint16_t half1 = half_from_float(f1.u32);
-						//northData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, maxIndex - z, numVerticesPerSize) = half1;
+						northData.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize) = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(northData.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize));
 
 						if (z == 1)
 						{
@@ -7020,15 +7078,11 @@ namespace TheWorld_Utils
 						{
 							float modifiedHeightStep1 = heightStep1 + sin(float(idx) * radiantStepPerVertex) * heightStepFactor1;
 							data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize) -= modifiedHeightStep1;
-							//TheWorld_Utils::FLOAT_32 f1(data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
-							//uint16_t half1 = half_from_float(f1.u32);
-							//data.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half1;
+							data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize) = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
 
 							float modifiedHeightStep2 = heightStep2 + sin(float(idx) * radiantStepPerVertex) * heightStepFactor2;
 							northData.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize) -= modifiedHeightStep2;
-							//TheWorld_Utils::FLOAT_32 f2(northData.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize));
-							//uint16_t half2 = half_from_float(f2.u32);
-							//northData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, maxIndex - z, numVerticesPerSize) = half2;
+							northData.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize) = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(northData.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize));
 
 							idx++;
 						}
@@ -7093,7 +7147,7 @@ namespace TheWorld_Utils
 
 		if (southData.heights32Buffer != nullptr && southTerrainEdit != nullptr /* && (terrainEdit->southSideZPlus.needBlend || southTerrainEdit->northSideZMinus.needBlend)*/)
 		{
-			// moving on south side: every x with z = 0 
+			// moving on south side: all the x values with z = 0 
 			for (size_t x = 0; x < numVerticesPerSize; x++)
 			{
 				float heightGapForEachQuandrantOnBorder = abs(data.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex, numVerticesPerSize) - southData.heights32Buffer->_deprecated_get_at_ref<float>(x, 0, numVerticesPerSize)) / 2;
@@ -7128,24 +7182,16 @@ namespace TheWorld_Utils
 							increment = 0.0f;
 
 						if (z == 0 && heightSaved)
-						{
 							data.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize) = saveHeight;
-						}
 						else
 							data.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize) += increment;
-						//TheWorld_Utils::FLOAT_32 f(data.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize));
-						//uint16_t half = half_from_float(f.u32);
-						//data.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, maxIndex - z, numVerticesPerSize) = half;
+						data.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize) = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(data.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize));
 
 						if (z == 0 && heightSaved)
-						{
 							southData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize) = saveHeight;
-						}
 						else
 							southData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize) -= increment;
-						//TheWorld_Utils::FLOAT_32 f1(southData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
-						//uint16_t half1 = half_from_float(f1.u32);
-						//southData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half1;
+						southData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize) = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(southData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
 
 						if (z == 1)
 						{
@@ -7178,15 +7224,11 @@ namespace TheWorld_Utils
 						{
 							float modifiedHeightStep1 = heightStep1 + sin(float(idx) * radiantStepPerVertex) * heightStepFactor1;
 							data.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize) -= modifiedHeightStep1;
-							//TheWorld_Utils::FLOAT_32 f1(data.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize));
-							//uint16_t half1 = half_from_float(f1.u32);
-							//data.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, maxIndex - z, numVerticesPerSize) = half1;
+							data.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize) = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(data.heights32Buffer->_deprecated_get_at_ref<float>(x, maxIndex - z, numVerticesPerSize));
 
 							float modifiedHeightStep2 = heightStep2 + sin(float(idx) * radiantStepPerVertex) * heightStepFactor2;
 							southData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize) -= modifiedHeightStep2;
-							//TheWorld_Utils::FLOAT_32 f2(southData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
-							//uint16_t half2 = half_from_float(f2.u32);
-							//southData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half2;
+							southData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize) = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(southData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
 
 							idx++;
 						}
@@ -7251,7 +7293,7 @@ namespace TheWorld_Utils
 
 		if (westData.heights32Buffer != nullptr && westTerrainEdit != nullptr /*&& (terrainEdit->westSideXMinus.needBlend || westTerrainEdit->eastSideXPlus.needBlend)*/)
 		{
-			// moving on west side: every z with x = 0 
+			// moving on west side: all the z values with x = 0 
 			for (size_t z = 0; z < numVerticesPerSize; z++)
 			{
 				float heightGapForEachQuandrantOnBorder = abs(data.heights32Buffer->_deprecated_get_at_ref<float>(0, z, numVerticesPerSize) - westData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, z, numVerticesPerSize)) / 2;
@@ -7285,24 +7327,16 @@ namespace TheWorld_Utils
 							increment = 0.0f;
 
 						if (x == 0 && heightSaved)
-						{
 							data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize) = saveHeight;
-						}
 						else
 							data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize) += increment;
-						//TheWorld_Utils::FLOAT_32 f(data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
-						//uint16_t half = half_from_float(f.u32);
-						//data.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half;
+						data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize) = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
 
 						if (x == 0 && heightSaved)
-						{
 							westData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize) = saveHeight;
-						}
 						else
 							westData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize) -= increment;
-						//TheWorld_Utils::FLOAT_32 f1(westData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize));
-						//uint16_t half1 = half_from_float(f1.u32);
-						//westData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex - x, z, numVerticesPerSize) = half1;
+						westData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize) = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(westData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize));
 
 						if (x == 1)
 						{
@@ -7335,15 +7369,11 @@ namespace TheWorld_Utils
 						{
 							float modifiedHeightStep1 = heightStep1 + sin(float(idx) * radiantStepPerVertex) * heightStepFactor1;
 							data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize) -= modifiedHeightStep1;
-							//TheWorld_Utils::FLOAT_32 f1(data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
-							//uint16_t half1 = half_from_float(f1.u32);
-							//data.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half1;
+							data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize) = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(data.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
 
 							float modifiedHeightStep2 = heightStep2 + sin(float(idx) * radiantStepPerVertex) * heightStepFactor2;
 							westData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize) -= modifiedHeightStep2;
-							//TheWorld_Utils::FLOAT_32 f2(westData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize));
-							//uint16_t half2 = half_from_float(f2.u32);
-							//westData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex - x, z, numVerticesPerSize) = half2;
+							westData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize) = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(westData.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize));
 
 							idx++;
 						}
@@ -7408,7 +7438,7 @@ namespace TheWorld_Utils
 
 		if (eastData.heights32Buffer != nullptr && eastTerrainEdit != nullptr /*&& (terrainEdit->eastSideXPlus.needBlend || eastTerrainEdit->westSideXMinus.needBlend)*/)
 		{
-			// moving on east side: every z with x = 0 
+			// moving on east side: all the z values with x = 0 
 			for (size_t z = 0; z < numVerticesPerSize; z++)
 			{
 				float heightGapForEachQuandrantOnBorder = abs(data.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex, z, numVerticesPerSize) - eastData.heights32Buffer->_deprecated_get_at_ref<float>(0, z, numVerticesPerSize)) / 2;
@@ -7442,24 +7472,16 @@ namespace TheWorld_Utils
 							increment = 0.0f;
 
 						if (x == 0 && heightSaved)
-						{
 							data.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize) = saveHeight;
-						}
 						else
 							data.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize) += increment;
-						//TheWorld_Utils::FLOAT_32 f(data.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize));
-						//uint16_t half = half_from_float(f.u32);
-						//data.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex - x, z, numVerticesPerSize) = half;
+						data.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize) = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(data.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize));
 
 						if (x == 0 && heightSaved)
-						{
 							eastData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize) = saveHeight;
-						}
 						else
 							eastData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize) -= increment;
-						//TheWorld_Utils::FLOAT_32 f1(eastData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
-						//uint16_t half1 = half_from_float(f1.u32);
-						//eastData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half1;
+						eastData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize) = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(eastData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
 
 						if (x == 1)
 						{
@@ -7492,15 +7514,11 @@ namespace TheWorld_Utils
 						{
 							float modifiedHeightStep1 = heightStep1 + sin(float(idx) * radiantStepPerVertex) * heightStepFactor1;
 							data.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize) -= modifiedHeightStep1;
-							//TheWorld_Utils::FLOAT_32 f1(data.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize));
-							//uint16_t half1 = half_from_float(f1.u32);
-							//data.heights16Buffer->_deprecated_get_at_ref<uint16_t>(maxIndex - x, z, numVerticesPerSize) = half1;
+							data.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize) = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(data.heights32Buffer->_deprecated_get_at_ref<float>(maxIndex - x, z, numVerticesPerSize));
 
 							float modifiedHeightStep2 = heightStep2 + sin(float(idx) * radiantStepPerVertex) * heightStepFactor2;
 							eastData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize) -= modifiedHeightStep2;
-							//TheWorld_Utils::FLOAT_32 f2(eastData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
-							//uint16_t half2 = half_from_float(f2.u32);
-							//eastData.heights16Buffer->_deprecated_get_at_ref<uint16_t>(x, z, numVerticesPerSize) = half2;
+							eastData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize) = MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(eastData.heights32Buffer->_deprecated_get_at_ref<float>(x, z, numVerticesPerSize));
 
 							idx++;
 						}
