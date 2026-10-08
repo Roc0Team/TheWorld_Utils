@@ -869,8 +869,8 @@ namespace TheWorld_Utils
 	//constexpr auto QUADRANT_TRACKING_IDX_POS_Z = 0;
 	//constexpr auto QUADRANT_TRACKING_IDX_POS_X = -55;
 	//constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -58;
-	constexpr auto QUADRANT_TRACKING_IDX_POS_X = -62;
-	constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -69;
+	constexpr auto QUADRANT_TRACKING_IDX_POS_X = -17;
+	constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -36;
 
 	constexpr auto QUADRANT_TRACKING_MULTIPLE = false;
 	static std::vector<int> quadrantTrackingPosX = { -45, -45 };
