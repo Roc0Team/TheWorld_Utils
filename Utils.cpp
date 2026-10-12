@@ -79,7 +79,7 @@ namespace TheWorld_Utils
 	float MeshCacheBuffer::adaptHeightToNewSavedQuadrantFormat(float height, bool& changed)
 	{
 		changed = false;
-		float newHeight;
+		float newHeight = 0;
 
 		if (MeshCacheBuffer::heightsFloat16InNewSavedQuadrant())
 		{
@@ -97,6 +97,10 @@ namespace TheWorld_Utils
 		{
 			// No conversion needed for Float32
 			newHeight = height;	
+		}
+		else
+		{
+			throw std::runtime_error("Unknown heights format in new saved quadrant.");
 		}
 		return newHeight;
 	}
@@ -1615,11 +1619,15 @@ namespace TheWorld_Utils
 		outBuffer.set(ptr() + offset, length);
 	}
 	
+	void MemoryBuffer::set(const MemoryBuffer& inBuffer)
+	{
+		set(inBuffer.ptr(), inBuffer.size());
+	}
+
 	void MemoryBuffer::set(BYTE* in, size_t size)
 	{
-		reserve(size);
+		resize(size);
 		memcpy(m_ptr, in, size);
-		adjustSize(size);
 	}
 
 	void MemoryBuffer::setPart(MemoryBuffer& inBuffer, size_t offset)
@@ -1700,7 +1708,7 @@ namespace TheWorld_Utils
 		}
 	}
 	
-	BYTE* MemoryBuffer::ptr()
+	BYTE* MemoryBuffer::ptr(void) const
 	{
 		return m_ptr;
 	}
@@ -1800,11 +1808,11 @@ namespace TheWorld_Utils
 		serializeToBuffer(s, offset, truncate);
 	}
 
-	std::string MemoryBuffer::deserializeStringFromBuffer(size_t& offset)
+	std::string MemoryBuffer::deserializeStringFromBuffer(size_t& offset) const
 	{
 		std::string out;
 		size_t stringLength = deserializeFromBuffer<size_t>(offset);
-		out = std::string((char*)(ptr() + offset), stringLength);
+		out = std::string((char*)((BYTE*)ptr() + offset), stringLength);
 		offset += stringLength;
 		return out;
 	}
@@ -1819,7 +1827,7 @@ namespace TheWorld_Utils
 		serializeToBuffer(buffer, offset, truncate);
 	}
 
-	MemoryBuffer MemoryBuffer::deserializeMemoryBufferFromBuffer(size_t& offset)
+	MemoryBuffer MemoryBuffer::deserializeMemoryBufferFromBuffer(size_t& offset) const
 	{
 		MemoryBuffer out;
 		size_t bufferSize = deserializeFromBuffer<size_t>(offset);
@@ -1828,7 +1836,7 @@ namespace TheWorld_Utils
 		return out;
 	}
 
-	void MemoryBuffer::deserializeFromBuffer(BYTE* out, size_t _size, size_t& offset)
+	void MemoryBuffer::deserializeFromBuffer(BYTE* out, size_t _size, size_t& offset) const
 	{
 		my_assert(offset + _size <= size());
 		memcpy(out, ptr() + offset, _size);
@@ -7880,5 +7888,156 @@ namespace TheWorld_Utils
 		normalX = float(normal.x());
 		normalY = float(normal.y());
 		normalZ = float(normal.z());
+	}
+
+	HeightMap::HeightMap(MemoryBuffer& float32Heights, size_t numVerticesPerSize)
+	{
+		my_assert(float32Heights.size() == numVerticesPerSize * numVerticesPerSize * sizeof(float));	// float32Heights size must match numVerticesPerSize
+		my_assert(numVerticesPerSize % 2 == 1);															// numVerticesPerSize must be odd
+		my_assert((numVerticesPerSize - 1) % 8 == 0);													// numVerticesPerSize - 1 must be multiple of 8: that means that the number of squares must be multiple of 8;
+
+		m_numVerticesPerSize = numVerticesPerSize;
+		set(float32Heights);
+	}
+
+	float HeightMap::getHeight(size_t row, size_t col) const
+	{
+		if (row >= m_numVerticesPerSize || col >= m_numVerticesPerSize)
+			throw std::out_of_range("HeightMap::getHeight: row or col out of range");
+		return get_at<float>(row, col, m_numVerticesPerSize);
+	}
+
+	//void HeightMap::setHeight(size_t row, size_t col, float height)	// TO BE TESTED
+	//{
+	//	if (row >= m_numVerticesPerSize || col >= m_numVerticesPerSize)
+	//		throw std::out_of_range("HeightMap::getHeight: row or col out of range");
+	//	get_at_ref<float>(row, col, m_numVerticesPerSize) = height;
+	//}
+
+	Level::Track::Square::Square()
+	{
+	}
+
+	Level::Track::Square::Square(HeightMap& heightmap, size_t row, size_t col, float height)
+	{
+		if (row >= heightmap.getNumVerticesPerSize() - 1 || col >= heightmap.getNumVerticesPerSize() - 1)
+			throw std::out_of_range("Level::Track::Square::Square: row or col out of range");
+		
+		m_type = getTypeFromHeightMap(heightmap, row, col, height);
+	}
+
+	Level::Track::Square::Type Level::Track::Square::getTypeFromHeightMap(HeightMap& heightmap, size_t row, size_t col, float height)
+	{
+		float h0 = heightmap.getHeight(row, col);					// vertex 0: upper left corner
+		float h1 = heightmap.getHeight(row, col + 1);				// vertex 1: upper right corner
+		float h2 = heightmap.getHeight(row + 1, col);				// vertex 2: lower left corner
+		float h3 = heightmap.getHeight(row + 1, col + 1);			// vertex 3: lower right corner
+		BYTE vertexMask = 0;
+		if (h0 >= height) vertexMask |= 1;	// vertex 0
+		if (h1 >= height) vertexMask |= 2;	// vertex 1
+		if (h2 >= height) vertexMask |= 4;	// vertex 2
+		if (h3 >= height) vertexMask |= 8;	// vertex 3
+		if (vertexMask == 0)
+			return Type::BelowHeight;
+		else if (vertexMask == 15)
+			return Type::AboveHeight;
+		else
+			return Type::IntersectedByHeight;
+	}
+	
+	size_t Level::Track::Square::getIndexFromRowCol(HeightMap& heightmap, size_t row, size_t col)
+	{
+		return row * (heightmap.getNumVerticesPerSize() - 1) + col;
+	}
+
+	void Level::Track::Square::getRowColFromIndex(HeightMap& heightmap, size_t index, size_t& row, size_t& col)
+	{
+		row = index / (heightmap.getNumVerticesPerSize() - 1);
+		col = index % (heightmap.getNumVerticesPerSize() - 1);
+	}
+
+	Level::Level()
+	{
+	}
+
+	void Level::generateTracks(HeightMap& heightmap)
+	{
+		m_numSquaresPerSize = heightmap.getNumVerticesPerSize() - 1;
+
+		std::vector<Track::Square> squares;	// 1 byte per square of vertices, each byte is a bitmask of the 4 vertices of the square, 1 if the vertex height is >= m_height, 0 otherwise
+											// if the byte is 0, the square is below the height, if the byte is 15 (1111), the square is above the height, if the byte is between 1 and 14, the square is intersected by the height
+
+		// map the heightmap to the squares to find the type of each square (above, below, intersected by height)
+		squares.resize(m_numSquaresPerSize * m_numSquaresPerSize);
+		for (size_t row = 0; row < m_numSquaresPerSize; row++)
+		{
+			for (size_t col = 0; col < m_numSquaresPerSize; col++)
+			{
+				Track::Square sq;
+				squares[Track::Square::getIndexFromRowCol(heightmap, row, col)] = Track::Square(heightmap, row, col, m_height);
+			}
+		}
+
+		// loook for all the tracks in the heightmap, a track is a sequence of squares that are intersected by the height, and that are connected to each other (8-connectivity)
+		std::vector<Track> tracks;
+		for (size_t row = 0; row < m_numSquaresPerSize; row++)
+		{
+			for (size_t col = 0; col < m_numSquaresPerSize; col++)
+			{
+				Track::Square& sq = squares[Track::Square::getIndexFromRowCol(heightmap, row, col)];
+				if (sq.intersectedByHeight() && !sq.visited())
+				{
+					// Found a new track, do a depth-first search to find all the squares connected to this square that are intersected by the height
+					Track track(this);
+					track.addSquare(sq);
+					sq.visited(true);
+					
+					// look for all the squares connected to this square that are intersected by the height
+					std::vector<Track::Square*> stack;
+					stack.push_back(&sq);
+					while (not stack.empty())
+					{
+						Track::Square* current = stack.back();
+						size_t currentIndex = current - &squares[0];
+						stack.pop_back();
+						size_t currentRow, currentCol;
+						Track::Square::getRowColFromIndex(heightmap, currentIndex, currentRow, currentCol);
+						for (int dr = -1; dr <= 1; dr++)
+						{
+							for (int dc = -1; dc <= 1; dc++)
+							{
+								if (dr == 0 && dc == 0)		// it's current square, skip it
+									continue;
+								
+								size_t neighborRow = currentRow + dr;
+								size_t neighborCol = currentCol + dc;
+								if (neighborRow >= 0 and neighborRow < m_numSquaresPerSize and neighborCol >= 0 and neighborCol < m_numSquaresPerSize)
+								{
+									Track::Square& neighbor = squares[Track::Square::getIndexFromRowCol(heightmap, neighborRow, neighborCol)];
+									if (neighbor.intersectedByHeight() && !neighbor.visited())
+									{
+										neighbor.visited(true);
+										stack.push_back(&neighbor);
+										track.addSquare(neighbor);
+									}
+								}
+							}
+						}
+					}
+					tracks.push_back(track);
+				}
+			}
+		}
+	}
+
+	Level::Level(QuadrantPos& pos, float height)
+	{
+		m_height = height;
+		m_quadrantPos = pos;
+	}
+
+	Level::Track::Track(Level* level)
+	{
+		m_level = level;
 	}
 }

@@ -288,6 +288,7 @@ namespace TheWorld_Utils
 		}
 		__declspec(dllexport) void getPart(MemoryBuffer& outBuffer, size_t offset, int64_t length = -1);
 
+		__declspec(dllexport) void set(const MemoryBuffer& inBuffer);
 		__declspec(dllexport) void set(BYTE* in, size_t size);
 		__declspec(dllexport) void setPart(MemoryBuffer& inBuffer, size_t offset);
 		__declspec(dllexport) void setPart(BYTE* in, size_t size, size_t offset);
@@ -308,8 +309,8 @@ namespace TheWorld_Utils
 		}
 		__declspec(dllexport) size_t reserved(void) const;
 		__declspec(dllexport) void reset(void);
-		__declspec(dllexport) BYTE* ptr();
-		template <typename T> __declspec(dllexport) T* ptr()
+		__declspec(dllexport) BYTE* ptr(void) const;
+		template <typename T> __declspec(dllexport) T* ptr(void) const
 		{
 			return (T*)m_ptr;
 		}
@@ -340,29 +341,29 @@ namespace TheWorld_Utils
 		__declspec(dllexport) void operator=(const std::string& o);
 		__declspec(dllexport) bool operator==(const MemoryBuffer& o) const;
 		__declspec(dllexport) bool equals(const MemoryBuffer& o) const;
-		template <typename T> __declspec(dllexport) void getNorthBorder(size_t numElementsPerBorder, MemoryBuffer& border)
+		template <typename T> __declspec(dllexport) void getNorthBorder(size_t numElementsPerBorder, MemoryBuffer& border) const
 		{
 			size_t borderSize = numElementsPerBorder * sizeof(T);
 			border.set(ptr(), borderSize);
 		}
-		template <typename T> __declspec(dllexport) void getNorthBorder(size_t numElementsPerBorder, BYTE* border)
+		template <typename T> __declspec(dllexport) void getNorthBorder(size_t numElementsPerBorder, BYTE* border) const
 		{
 			size_t borderSize = numElementsPerBorder * sizeof(T);
 			memcpy(border, ptr(), borderSize);
 		}
-		template <typename T> __declspec(dllexport) void getSouthBorder(size_t numElementsPerBorder, MemoryBuffer& border)
+		template <typename T> __declspec(dllexport) void getSouthBorder(size_t numElementsPerBorder, MemoryBuffer& border) const
 		{
 			size_t borderSize = numElementsPerBorder * sizeof(T);
 			BYTE* offset = ptr() + borderSize * (numElementsPerBorder - 1);
 			border.set(offset, borderSize);
 		}
-		template <typename T> __declspec(dllexport) void getSouthBorder(size_t numElementsPerBorder, BYTE* border)
+		template <typename T> __declspec(dllexport) void getSouthBorder(size_t numElementsPerBorder, BYTE* border) const
 		{
 			size_t borderSize = numElementsPerBorder * sizeof(T);
 			BYTE* offset = ptr() + borderSize * (numElementsPerBorder - 1);
 			memcpy(border, offset, borderSize);
 		}
-		template <typename T> __declspec(dllexport) void getWestBorder(size_t numElementsPerBorder, MemoryBuffer& border)
+		template <typename T> __declspec(dllexport) void getWestBorder(size_t numElementsPerBorder, MemoryBuffer& border) const
 		{
 			size_t borderSize = numElementsPerBorder * sizeof(T);
 			border.reserve(borderSize);
@@ -373,7 +374,7 @@ namespace TheWorld_Utils
 				border.set_at_ref<T>(*element, idx, 0, numElementsPerBorder);
 			}
 		}
-		template <typename T> __declspec(dllexport) void getWestBorder(size_t numElementsPerBorder, BYTE* border)
+		template <typename T> __declspec(dllexport) void getWestBorder(size_t numElementsPerBorder, BYTE* border) const
 		{
 			size_t borderSize = numElementsPerBorder * sizeof(T);
 			T* westBorderCursor = (T*)border;
@@ -384,7 +385,7 @@ namespace TheWorld_Utils
 				westBorderCursor++;
 			}
 		}
-		template <typename T> __declspec(dllexport) void getEastBorder(size_t numElementsPerBorder, MemoryBuffer& border)
+		template <typename T> __declspec(dllexport) void getEastBorder(size_t numElementsPerBorder, MemoryBuffer& border) const
 		{
 			size_t borderSize = numElementsPerBorder * sizeof(T);
 			border.reserve(borderSize);
@@ -395,7 +396,7 @@ namespace TheWorld_Utils
 				border.set_at_ref<T>(*element, idx, 0, numElementsPerBorder);
 			}
 		}
-		template <typename T> __declspec(dllexport) void getEastBorder(size_t numElementsPerBorder, BYTE* border)
+		template <typename T> __declspec(dllexport) void getEastBorder(size_t numElementsPerBorder, BYTE* border) const
 		{
 			size_t borderSize = numElementsPerBorder * sizeof(T);
 			T* eastBorderCursor = (T*)border;
@@ -406,7 +407,7 @@ namespace TheWorld_Utils
 				eastBorderCursor++;
 			}
 		}
-		template <typename T> __declspec(dllexport) void getBorders(size_t numElementsPerBorder, BYTE* northBorder, BYTE* southBorder, BYTE* westBorder, BYTE* eastBorder)
+		template <typename T> __declspec(dllexport) void getBorders(size_t numElementsPerBorder, BYTE* northBorder, BYTE* southBorder, BYTE* westBorder, BYTE* eastBorder) const
 		{
 			size_t borderSize = numElementsPerBorder * sizeof(T);
 
@@ -447,7 +448,7 @@ namespace TheWorld_Utils
 				}
 			}
 		}
-		template <typename T> __declspec(dllexport) void getBorders(size_t numElementsPerBorder, MemoryBuffer& borderBuffer) // first row upper border, second row lower border, third row left border, fourth row right border
+		template <typename T> __declspec(dllexport) void getBorders(size_t numElementsPerBorder, MemoryBuffer& borderBuffer) const// first row upper border, second row lower border, third row left border, fourth row right border
 		{
 			size_t borderSize = numElementsPerBorder * sizeof(T);
 			borderBuffer.reserve(borderSize * 4);	// reserve for 4 borders (UP/NORTH,DOWN/SOUTH,LEFT/WEST,RIGHT/EAST)
@@ -458,7 +459,7 @@ namespace TheWorld_Utils
 							borderBuffer.ptr() + (borderSize * 2),		// LEFT/WEST border
 							borderBuffer.ptr() + (borderSize * 3));		// RIGHT/EAST border
 		}
-		template <typename T> __declspec(dllexport) void getBorders(size_t numElementsPerBorder, MemoryBuffer& northUpBorder, MemoryBuffer& southDownBorder, MemoryBuffer& westLeftBorder, MemoryBuffer& eastRightBorder)
+		template <typename T> __declspec(dllexport) void getBorders(size_t numElementsPerBorder, MemoryBuffer& northUpBorder, MemoryBuffer& southDownBorder, MemoryBuffer& westLeftBorder, MemoryBuffer& eastRightBorder) const
 		{
 			size_t borderSize = numElementsPerBorder * sizeof(T);
 
@@ -507,38 +508,38 @@ namespace TheWorld_Utils
 		{
 			return idx / numElementsPerRow;
 		}
-		template <typename T> __declspec(dllexport) T get_at(size_t idx)
+		template <typename T> __declspec(dllexport) T get_at(size_t idx) const
 		{
 			// z-based idx
 			return get_at_ref<T>(idx);
 		}
-		template <typename T> __declspec(dllexport) T& get_at_ref(size_t idx)
+		template <typename T> __declspec(dllexport) T& get_at_ref(size_t idx) const
 		{
 			// z-based idx
 			T* ptr = (T*)m_ptr;
 			ptr += idx;
 			return *ptr;
 		}
-		template <typename T> __declspec(dllexport) T get_at(size_t row, size_t col, size_t numElementsPerRow)
+		template <typename T> __declspec(dllexport) T get_at(size_t row, size_t col, size_t numElementsPerRow) const
 		{
 			// z-based col/row
 			return get_at_ref<T>(row, col, numElementsPerRow);
 		}
-		template <typename T> __declspec(dllexport) T& get_at_ref(size_t row, size_t col, size_t numElementsPerRow)
+		template <typename T> __declspec(dllexport) T& get_at_ref(size_t row, size_t col, size_t numElementsPerRow) const
 		{
 			// z-based col/row
 			T* ptr = (T*)m_ptr;
 			ptr += ((row * numElementsPerRow) + col);
 			return *ptr;
 		}
-		template <typename T> __declspec(dllexport) T& _deprecated_get_at_ref(size_t col, size_t row, size_t numElementsPerRow)		// deprecated: use get_at_ref instead with row and column in reversed order 
+		template <typename T> __declspec(dllexport) T& _deprecated_get_at_ref(size_t col, size_t row, size_t numElementsPerRow)	const	// deprecated: use get_at_ref instead with row and column in reversed order 
 		{
 			// z-based col/row
 			T* ptr = (T*)m_ptr;
 			ptr += ((row * numElementsPerRow) + col);
 			return *ptr;
 		}
-		template <typename T> __declspec(dllexport) T* get_at_ptr(size_t row, size_t col, size_t numElementsPerRow)
+		template <typename T> __declspec(dllexport) T* get_at_ptr(size_t row, size_t col, size_t numElementsPerRow) const
 		{
 			// z-based col/row
 			T* ptr = (T*)m_ptr;
@@ -594,7 +595,7 @@ namespace TheWorld_Utils
 		__declspec(dllexport) void serializeMemoryBufferToBufferAndTruncate(MemoryBuffer& buffer, size_t& offset);
 		__declspec(dllexport) void serializeMemoryBufferToBuffer(MemoryBuffer& buffer, size_t& offset, bool truncate);
 		
-		template <typename T> __declspec(dllexport) T deserializeFromBuffer(size_t& offset)
+		template <typename T> __declspec(dllexport) T deserializeFromBuffer(size_t& offset) const
 		{
 			T out;
 			size_t size = 0;
@@ -602,9 +603,9 @@ namespace TheWorld_Utils
 			offset += size;
 			return out;
 		}
-		__declspec(dllexport) void deserializeFromBuffer(BYTE* out, size_t size, size_t& offset);
-		__declspec(dllexport) std::string deserializeStringFromBuffer(size_t& offset);
-		__declspec(dllexport) MemoryBuffer deserializeMemoryBufferFromBuffer(size_t& offset);
+		__declspec(dllexport) void deserializeFromBuffer(BYTE* out, size_t size, size_t& offset) const;
+		__declspec(dllexport) std::string deserializeStringFromBuffer(size_t& offset) const;
+		__declspec(dllexport) MemoryBuffer deserializeMemoryBufferFromBuffer(size_t& offset) const;
 
 	private:
 
@@ -1837,7 +1838,7 @@ namespace TheWorld_Utils
 		}
 	};
 
-	template<> MYAPI void MemoryBuffer::populateVector<float>(std::vector<float>& v);
+	//template<> MYAPI void MemoryBuffer::populateVector<float>(std::vector<float>& v);
 
 	template <class TimeT = std::chrono::milliseconds, class ClockT = std::chrono::steady_clock> class Timer
 	{
@@ -2610,6 +2611,110 @@ namespace TheWorld_Utils
 		return fabs(f0 - f1) <= epsilon * TheWorld_Utils::Utils::max3(1.0f, fabsf(f0), fabsf(f1));
 	}
 	
+	class HeightMap : private TheWorld_Utils::MemoryBuffer
+	{
+	public:
+		HeightMap(MemoryBuffer& float32Heights, size_t numVerticesPerSize);
+		
+		float getHeight(size_t row, size_t col) const;
+		//void setHeight(size_t row, size_t col, float height);		// TO BE TESTED
+		
+		size_t getNumVerticesPerSize() const
+		{
+			return m_numVerticesPerSize;
+		}
+
+	private:
+		size_t m_numVerticesPerSize = 0;
+	};
+
+	class Level
+	{
+	public:
+		class Track
+		{
+		public:
+			class Square
+			{
+			enum class Type
+			{
+				NotSet = -1,
+				BelowHeight = 0,
+				IntersectedByHeight = 1,
+				AboveHeight = 2,
+			};
+			public:
+				_declspec(dllexport) Square();
+				_declspec(dllexport) Square(HeightMap& heightmap, size_t row, size_t col, float height);
+
+				_declspec(dllexport) bool belowHeight(void) const
+				{
+					return m_type == Type::BelowHeight;
+				}
+				_declspec(dllexport) bool intersectedByHeight(void) const
+				{
+					return m_type == Type::IntersectedByHeight;
+				}
+				_declspec(dllexport) bool aboveHeight(void) const
+				{
+					return m_type == Type::AboveHeight;
+				}
+
+				_declspec(dllexport) bool visited(void) const
+				{
+					return m_visited;
+				}
+				_declspec(dllexport) void visited(bool visited)
+				{
+					m_visited = visited;
+				}
+
+				_declspec(dllexport) static size_t getIndexFromRowCol(HeightMap& heightmap, size_t row, size_t col);
+				_declspec(dllexport) static void getRowColFromIndex(HeightMap& heightmap, size_t index, size_t& row, size_t& col);
+
+			private:
+				_declspec(dllexport) static Type getTypeFromHeightMap(HeightMap& heightmap, size_t row, size_t col, float height);
+
+			private:
+				enum class Type m_type = Type::NotSet;
+				bool m_visited = false;
+			};
+
+		public:
+			_declspec(dllexport) Track(Level* level);
+			//_declspec(dllexport) float levelHeight(void) const
+			//{
+			//	return m_level->levelHeight();
+			//};
+
+			_declspec(dllexport) void addSquare(const Square& square)
+			{
+				m_squares.push_back(square);
+			}
+
+		private:
+			Level* m_level;
+			std::vector<Square> m_squares;
+		};
+
+	public:
+		_declspec(dllexport) Level();
+		_declspec(dllexport) Level(QuadrantPos& pos, float height);
+		
+		_declspec(dllexport) float levelHeight(void) const
+		{
+			return m_height;
+		};
+
+		_declspec(dllexport) void generateTracks(HeightMap& heightmap);
+
+	private:
+		float m_height = 0;
+		TheWorld_Utils::QuadrantPos m_quadrantPos;
+		size_t m_numSquaresPerSize = 0;
+		std::vector<Track> m_tracks;
+	};
+
 	//void X_aligned_memcpy_sse2(void* dest, const void* src, const unsigned long size)
 	//{
 
