@@ -2,6 +2,7 @@
 
 // D:\TheWorld\Client\TheWorld_MapManager\Data\DBJson\TheWorldMap.TestMap03.json
 constexpr auto THEWORLD_SEA_LEVEL = 0.0f;
+constexpr auto THEWORLD_SEA_LEVEL_TRACK_NAME = "SEA_LEVEL_TRACKS";
 constexpr auto  THEWORLD_SEA_MAX_WAVE_HEIGHT = 30.0f;
 constexpr auto EMPTY_QUADRANTS_TERRAIN_HEIGHT = -500.0f;
 constexpr auto EMPTY_QUADRANT_TERRAIN_TEXTURE = "beach_1";
