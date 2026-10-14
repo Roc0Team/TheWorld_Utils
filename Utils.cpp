@@ -720,12 +720,45 @@ namespace TheWorld_Utils
 		buffer.adjustSize(cursor);
 	}
 
-	void QuadrantPos::deserialize(TheWorld_Utils::MemoryBuffer& buffer)
+	void QuadrantPos::deserialize(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset)
 	{
 		reset();
 
 		size_t size;
+
+		m_lowerXGridVertex = deserializeFromByteStream<float>(buffer.ptr() + offset, size);
+		offset += size;
+		m_lowerZGridVertex = deserializeFromByteStream<float>(buffer.ptr() + offset, size);
+		offset += size;
+		m_numVerticesPerSize = deserializeFromByteStream<int>(buffer.ptr() + offset, size);
+		offset += size;
+		m_level = deserializeFromByteStream<int>(buffer.ptr() + offset, size);
+		offset += size;
+		m_gridStepInWU = deserializeFromByteStream<float>(buffer.ptr() + offset, size);
+		offset += size;
+		m_initialized = deserializeFromByteStream<bool>(buffer.ptr() + offset, size);
+		offset += size;
+		size_t m_tagSize = deserializeFromByteStream<size_t>(buffer.ptr() + offset, size);
+		offset += size;
+		m_tag = std::string((char*)buffer.ptr() + offset, m_tagSize);
+		offset += m_tagSize;
+
+		m_sizeInWU = (m_numVerticesPerSize - 1) * m_gridStepInWU;
+		m_centerX = m_lowerXGridVertex + (m_sizeInWU / 2);
+		m_centerZ = m_lowerZGridVertex + (m_sizeInWU / 2);
+		resetIndexPos();
+		resetName();
+	}
+
+	void QuadrantPos::deserialize(TheWorld_Utils::MemoryBuffer& buffer)
+	{
 		size_t cursor = 0;
+
+		//deserialize(buffer, cursor); // same as below but it needs to be tested
+
+		reset();
+
+		size_t size;
 
 		m_lowerXGridVertex = deserializeFromByteStream<float>(buffer.ptr() + cursor, size);
 		cursor += size;
@@ -3652,7 +3685,7 @@ namespace TheWorld_Utils
 		return refreshed;
 	}
 		
-	bool MeshCacheBuffer::refreshInternalCacheQuadrantDataFromDisk(bool workDir, bool force, bool renewMeshId)
+	bool MeshCacheBuffer::refreshInternalCacheQuadrantDataFromDisk(bool useWorkDir, bool force, bool renewMeshId)
 	{
 		TheWorld_Utils::GuardProfiler profiler(std::string("MeshCacheBuffer refreshInternalCacheQuadrantDataFromDisk 2 ") + __FUNCTION__, "ALL");
 
@@ -3664,7 +3697,7 @@ namespace TheWorld_Utils
 
 			std::string buffer;
 			TerrainEdit terr;
-			readBufferFromDisk(m_meshId, buffer, workDir, &terr);
+			readBufferFromDisk(m_meshId, buffer, useWorkDir, &terr);
 			m_internalCacheQuadrantData.allocateBuffers();
 			bool renewed = false;
 			if (m_meshId.length() == 0 || buffer.length() == 0)
@@ -7957,11 +7990,11 @@ namespace TheWorld_Utils
 	//	get_at_ref<float>(row, col, m_numVerticesPerSize) = height;
 	//}
 
-	Level::Track::Square::Square(void)
+	LevelCurve::Track::Square::Square(void)
 	{
 	}
 
-	Level::Track::Square::Square(HeightMap& heightmap, size_t row, size_t col, float height)
+	LevelCurve::Track::Square::Square(HeightMap& heightmap, size_t row, size_t col, float height)
 	{
 		if (row >= heightmap.getNumVerticesPerSize() - 1 || col >= heightmap.getNumVerticesPerSize() - 1)
 			throw std::out_of_range("Level::Track::Square::Square: row or col out of range");
@@ -7969,7 +8002,7 @@ namespace TheWorld_Utils
 		m_type = getTypeFromHeightMap(heightmap, row, col, height);
 	}
 
-	Level::Track::Square::Type Level::Track::Square::getTypeFromHeightMap(HeightMap& heightmap, size_t row, size_t col, float height)
+	LevelCurve::Track::Square::Type LevelCurve::Track::Square::getTypeFromHeightMap(HeightMap& heightmap, size_t row, size_t col, float height)
 	{
 		float h0 = heightmap.getHeight(row, col);					// vertex 0: upper left corner
 		float h1 = heightmap.getHeight(row, col + 1);				// vertex 1: upper right corner
@@ -7988,18 +8021,18 @@ namespace TheWorld_Utils
 			return Type::IntersectedByHeight;
 	}
 	
-	size_t Level::Track::Square::getIndexFromRowCol(HeightMap& heightmap, size_t row, size_t col)
+	size_t LevelCurve::Track::Square::getIndexFromRowCol(HeightMap& heightmap, size_t row, size_t col)
 	{
 		return row * (heightmap.getNumVerticesPerSize() - 1) + col;
 	}
 
-	void Level::Track::Square::getRowColFromIndex(HeightMap& heightmap, size_t index, size_t& row, size_t& col)
+	void LevelCurve::Track::Square::getRowColFromIndex(HeightMap& heightmap, size_t index, size_t& row, size_t& col)
 	{
 		row = index / (heightmap.getNumVerticesPerSize() - 1);
 		col = index % (heightmap.getNumVerticesPerSize() - 1);
 	}
 
-	void Level::Track::Square::serializeAndTruncate(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset) const
+	void LevelCurve::Track::Square::serializeAndTruncate(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset) const
 	{
 		if (int64_t(offset) < 0)			// to append to the end of the buffer
 			offset = buffer.size();
@@ -8009,12 +8042,23 @@ namespace TheWorld_Utils
 		buffer.serializeToBufferAndTruncate<size_t>(m_index, offset);
 	}
 
-	Level::Track::Track(Level* level)
+	void LevelCurve::Track::Square::deserialize(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset)
 	{
-		m_level = level;
+		m_type = static_cast<Type>(buffer.deserializeFromBuffer<int32_t>(offset));
+		m_visited = buffer.deserializeFromBuffer<bool>(offset);
+		m_index = buffer.deserializeFromBuffer<size_t>(offset);
 	}
 
-	void Level::Track::serializeAndTruncate(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset) const
+	bool LevelCurve::Track::Square::operator==(const Square& o) const
+	{
+		return m_type == o.m_type && m_visited == o.m_visited && m_index == o.m_index;
+	}
+		
+	LevelCurve::Track::Track(void)
+	{
+	}
+
+	void LevelCurve::Track::serializeAndTruncate(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset) const
 	{
 		if (int64_t(offset) < 0)			// to append to the end of the buffer
 			offset = buffer.size();
@@ -8026,17 +8070,42 @@ namespace TheWorld_Utils
 		}
 	}
 
-	Level::Level(void)
+	void LevelCurve::Track::deserialize(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset)
+	{
+		m_squares.clear();
+		size_t numSquares = buffer.deserializeFromBuffer<size_t>(offset);
+		for (size_t i = 0; i < numSquares; i++)
+		{
+			Square sq;
+			//sq.deserialize(buffer, offset);
+			m_squares.push_back(sq);
+			m_squares.back().deserialize(buffer, offset);
+		}
+	}
+
+	bool LevelCurve::Track::operator==(const Track& o) const
+	{
+		if (m_squares.size() != o.m_squares.size())
+			return false;
+		for (size_t i = 0; i < m_squares.size(); i++)
+		{
+			if (!(m_squares[i] == o.m_squares[i]))
+				return false;
+		}
+		return true;
+	}
+
+	LevelCurve::LevelCurve(void)
 	{
 	}
 
-	Level::Level(QuadrantPos& pos, float height)
+	LevelCurve::LevelCurve(QuadrantPos& pos, float height)
 	{
-		m_height = height;
+		m_height = float(int(height));	// truncate height to integer value
 		m_quadrantPos = pos;
 	}
 
-	void Level::generateTracks(HeightMap& heightmap)
+	void LevelCurve::generateTracks(HeightMap& heightmap)
 	{
 		m_numSquaresPerSize = heightmap.getNumVerticesPerSize() - 1;
 
@@ -8066,7 +8135,7 @@ namespace TheWorld_Utils
 				if (sq.intersectedByHeight() && !sq.visited())
 				{
 					// Found a new track, do a depth-first search to find all the squares connected to this square that are intersected by the height
-					Track track(this);
+					Track track;
 					track.addSquare(sq);
 					sq.visited(true);
 					
@@ -8094,9 +8163,9 @@ namespace TheWorld_Utils
 									Track::Square& neighbor = squares[Track::Square::getIndexFromRowCol(heightmap, neighborRow, neighborCol)];
 									if (neighbor.intersectedByHeight() && !neighbor.visited())
 									{
-										neighbor.visited(true);
 										stack.push_back(&neighbor);
 										track.addSquare(neighbor);
+										neighbor.visited(true);
 									}
 								}
 							}
@@ -8110,7 +8179,7 @@ namespace TheWorld_Utils
 		m_tracks = tracks;
 	}
 
-	void Level::serializeAndTruncate(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset) const
+	void LevelCurve::serializeAndTruncate(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset) const
 	{
 		if (int64_t(offset) < 0)			// to append to the end of the buffer
 			offset = buffer.size();
@@ -8124,5 +8193,116 @@ namespace TheWorld_Utils
 		{
 			track.serializeAndTruncate(buffer, offset);
 		}
+	}
+
+	void LevelCurve::deserialize(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset)
+	{
+		m_height = buffer.deserializeFromBuffer<float>(offset);
+		m_quadrantPos.deserialize(buffer, offset);
+		m_numSquaresPerSize = buffer.deserializeFromBuffer<size_t>(offset);
+
+		m_tracks.clear();
+		size_t numTracks = buffer.deserializeFromBuffer<size_t>(offset);
+		for (size_t i = 0; i < numTracks; i++)
+		{
+			Track track;
+			//track.deserialize(buffer, offset);
+			m_tracks.push_back(track);
+			m_tracks.back().deserialize(buffer, offset);
+		}
+	}
+
+	bool LevelCurve::operator==(const LevelCurve& o) const
+	{
+		if (m_height != o.m_height)
+			return false;
+		if (!(m_quadrantPos == o.m_quadrantPos))
+			return false;
+		if (m_numSquaresPerSize != o.m_numSquaresPerSize)
+			return false;
+		if (m_tracks.size() != o.m_tracks.size())
+			return false;
+		for (size_t i = 0; i < m_tracks.size(); i++)
+		{
+			if (!(m_tracks[i] == o.m_tracks[i]))
+				return false;
+		}
+		return true;
+	}
+
+	//std::string LevelCurve::getLevelCurveName(void)
+	//{
+	//	return getLevelCurveName(m_height);
+	//}
+
+	//std::string LevelCurve::getLevelCurveName(float height)
+	//{
+	//	std::string levelName = "Level_Curve_";
+	//	levelName += std::to_string((int)height);
+	//	return levelName;
+	//}
+	
+	LevelCurves::LevelCurves(void)
+	{
+	}
+
+	void LevelCurves::generateLevelCurve(QuadrantPos& pos, HeightMap& heightmap, float height)
+	{
+		LevelCurve level(pos, height);
+		height = level.levelHeight();
+		m_levelCurves[height] = level;
+		m_levelCurves[height].generateTracks(heightmap);
+	}
+
+	constexpr const char* LevelCurvesName = "LevelCurves";
+	
+	void LevelCurves::saveToBuffer(TheWorld_Utils::NamedDataBuffer& buffer) const
+	{
+		TheWorld_Utils::MemoryBuffer levelCurvesBuffer;
+		size_t offset = -1;		// to append to the end of the buffer
+		levelCurvesBuffer.serializeToBufferAndTruncate<size_t>(m_levelCurves.size(), offset);
+		for (const auto& [height, levelCurve] : m_levelCurves)
+		{
+			levelCurvesBuffer.serializeToBufferAndTruncate<float>(height, offset);
+			levelCurve.serializeAndTruncate(levelCurvesBuffer, offset);
+		}
+
+		buffer.add(levelCurvesBuffer, LevelCurvesName);
+	}
+
+	void LevelCurves::loadFromBuffer(TheWorld_Utils::NamedDataBuffer& buffer)
+	{
+		m_levelCurves.clear();
+
+		TheWorld_Utils::MemoryBuffer levelCurvesBuffer;
+		int32_t flags = 0;
+		if (!buffer.get(levelCurvesBuffer, std::string(LevelCurvesName), flags))
+			return;
+		
+		size_t offset = 0;
+		size_t numLevelCurves = levelCurvesBuffer.deserializeFromBuffer<size_t>(offset);
+		for (size_t i = 0; i < numLevelCurves; i++)
+		{
+			float height = levelCurvesBuffer.deserializeFromBuffer<float>(offset);
+			LevelCurve levelCurve;
+			//levelCurve.deserialize(levelCurvesBuffer, offset);
+			m_levelCurves[height] = levelCurve;
+			m_levelCurves[height].deserialize(levelCurvesBuffer, offset);
+		}
+	}
+
+	bool LevelCurves::operator==(const LevelCurves& o) const
+	{
+		if (m_levelCurves.size() != o.m_levelCurves.size())
+			return false;
+		for (const auto& [height, levelCurve] : m_levelCurves)
+		{
+			auto it = o.m_levelCurves.find(height);
+			if (it == o.m_levelCurves.end())
+				return false;
+			if (!(levelCurve == it->second))
+				return false;
+		}
+		return true;
 	}
 }

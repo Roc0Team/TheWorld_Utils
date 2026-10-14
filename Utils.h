@@ -1264,6 +1264,7 @@ namespace TheWorld_Utils
 
 		__declspec(dllexport) void serializeAndTruncate(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset) const;
 		__declspec(dllexport) void serialize(TheWorld_Utils::MemoryBuffer& buffer) const;
+		__declspec(dllexport) void deserialize(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset);
 		__declspec(dllexport) void deserialize(TheWorld_Utils::MemoryBuffer& buffer);
 
 		bool operator<(const QuadrantPos& quadrantPos) const
@@ -2145,7 +2146,7 @@ namespace TheWorld_Utils
 		__declspec(dllexport) bool refreshCacheQuadrantDataFromBuffer(TheWorld_Utils::MemoryBuffer& buffer, CacheQuadrantData& cacheQuadrantData, bool updateCache, bool overrideNotEmptyMaps);
 		__declspec(dllexport) bool refreshCacheQuadrantDataFromBuffer(std::string& buffer, CacheQuadrantData& cacheQuadrantData, bool updateCache, bool overrideNotEmptyMaps);
 		__declspec(dllexport) bool refreshInternalCacheQuadrantDataFromDisk(bool force, bool renewMeshId);
-		__declspec(dllexport) bool refreshInternalCacheQuadrantDataFromDisk(bool workDir, bool force, bool renewMeshId);
+		__declspec(dllexport) bool refreshInternalCacheQuadrantDataFromDisk(bool useWorkDir, bool force, bool renewMeshId);
 		__declspec(dllexport) void refreshInternalCacheQuadrantDataFromBuffer(std::string& buffer, bool force = false);
 		__declspec(dllexport) CacheQuadrantData* internalCacheQuadrantData(void);
 		__declspec(dllexport) void readBufferFromDisk(std::string meshId, TheWorld_Utils::MemoryBuffer& buffer, bool workDir = false, TerrainEdit* terrainEdit = nullptr, bool onlyTerrainEdit = false);
@@ -2631,7 +2632,7 @@ namespace TheWorld_Utils
 		size_t m_numVerticesPerSize = 0;
 	};
 
-	class Level
+	class LevelCurve
 	{
 	public:
 		class Track
@@ -2677,56 +2678,92 @@ namespace TheWorld_Utils
 					m_index = index;
 				}
 
+				__declspec(dllexport) bool operator==(const Square& o) const;
+
 				_declspec(dllexport) static size_t getIndexFromRowCol(HeightMap& heightmap, size_t row, size_t col);
 				_declspec(dllexport) static void getRowColFromIndex(HeightMap& heightmap, size_t index, size_t& row, size_t& col);
 
 				_declspec(dllexport) void serializeAndTruncate(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset) const;
+				_declspec(dllexport) void deserialize(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset);
 
 			private:
 				_declspec(dllexport) static Type getTypeFromHeightMap(HeightMap& heightmap, size_t row, size_t col, float height);
 
 			private:
+				// All type must have operator== defined
 				enum class Type m_type = Type::NotSet;
 				bool m_visited = false;
-				size_t m_index = 0;		// DEBUG ONLY
+				size_t m_index = 0;		// DEBUG ONLY: to remove later
 			};
 
 		public:
-			_declspec(dllexport) Track(Level* level);
-			//_declspec(dllexport) float levelHeight(void) const
-			//{
-			//	return m_level->levelHeight();
-			//};
+			_declspec(dllexport) Track(void);
 
 			_declspec(dllexport) void addSquare(const Square& square)
 			{
 				m_squares.push_back(square);
 			}
 
+			__declspec(dllexport) bool operator==(const Track& o) const;
+
 			_declspec(dllexport) void serializeAndTruncate(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset) const;
+			_declspec(dllexport) void deserialize(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset);
 
 		private:
-			Level* m_level;
+			// All type must have operator== defined
 			std::vector<Square> m_squares;
 		};
 
 	public:
-		_declspec(dllexport) Level(void);
-		_declspec(dllexport) Level(QuadrantPos& pos, float height);
+		_declspec(dllexport) LevelCurve(void);
+		_declspec(dllexport) LevelCurve(QuadrantPos& pos, float height);
 		
 		_declspec(dllexport) float levelHeight(void) const
 		{
 			return m_height;
 		};
 
+		__declspec(dllexport) bool operator==(const LevelCurve& o) const;
+
 		_declspec(dllexport) void generateTracks(HeightMap& heightmap);
 		_declspec(dllexport) void serializeAndTruncate(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset) const;
+		_declspec(dllexport) void deserialize(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset);
+
+		//_declspec(dllexport) std::string getLevelCurveName(void);
+		//_declspec(dllexport) static std::string getLevelCurveName(float height);
 
 	private:
-		float m_height = 0;
+		// All type must have operator== defined
+		float m_height = 0.0f;
 		TheWorld_Utils::QuadrantPos m_quadrantPos;
 		size_t m_numSquaresPerSize = 0;
 		std::vector<Track> m_tracks;
+	};
+
+	class LevelCurves
+	{
+	public:
+		_declspec(dllexport) LevelCurves(void);
+		
+		_declspec(dllexport) void generateLevelCurve(QuadrantPos& pos, HeightMap& heightmap, float height);
+
+		_declspec(dllexport) size_t getNumLevelCurves(void) const
+		{
+			return m_levelCurves.size();
+		}
+		_declspec(dllexport) LevelCurve& getLevelCurve(float height)
+		{
+			return m_levelCurves[height];
+		}
+
+		__declspec(dllexport) bool operator==(const LevelCurves& o) const;
+
+		_declspec(dllexport) void saveToBuffer(TheWorld_Utils::NamedDataBuffer& buffer) const;
+		_declspec(dllexport) void loadFromBuffer(TheWorld_Utils::NamedDataBuffer& buffer);
+
+	private:
+		// All type must have operator== defined
+		std::map<float, LevelCurve> m_levelCurves;
 	};
 
 	//void X_aligned_memcpy_sse2(void* dest, const void* src, const unsigned long size)
