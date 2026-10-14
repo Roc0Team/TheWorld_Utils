@@ -7994,33 +7994,6 @@ namespace TheWorld_Utils
 	{
 	}
 
-	LevelCurve::Track::Square::Square(HeightMap& heightmap, size_t row, size_t col, float height)
-	{
-		if (row >= heightmap.getNumVerticesPerSize() - 1 || col >= heightmap.getNumVerticesPerSize() - 1)
-			throw std::out_of_range("Level::Track::Square::Square: row or col out of range");
-		
-		m_type = getTypeFromHeightMap(heightmap, row, col, height);
-	}
-
-	LevelCurve::Track::Square::Type LevelCurve::Track::Square::getTypeFromHeightMap(HeightMap& heightmap, size_t row, size_t col, float height)
-	{
-		float h0 = heightmap.getHeight(row, col);					// vertex 0: upper left corner
-		float h1 = heightmap.getHeight(row, col + 1);				// vertex 1: upper right corner
-		float h2 = heightmap.getHeight(row + 1, col);				// vertex 2: lower left corner
-		float h3 = heightmap.getHeight(row + 1, col + 1);			// vertex 3: lower right corner
-		BYTE vertexMask = 0;
-		if (h0 >= height) vertexMask |= 1;	// vertex 0
-		if (h1 >= height) vertexMask |= 2;	// vertex 1
-		if (h2 >= height) vertexMask |= 4;	// vertex 2
-		if (h3 >= height) vertexMask |= 8;	// vertex 3
-		if (vertexMask == 0)
-			return Type::BelowHeight;
-		else if (vertexMask == 15)
-			return Type::AboveHeight;
-		else
-			return Type::IntersectedByHeight;
-	}
-	
 	size_t LevelCurve::Track::Square::getIndexFromRowCol(HeightMap& heightmap, size_t row, size_t col)
 	{
 		return row * (heightmap.getNumVerticesPerSize() - 1) + col;
@@ -8037,21 +8010,17 @@ namespace TheWorld_Utils
 		if (int64_t(offset) < 0)			// to append to the end of the buffer
 			offset = buffer.size();
 		
-		buffer.serializeToBufferAndTruncate<int32_t>(static_cast<int32_t>(m_type), offset);
-		buffer.serializeToBufferAndTruncate<bool>(m_visited, offset);
-		buffer.serializeToBufferAndTruncate<size_t>(m_index, offset);
+		buffer.serializeToBufferAndTruncate<size_t>(m_indexInHeightmap, offset);
 	}
 
 	void LevelCurve::Track::Square::deserialize(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset)
 	{
-		m_type = static_cast<Type>(buffer.deserializeFromBuffer<int32_t>(offset));
-		m_visited = buffer.deserializeFromBuffer<bool>(offset);
-		m_index = buffer.deserializeFromBuffer<size_t>(offset);
+		m_indexInHeightmap = buffer.deserializeFromBuffer<size_t>(offset);
 	}
 
 	bool LevelCurve::Track::Square::operator==(const Square& o) const
 	{
-		return m_type == o.m_type && m_visited == o.m_visited && m_index == o.m_index;
+		return m_indexInHeightmap == o.m_indexInHeightmap;
 	}
 		
 	LevelCurve::Track::Track(void)
@@ -8107,48 +8076,135 @@ namespace TheWorld_Utils
 
 	void LevelCurve::generateTracks(HeightMap& heightmap)
 	{
+		class LocalWorkSquare : public Track::Square
+		{
+		public:
+			enum class Type
+			{
+				NotSet = -1,
+				BelowHeight = 0,
+				IntersectedByHeight = 1,
+				AboveHeight = 2,
+			};
+		public:
+			LocalWorkSquare(void)
+			{
+			}
+			LocalWorkSquare(HeightMap& heightmap, size_t row, size_t col, float height)
+			{
+				if (row >= heightmap.getNumVerticesPerSize() - 1 || col >= heightmap.getNumVerticesPerSize() - 1)
+					throw std::out_of_range("Level::Track::Square::Square: row or col out of range");
+
+				m_type = getTypeFromHeightMap(heightmap, row, col, height);
+			}
+
+			bool belowHeight(void) const
+			{
+				return m_type == Type::BelowHeight;
+			}
+			bool intersectedByHeight(void) const
+			{
+				return m_type == Type::IntersectedByHeight;
+			}
+			bool aboveHeight(void) const
+			{
+				return m_type == Type::AboveHeight;
+			}
+			bool visited(void) const
+			{
+				return m_visited;
+			}
+			void visited(bool visited)
+			{
+				m_visited = visited;
+			}
+
+		private:
+			Type getTypeFromHeightMap(HeightMap& heightmap, size_t row, size_t col, float height)
+			{
+				float h0 = heightmap.getHeight(row, col);					// vertex 0: upper left corner
+				float h1 = heightmap.getHeight(row, col + 1);				// vertex 1: upper right corner
+				float h2 = heightmap.getHeight(row + 1, col);				// vertex 2: lower left corner
+				float h3 = heightmap.getHeight(row + 1, col + 1);			// vertex 3: lower right corner
+				BYTE vertexMask = 0;
+				if (h0 >= height) vertexMask |= 1;	// vertex 0
+				if (h1 >= height) vertexMask |= 2;	// vertex 1
+				if (h2 >= height) vertexMask |= 4;	// vertex 2
+				if (h3 >= height) vertexMask |= 8;	// vertex 3
+				if (vertexMask == 0)
+					return Type::BelowHeight;
+				else if (vertexMask == 15)
+					return Type::AboveHeight;
+				else
+					return Type::IntersectedByHeight;
+			}
+
+		private:
+			enum class Type m_type = Type::NotSet;
+			bool m_visited = false;
+		};
+		
+		class LocalWorkTrack : public Track
+		{
+		public:
+			LocalWorkTrack(void)
+			{
+			}
+			void addLocalWorkSquare(const LocalWorkSquare& square)
+			{
+				m_localWorkSquares.push_back(square);
+			}
+			std::vector<LocalWorkSquare>& getLocalWorkSquares(void)
+			{
+				return m_localWorkSquares;
+			}
+
+
+		private:
+			std::vector<LocalWorkSquare> m_localWorkSquares;
+		};
+		
 		m_numSquaresPerSize = heightmap.getNumVerticesPerSize() - 1;
 
-		std::vector<Track::Square> squares;	// 1 byte per square of vertices, each byte is a bitmask of the 4 vertices of the square, 1 if the vertex height is >= m_height, 0 otherwise
+		std::vector<LocalWorkSquare> localSquares;	// 1 byte per square of vertices, each byte is a bitmask of the 4 vertices of the square, 1 if the vertex height is >= m_height, 0 otherwise
 											// if the byte is 0, the square is below the height, if the byte is 15 (1111), the square is above the height, if the byte is between 1 and 14, the square is intersected by the height
 
 		// map the heightmap to the squares to find the type of each square (above, below, intersected by height)
-		squares.resize(m_numSquaresPerSize * m_numSquaresPerSize);
+		localSquares.resize(m_numSquaresPerSize * m_numSquaresPerSize);
 		for (size_t row = 0; row < m_numSquaresPerSize; row++)
 		{
 			for (size_t col = 0; col < m_numSquaresPerSize; col++)
 			{
-				Track::Square sq;
-				size_t index = Track::Square::getIndexFromRowCol(heightmap, row, col);
-				squares[index] = Track::Square(heightmap, row, col, m_height);
-				squares[index].index(index);
+				size_t index = LocalWorkSquare::getIndexFromRowCol(heightmap, row, col);
+				localSquares[index] = LocalWorkSquare(heightmap, row, col, m_height);
+				localSquares[index].indexInHeightmap(index);
 			}
 		}
 
 		// loook for all the tracks in the heightmap, a track is a sequence of squares that are intersected by the height, and that are connected to each other (8-connectivity)
-		std::vector<Track> tracks;
+		std::vector<LocalWorkTrack> localTracks;
 		for (size_t row = 0; row < m_numSquaresPerSize; row++)
 		{
 			for (size_t col = 0; col < m_numSquaresPerSize; col++)
 			{
-				Track::Square& sq = squares[Track::Square::getIndexFromRowCol(heightmap, row, col)];
-				if (sq.intersectedByHeight() && !sq.visited())
+				LocalWorkSquare& lsq = localSquares[LocalWorkSquare::getIndexFromRowCol(heightmap, row, col)];
+				if (lsq.intersectedByHeight() && !lsq.visited())
 				{
 					// Found a new track, do a depth-first search to find all the squares connected to this square that are intersected by the height
-					Track track;
-					track.addSquare(sq);
-					sq.visited(true);
+					LocalWorkTrack localTrack;
+					localTrack.addLocalWorkSquare(lsq);
+					lsq.visited(true);
 					
 					// look for all the squares connected to this square that are intersected by the height
-					std::vector<Track::Square*> stack;
-					stack.push_back(&sq);
+					std::vector<LocalWorkSquare*> stack;
+					stack.push_back(&lsq);
 					while (not stack.empty())
 					{
-						Track::Square* current = stack.back();
-						size_t currentIndex = current - &squares[0];
+						LocalWorkSquare* currentLsq = stack.back();
+						size_t currentIndex = currentLsq - &localSquares[0];
 						stack.pop_back();
 						size_t currentRow, currentCol;
-						Track::Square::getRowColFromIndex(heightmap, currentIndex, currentRow, currentCol);
+						LocalWorkSquare::getRowColFromIndex(heightmap, currentIndex, currentRow, currentCol);
 						for (int dr = -1; dr <= 1; dr++)
 						{
 							for (int dc = -1; dc <= 1; dc++)
@@ -8160,23 +8216,34 @@ namespace TheWorld_Utils
 								size_t neighborCol = currentCol + dc;
 								if (neighborRow >= 0 and neighborRow < m_numSquaresPerSize and neighborCol >= 0 and neighborCol < m_numSquaresPerSize)
 								{
-									Track::Square& neighbor = squares[Track::Square::getIndexFromRowCol(heightmap, neighborRow, neighborCol)];
+									LocalWorkSquare& neighbor = localSquares[LocalWorkSquare::getIndexFromRowCol(heightmap, neighborRow, neighborCol)];
 									if (neighbor.intersectedByHeight() && !neighbor.visited())
 									{
 										stack.push_back(&neighbor);
-										track.addSquare(neighbor);
+										localTrack.addLocalWorkSquare(neighbor);
 										neighbor.visited(true);
 									}
 								}
 							}
 						}
 					}
-					tracks.push_back(track);
+					localTracks.push_back(localTrack);
 				}
 			}
 		}
 
-		m_tracks = tracks;
+		m_tracks.clear();
+		for (LocalWorkTrack& localTrack : localTracks)
+		{
+			m_tracks.push_back(Track());
+			Track& track = m_tracks.back();
+			for (LocalWorkSquare& localSquare : localTrack.getLocalWorkSquares())
+			{
+				Track::Square square;
+				square.indexInHeightmap(localSquare.indexInHeightmap());
+				track.addSquare(square);
+			}
+		}
 	}
 
 	void LevelCurve::serializeAndTruncate(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset) const

@@ -2641,41 +2641,15 @@ namespace TheWorld_Utils
 			class Square
 			{
 			public:
-				enum class Type
-				{
-					NotSet = -1,
-					BelowHeight = 0,
-					IntersectedByHeight = 1,
-					AboveHeight = 2,
-				};
-			public:
 				_declspec(dllexport) Square(void);
-				_declspec(dllexport) Square(HeightMap& heightmap, size_t row, size_t col, float height);
 
-				_declspec(dllexport) bool belowHeight(void) const
+				_declspec(dllexport) void indexInHeightmap(size_t index)
 				{
-					return m_type == Type::BelowHeight;
+					m_indexInHeightmap = index;
 				}
-				_declspec(dllexport) bool intersectedByHeight(void) const
+				_declspec(dllexport) size_t indexInHeightmap(void) const
 				{
-					return m_type == Type::IntersectedByHeight;
-				}
-				_declspec(dllexport) bool aboveHeight(void) const
-				{
-					return m_type == Type::AboveHeight;
-				}
-
-				_declspec(dllexport) bool visited(void) const
-				{
-					return m_visited;
-				}
-				_declspec(dllexport) void visited(bool visited)
-				{
-					m_visited = visited;
-				}
-				_declspec(dllexport) void index(size_t index)
-				{
-					m_index = index;
+					return m_indexInHeightmap;
 				}
 
 				__declspec(dllexport) bool operator==(const Square& o) const;
@@ -2687,13 +2661,7 @@ namespace TheWorld_Utils
 				_declspec(dllexport) void deserialize(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset);
 
 			private:
-				_declspec(dllexport) static Type getTypeFromHeightMap(HeightMap& heightmap, size_t row, size_t col, float height);
-
-			private:
-				// All type must have operator== defined
-				enum class Type m_type = Type::NotSet;
-				bool m_visited = false;
-				size_t m_index = 0;		// DEBUG ONLY: to remove later
+				size_t m_indexInHeightmap = 0;
 			};
 
 		public:
@@ -2710,7 +2678,6 @@ namespace TheWorld_Utils
 			_declspec(dllexport) void deserialize(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset);
 
 		private:
-			// All type must have operator== defined
 			std::vector<Square> m_squares;
 		};
 
@@ -2733,7 +2700,6 @@ namespace TheWorld_Utils
 		//_declspec(dllexport) static std::string getLevelCurveName(float height);
 
 	private:
-		// All type must have operator== defined
 		float m_height = 0.0f;
 		TheWorld_Utils::QuadrantPos m_quadrantPos;
 		size_t m_numSquaresPerSize = 0;
