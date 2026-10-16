@@ -8011,16 +8011,20 @@ namespace TheWorld_Utils
 			offset = buffer.size();
 		
 		buffer.serializeToBufferAndTruncate<size_t>(m_indexInHeightmap, offset);
+		buffer.serializeToBufferAndTruncate<size_t>(m_colInHeightmap, offset);
+		buffer.serializeToBufferAndTruncate<size_t>(m_rowInHeightmap, offset);
 	}
 
 	void LevelCurve::Track::Square::deserialize(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset)
 	{
 		m_indexInHeightmap = buffer.deserializeFromBuffer<size_t>(offset);
+		m_colInHeightmap = buffer.deserializeFromBuffer<size_t>(offset);
+		m_rowInHeightmap = buffer.deserializeFromBuffer<size_t>(offset);
 	}
 
 	bool LevelCurve::Track::Square::operator==(const Square& o) const
 	{
-		return m_indexInHeightmap == o.m_indexInHeightmap;
+		return m_indexInHeightmap == o.m_indexInHeightmap && m_colInHeightmap == o.m_colInHeightmap && m_rowInHeightmap == o.m_rowInHeightmap;
 	}
 		
 	LevelCurve::Track::Track(void)
@@ -8119,6 +8123,23 @@ namespace TheWorld_Utils
 				m_visited = visited;
 			}
 
+			int trackPartIndex(void) const
+			{
+				return m_trackPartIndex;
+			}
+			void trackPartIndex(int index)
+			{
+				m_trackPartIndex = index;
+			}
+			int trackPartProgressIndex(void) const
+			{
+				return m_trackPartProgressIndex;
+			}
+			void trackPartProgressIndex(int index)
+			{
+				m_trackPartProgressIndex = index;
+			}
+
 		private:
 			Type getTypeFromHeightMap(HeightMap& heightmap, size_t row, size_t col, float height)
 			{
@@ -8142,6 +8163,8 @@ namespace TheWorld_Utils
 		private:
 			enum class Type m_type = Type::NotSet;
 			bool m_visited = false;
+			int m_trackPartIndex = 0;			// index of the track part this square belongs to
+			int m_trackPartProgressIndex = 0;	// index of the square in the track part
 		};
 		
 		class LocalWorkTrack : public Track
@@ -8158,7 +8181,17 @@ namespace TheWorld_Utils
 			{
 				return m_localWorkSquares;
 			}
-
+			void sortSquaresByTrackPartAndProgress(void)
+			{
+				std::sort(m_localWorkSquares.begin(), m_localWorkSquares.end(), [](const LocalWorkSquare& a, const LocalWorkSquare& b)
+																				{
+																					if (a.trackPartIndex() != b.trackPartIndex())
+																						return a.trackPartIndex() < b.trackPartIndex();
+																					else
+																						return a.trackPartProgressIndex() < b.trackPartProgressIndex();
+																				}
+				);
+			}
 
 		private:
 			std::vector<LocalWorkSquare> m_localWorkSquares;
@@ -8166,18 +8199,19 @@ namespace TheWorld_Utils
 		
 		m_numSquaresPerSize = heightmap.getNumVerticesPerSize() - 1;
 
-		std::vector<LocalWorkSquare> localSquares;	// 1 byte per square of vertices, each byte is a bitmask of the 4 vertices of the square, 1 if the vertex height is >= m_height, 0 otherwise
+		std::vector<LocalWorkSquare> localHeightmapSquares;	// 1 byte per square of vertices, each byte is a bitmask of the 4 vertices of the square, 1 if the vertex height is >= m_height, 0 otherwise
 											// if the byte is 0, the square is below the height, if the byte is 15 (1111), the square is above the height, if the byte is between 1 and 14, the square is intersected by the height
 
 		// map the heightmap to the squares to find the type of each square (above, below, intersected by height)
-		localSquares.resize(m_numSquaresPerSize * m_numSquaresPerSize);
+		localHeightmapSquares.resize(m_numSquaresPerSize * m_numSquaresPerSize);
 		for (size_t row = 0; row < m_numSquaresPerSize; row++)
 		{
 			for (size_t col = 0; col < m_numSquaresPerSize; col++)
 			{
 				size_t index = LocalWorkSquare::getIndexFromRowCol(heightmap, row, col);
-				localSquares[index] = LocalWorkSquare(heightmap, row, col, m_height);
-				localSquares[index].indexInHeightmap(index);
+				localHeightmapSquares[index] = LocalWorkSquare(heightmap, row, col, m_height);
+				localHeightmapSquares[index].indexInHeightmap(index);
+				localHeightmapSquares[index].rowcolInHeightmap(row, col);
 			}
 		}
 
@@ -8187,24 +8221,29 @@ namespace TheWorld_Utils
 		{
 			for (size_t col = 0; col < m_numSquaresPerSize; col++)
 			{
-				LocalWorkSquare& lsq = localSquares[LocalWorkSquare::getIndexFromRowCol(heightmap, row, col)];
+				LocalWorkSquare& lsq = localHeightmapSquares[LocalWorkSquare::getIndexFromRowCol(heightmap, row, col)];
 				if (lsq.intersectedByHeight() && !lsq.visited())
 				{
 					// Found a new track, do a depth-first search to find all the squares connected to this square that are intersected by the height
+					//std::vector<size_t> counterInTrackParts;
 					LocalWorkTrack localTrack;
-					localTrack.addLocalWorkSquare(lsq);
 					lsq.visited(true);
+					localTrack.addLocalWorkSquare(lsq);
 					
 					// look for all the squares connected to this square that are intersected by the height
 					std::vector<LocalWorkSquare*> stack;
 					stack.push_back(&lsq);
 					while (not stack.empty())
 					{
-						LocalWorkSquare* currentLsq = stack.back();
-						size_t currentIndex = currentLsq - &localSquares[0];
+						LocalWorkSquare* currentLsqInStack = stack.back();
+						size_t currentIndexInHeightmap = currentLsqInStack - &localHeightmapSquares[0];
 						stack.pop_back();
-						size_t currentRow, currentCol;
-						LocalWorkSquare::getRowColFromIndex(heightmap, currentIndex, currentRow, currentCol);
+						size_t currentRowInHeightmap, currentColInHeightmap;
+						LocalWorkSquare::getRowColFromIndex(heightmap, currentIndexInHeightmap, currentRowInHeightmap, currentColInHeightmap);
+						// reading the reference of the current stack square in the heightmap squares vector, to be able to modify it
+						LocalWorkSquare& currentLsqInHeightmap = localHeightmapSquares[LocalWorkSquare::getIndexFromRowCol(heightmap, currentRowInHeightmap, currentColInHeightmap)];
+
+						size_t neighborsTracked = 0;
 						for (int dr = -1; dr <= 1; dr++)
 						{
 							for (int dc = -1; dc <= 1; dc++)
@@ -8212,21 +8251,51 @@ namespace TheWorld_Utils
 								if (dr == 0 && dc == 0)		// it's current square, skip it
 									continue;
 								
-								size_t neighborRow = currentRow + dr;
-								size_t neighborCol = currentCol + dc;
+								size_t neighborRow = currentRowInHeightmap + dr;
+								size_t neighborCol = currentColInHeightmap + dc;
 								if (neighborRow >= 0 and neighborRow < m_numSquaresPerSize and neighborCol >= 0 and neighborCol < m_numSquaresPerSize)
 								{
-									LocalWorkSquare& neighbor = localSquares[LocalWorkSquare::getIndexFromRowCol(heightmap, neighborRow, neighborCol)];
-									if (neighbor.intersectedByHeight() && !neighbor.visited())
+									// reading the reference of the neighbor square in the heightmap squares vector, to be able to modify it
+									LocalWorkSquare& neighborLsqInHeightmap = localHeightmapSquares[LocalWorkSquare::getIndexFromRowCol(heightmap, neighborRow, neighborCol)];
+									if (neighborLsqInHeightmap.intersectedByHeight() && !neighborLsqInHeightmap.visited())
 									{
-										stack.push_back(&neighbor);
-										localTrack.addLocalWorkSquare(neighbor);
-										neighbor.visited(true);
+										if (neighborsTracked == 0)
+										{
+																																	// first neighbor of the current square, so it belongs to the same track part as the current square
+											neighborLsqInHeightmap.trackPartIndex(currentLsqInHeightmap.trackPartIndex());						// we need to set the track part index of the current square in the neighbor square
+											neighborLsqInHeightmap.trackPartProgressIndex(currentLsqInHeightmap.trackPartProgressIndex() + (currentLsqInHeightmap.trackPartIndex() > 0 ? 1 : -1));	// and to increment/decrement the track part progress index of the neighbor square
+										}
+										else
+										{
+											if (currentLsqInHeightmap.trackPartIndex() == 0 and currentLsqInHeightmap.trackPartProgressIndex() == 0)	// starting square of the track
+											{
+												neighborLsqInHeightmap.trackPartIndex(currentLsqInHeightmap.trackPartIndex() + 1);					// not the first neighbor of the current square, so it starts a new track part (positive one)
+											}
+											else
+											{
+												if (currentLsqInHeightmap.trackPartIndex() > 0)
+													neighborLsqInHeightmap.trackPartIndex(currentLsqInHeightmap.trackPartIndex() + 1);				// not the first neighbor of the current square, so it starts a new track part (positive one)
+												else
+													neighborLsqInHeightmap.trackPartIndex(currentLsqInHeightmap.trackPartIndex() - 1);				// not the first neighbor of the current square, so it starts a new track part (negative one)
+											}
+											neighborLsqInHeightmap.trackPartProgressIndex(0);
+										}
+										neighborLsqInHeightmap.visited(true);
+										if (neighborsTracked < 2)
+										{
+											stack.push_back(&neighborLsqInHeightmap);
+											localTrack.addLocalWorkSquare(neighborLsqInHeightmap);
+											if (neighborLsqInHeightmap.trackPartIndex() > 1)	// DEBUG
+												PLOG_VERBOSE << "LevelCurve::generateTracks: neighbor square at row " << neighborRow << ", col " << neighborCol << " has track part index " << neighborLsqInHeightmap.trackPartIndex() << ", progress index " << neighborLsqInHeightmap.trackPartProgressIndex();
+										}
+										neighborsTracked++;
 									}
 								}
 							}
 						}
 					}
+
+					localTrack.sortSquaresByTrackPartAndProgress();
 					localTracks.push_back(localTrack);
 				}
 			}
@@ -8241,6 +8310,7 @@ namespace TheWorld_Utils
 			{
 				Track::Square square;
 				square.indexInHeightmap(localSquare.indexInHeightmap());
+				square.rowcolInHeightmap(localSquare.rowInHeightmap(), localSquare.colInHeightmap());
 				track.addSquare(square);
 			}
 		}

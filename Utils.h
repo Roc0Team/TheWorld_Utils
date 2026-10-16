@@ -2643,6 +2643,19 @@ namespace TheWorld_Utils
 			public:
 				_declspec(dllexport) Square(void);
 
+				_declspec(dllexport) void rowcolInHeightmap(size_t row, size_t col)
+				{
+					m_rowInHeightmap = row;
+					m_colInHeightmap = col;
+				}
+				_declspec(dllexport) size_t rowInHeightmap(void) const
+				{
+					return m_rowInHeightmap;
+				}
+				_declspec(dllexport) size_t colInHeightmap(void) const
+				{
+					return m_colInHeightmap;
+				}
 				_declspec(dllexport) void indexInHeightmap(size_t index)
 				{
 					m_indexInHeightmap = index;
@@ -2662,6 +2675,8 @@ namespace TheWorld_Utils
 
 			private:
 				size_t m_indexInHeightmap = 0;
+				size_t m_colInHeightmap = 0;		// DEBUG ONLY to be removed later
+				size_t m_rowInHeightmap = 0;		// DEBUG ONLY to be removed later
 			};
 
 		public:
