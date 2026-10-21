@@ -932,13 +932,13 @@ namespace TheWorld_Utils
 		return ret;
 	}
 
-	constexpr auto QUADRANT_TRACKING_SINGLE = true;
+	constexpr auto QUADRANT_TRACKING_SINGLE = false;
 	//constexpr auto QUADRANT_TRACKING_IDX_POS_X = -1;
 	//constexpr auto QUADRANT_TRACKING_IDX_POS_Z = 0;
 	//constexpr auto QUADRANT_TRACKING_IDX_POS_X = -55;
 	//constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -58;
-	constexpr auto QUADRANT_TRACKING_IDX_POS_X = -17;
-	constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -36;
+	constexpr auto QUADRANT_TRACKING_IDX_POS_X = -2;
+	constexpr auto QUADRANT_TRACKING_IDX_POS_Z = -38;
 
 	constexpr auto QUADRANT_TRACKING_MULTIPLE = false;
 	static std::vector<int> quadrantTrackingPosX = { -45, -45 };
@@ -7961,19 +7961,27 @@ namespace TheWorld_Utils
 	{
 	}
 
-	HeightMap::HeightMap(MemoryBuffer& float32Heights, size_t numVerticesPerSize)
+	HeightMap::HeightMap(MemoryBuffer& float32Heights, size_t numVerticesPerSize, float step)
 	{
-		init(float32Heights, numVerticesPerSize);
+		init(float32Heights, numVerticesPerSize, step);
 	}
 
-	void HeightMap::init(MemoryBuffer& float32Heights, size_t numVerticesPerSize)
+	void HeightMap::init(MemoryBuffer& float32Heights, size_t numVerticesPerSize, float step)
 	{
 		my_assert(float32Heights.size() == numVerticesPerSize * numVerticesPerSize * sizeof(float));	// float32Heights size must match numVerticesPerSize
 		my_assert(numVerticesPerSize % 2 == 1);															// numVerticesPerSize must be odd
 		my_assert((numVerticesPerSize - 1) % 8 == 0);													// numVerticesPerSize - 1 must be multiple of 8: that means that the number of squares must be multiple of 8;
 
 		m_numVerticesPerSize = numVerticesPerSize;
+		m_step = step;
 		set(float32Heights);
+	}
+
+	float HeightMap::getHeight(size_t idx) const
+	{
+		if (idx >= m_numVerticesPerSize * m_numVerticesPerSize)
+			throw std::out_of_range("HeightMap::getHeight: index out of range");
+		return get_at<float>(idx);
 	}
 
 	float HeightMap::getHeight(size_t row, size_t col) const
@@ -7990,16 +7998,39 @@ namespace TheWorld_Utils
 	//	get_at_ref<float>(row, col, m_numVerticesPerSize) = height;
 	//}
 
-	LevelCurve::Track::Square::Square(void)
+	LevelCurve::Track::Square::Square(size_t squareIndex, HeightMap& heightmap)
 	{
+		m_squareIndexInHeightmap = squareIndex;
+		getSquareRowColFromIndex(heightmap, squareIndex, m_squareRowInHeightmap, m_squareColInHeightmap);
+		heightmap.getVertexLocalPosFromRowCol(m_squareRowInHeightmap, m_squareColInHeightmap, m_vertexXLocalToHeightmap, m_vertexZLocalToHeightmap);
+		m_vertexXLocalToHeightmap += heightmap.getStep() / 2.0f;
+		m_vertexZLocalToHeightmap += heightmap.getStep() / 2.0f;
+
+		size_t upperLeftVertexCol = m_squareColInHeightmap;
+		size_t upperLeftVertexRow = m_squareRowInHeightmap;
+		float upperLeftVertexHeight = heightmap.getHeight(upperLeftVertexRow, upperLeftVertexCol);
+
+		size_t upperRightVertexCol = m_squareColInHeightmap + 1;
+		size_t upperRightVertexRow = m_squareRowInHeightmap;
+		float upperRightVertexHeight = heightmap.getHeight(upperRightVertexRow, upperRightVertexCol);
+
+		size_t lowerLeftVertexCol = m_squareColInHeightmap;
+		size_t lowerLeftVertexRow = m_squareRowInHeightmap + 1;
+		float lowerLeftVertexHeight = heightmap.getHeight(lowerLeftVertexRow, lowerLeftVertexCol);
+
+		size_t lowerRightVertexCol = m_squareColInHeightmap + 1;
+		size_t lowerRightVertexRow = m_squareRowInHeightmap + 1;
+		float lowerRightVertexHeight = heightmap.getHeight(lowerRightVertexRow, lowerRightVertexCol);
+
+		m_vertexHeightmap = (upperLeftVertexHeight + upperRightVertexHeight + lowerLeftVertexHeight + lowerRightVertexHeight) / 4.0f;
 	}
 
-	size_t LevelCurve::Track::Square::getIndexFromRowCol(HeightMap& heightmap, size_t row, size_t col)
+	size_t LevelCurve::Track::Square::getSquareIndexFromRowCol(HeightMap& heightmap, size_t row, size_t col)
 	{
 		return row * (heightmap.getNumVerticesPerSize() - 1) + col;
 	}
 
-	void LevelCurve::Track::Square::getRowColFromIndex(HeightMap& heightmap, size_t index, size_t& row, size_t& col)
+	void LevelCurve::Track::Square::getSquareRowColFromIndex(HeightMap& heightmap, size_t index, size_t& row, size_t& col)
 	{
 		row = index / (heightmap.getNumVerticesPerSize() - 1);
 		col = index % (heightmap.getNumVerticesPerSize() - 1);
@@ -8010,21 +8041,28 @@ namespace TheWorld_Utils
 		if (int64_t(offset) < 0)			// to append to the end of the buffer
 			offset = buffer.size();
 		
-		buffer.serializeToBufferAndTruncate<size_t>(m_indexInHeightmap, offset);
-		buffer.serializeToBufferAndTruncate<size_t>(m_colInHeightmap, offset);
-		buffer.serializeToBufferAndTruncate<size_t>(m_rowInHeightmap, offset);
+		buffer.serializeToBufferAndTruncate<size_t>(m_squareIndexInHeightmap, offset);
+		buffer.serializeToBufferAndTruncate<size_t>(m_squareColInHeightmap, offset);
+		buffer.serializeToBufferAndTruncate<size_t>(m_squareRowInHeightmap, offset);
+		buffer.serializeToBufferAndTruncate<float>(m_vertexXLocalToHeightmap, offset);
+		buffer.serializeToBufferAndTruncate<float>(m_vertexZLocalToHeightmap, offset);
+		buffer.serializeToBufferAndTruncate<float>(m_vertexHeightmap, offset);
 	}
 
 	void LevelCurve::Track::Square::deserialize(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset)
 	{
-		m_indexInHeightmap = buffer.deserializeFromBuffer<size_t>(offset);
-		m_colInHeightmap = buffer.deserializeFromBuffer<size_t>(offset);
-		m_rowInHeightmap = buffer.deserializeFromBuffer<size_t>(offset);
+		m_squareIndexInHeightmap = buffer.deserializeFromBuffer<size_t>(offset);
+		m_squareColInHeightmap = buffer.deserializeFromBuffer<size_t>(offset);
+		m_squareRowInHeightmap = buffer.deserializeFromBuffer<size_t>(offset);
+		m_vertexXLocalToHeightmap = buffer.deserializeFromBuffer<float>(offset);
+		m_vertexZLocalToHeightmap = buffer.deserializeFromBuffer<float>(offset);
+		m_vertexHeightmap = buffer.deserializeFromBuffer<float>(offset);
 	}
 
 	bool LevelCurve::Track::Square::operator==(const Square& o) const
 	{
-		return m_indexInHeightmap == o.m_indexInHeightmap && m_colInHeightmap == o.m_colInHeightmap && m_rowInHeightmap == o.m_rowInHeightmap;
+		return m_squareIndexInHeightmap == o.m_squareIndexInHeightmap && m_squareColInHeightmap == o.m_squareColInHeightmap && m_squareRowInHeightmap == o.m_squareRowInHeightmap 
+			&& m_vertexXLocalToHeightmap == o.m_vertexXLocalToHeightmap && m_vertexZLocalToHeightmap == o.m_vertexZLocalToHeightmap && m_vertexHeightmap == o.m_vertexHeightmap;
 	}
 		
 	LevelCurve::Track::Track(void)
@@ -8208,10 +8246,10 @@ namespace TheWorld_Utils
 		{
 			for (size_t col = 0; col < m_numSquaresPerSize; col++)
 			{
-				size_t index = LocalWorkSquare::getIndexFromRowCol(heightmap, row, col);
+				size_t index = LocalWorkSquare::getSquareIndexFromRowCol(heightmap, row, col);
 				localHeightmapSquares[index] = LocalWorkSquare(heightmap, row, col, m_height);
-				localHeightmapSquares[index].indexInHeightmap(index);
-				localHeightmapSquares[index].rowcolInHeightmap(row, col);
+				localHeightmapSquares[index].squareIndexInHeightmap(index);
+				localHeightmapSquares[index].squareRowColInHeightmap(row, col);
 			}
 		}
 
@@ -8221,7 +8259,7 @@ namespace TheWorld_Utils
 		{
 			for (size_t col = 0; col < m_numSquaresPerSize; col++)
 			{
-				LocalWorkSquare& lsq = localHeightmapSquares[LocalWorkSquare::getIndexFromRowCol(heightmap, row, col)];
+				LocalWorkSquare& lsq = localHeightmapSquares[LocalWorkSquare::getSquareIndexFromRowCol(heightmap, row, col)];
 				if (lsq.intersectedByHeight() && !lsq.visited())
 				{
 					// Found a new track, do a depth-first search to find all the squares connected to this square that are intersected by the height
@@ -8239,9 +8277,9 @@ namespace TheWorld_Utils
 						size_t currentIndexInHeightmap = currentLsqInStack - &localHeightmapSquares[0];
 						stack.pop_back();
 						size_t currentRowInHeightmap, currentColInHeightmap;
-						LocalWorkSquare::getRowColFromIndex(heightmap, currentIndexInHeightmap, currentRowInHeightmap, currentColInHeightmap);
+						LocalWorkSquare::getSquareRowColFromIndex(heightmap, currentIndexInHeightmap, currentRowInHeightmap, currentColInHeightmap);
 						// reading the reference of the current stack square in the heightmap squares vector, to be able to modify it
-						LocalWorkSquare& currentLsqInHeightmap = localHeightmapSquares[LocalWorkSquare::getIndexFromRowCol(heightmap, currentRowInHeightmap, currentColInHeightmap)];
+						LocalWorkSquare& currentLsqInHeightmap = localHeightmapSquares[LocalWorkSquare::getSquareIndexFromRowCol(heightmap, currentRowInHeightmap, currentColInHeightmap)];
 
 						size_t neighborsTracked = 0;
 						for (int dr = -1; dr <= 1; dr++)
@@ -8256,7 +8294,7 @@ namespace TheWorld_Utils
 								if (neighborRow >= 0 and neighborRow < m_numSquaresPerSize and neighborCol >= 0 and neighborCol < m_numSquaresPerSize)
 								{
 									// reading the reference of the neighbor square in the heightmap squares vector, to be able to modify it
-									LocalWorkSquare& neighborLsqInHeightmap = localHeightmapSquares[LocalWorkSquare::getIndexFromRowCol(heightmap, neighborRow, neighborCol)];
+									LocalWorkSquare& neighborLsqInHeightmap = localHeightmapSquares[LocalWorkSquare::getSquareIndexFromRowCol(heightmap, neighborRow, neighborCol)];
 									if (neighborLsqInHeightmap.intersectedByHeight() && !neighborLsqInHeightmap.visited())
 									{
 										if (neighborsTracked == 0)
@@ -8308,12 +8346,13 @@ namespace TheWorld_Utils
 			Track& track = m_tracks.back();
 			for (LocalWorkSquare& localSquare : localTrack.getLocalWorkSquares())
 			{
-				Track::Square square;
-				square.indexInHeightmap(localSquare.indexInHeightmap());
-				square.rowcolInHeightmap(localSquare.rowInHeightmap(), localSquare.colInHeightmap());
+				Track::Square square(localSquare.squareIndexInHeightmap(), heightmap);
+				//square.squareRowColInHeightmap(localSquare.squareRowInHeightmap(), localSquare.squareColInHeightmap());
 				track.addSquare(square);
 			}
 		}
+
+		m_timestamp = TheWorld_Utils::current_utc_time_t();
 	}
 
 	void LevelCurve::serializeAndTruncate(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset) const
@@ -8324,6 +8363,7 @@ namespace TheWorld_Utils
 		buffer.serializeToBufferAndTruncate<float>(m_height, offset);
 		m_quadrantPos.serializeAndTruncate(buffer, offset);
 		buffer.serializeToBufferAndTruncate<size_t>(m_numSquaresPerSize, offset);
+		buffer.serializeToBufferAndTruncate<std::time_t>(m_timestamp, offset);
 
 		buffer.serializeToBufferAndTruncate<size_t>(m_tracks.size(), offset);
 		for (const Track& track : m_tracks)
@@ -8337,6 +8377,7 @@ namespace TheWorld_Utils
 		m_height = buffer.deserializeFromBuffer<float>(offset);
 		m_quadrantPos.deserialize(buffer, offset);
 		m_numSquaresPerSize = buffer.deserializeFromBuffer<size_t>(offset);
+		m_timestamp = buffer.deserializeFromBuffer<std::time_t>(offset);
 
 		m_tracks.clear();
 		size_t numTracks = buffer.deserializeFromBuffer<size_t>(offset);
@@ -8379,11 +8420,11 @@ namespace TheWorld_Utils
 	//	return levelName;
 	//}
 	
-	LevelCurves::LevelCurves(void)
+	LevelCurvesManager::LevelCurvesManager(void)
 	{
 	}
 
-	void LevelCurves::generateLevelCurve(QuadrantPos& pos, HeightMap& heightmap, float height)
+	void LevelCurvesManager::generateLevelCurve(QuadrantPos& pos, HeightMap& heightmap, float height)
 	{
 		LevelCurve level(pos, height);
 		height = level.levelHeight();
@@ -8393,7 +8434,7 @@ namespace TheWorld_Utils
 
 	constexpr const char* LevelCurvesName = "LevelCurves";
 	
-	void LevelCurves::saveToBuffer(TheWorld_Utils::NamedDataBuffer& buffer) const
+	void LevelCurvesManager::saveToBuffer(TheWorld_Utils::NamedDataBuffer& buffer) const
 	{
 		TheWorld_Utils::MemoryBuffer levelCurvesBuffer;
 		size_t offset = -1;		// to append to the end of the buffer
@@ -8407,7 +8448,7 @@ namespace TheWorld_Utils
 		buffer.add(levelCurvesBuffer, LevelCurvesName);
 	}
 
-	void LevelCurves::loadFromBuffer(TheWorld_Utils::NamedDataBuffer& buffer)
+	void LevelCurvesManager::loadFromBuffer(TheWorld_Utils::NamedDataBuffer& buffer)
 	{
 		m_levelCurves.clear();
 
@@ -8428,7 +8469,7 @@ namespace TheWorld_Utils
 		}
 	}
 
-	bool LevelCurves::operator==(const LevelCurves& o) const
+	bool LevelCurvesManager::operator==(const LevelCurvesManager& o) const
 	{
 		if (m_levelCurves.size() != o.m_levelCurves.size())
 			return false;

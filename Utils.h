@@ -1230,7 +1230,7 @@ namespace TheWorld_Utils
 			*this = quadrantPos;
 		}
 
-		// x, z coords of a point contained in the quadrant in global coord: calculating starting point of the quadrant in global coord
+		// x, z coords of a point contained in the quadrant in world coord: calculating starting point of the quadrant in world coord
 		QuadrantPos(float x, float z, int level, int numVerticesPerSize, float gridStepInWU)
 		{
 			m_numVerticesPerSize = numVerticesPerSize;
@@ -2617,9 +2617,10 @@ namespace TheWorld_Utils
 	{
 	public:
 		_declspec(dllexport) HeightMap(void);
-		_declspec(dllexport) HeightMap(MemoryBuffer& float32Heights, size_t numVerticesPerSize);
-		_declspec(dllexport) void init(MemoryBuffer& float32Heights, size_t numVerticesPerSize);
+		_declspec(dllexport) HeightMap(MemoryBuffer& float32Heights, size_t numVerticesPerSize, float step);
+		_declspec(dllexport) void init(MemoryBuffer& float32Heights, size_t numVerticesPerSize, float step);
 
+		_declspec(dllexport) float getHeight(size_t idx) const;
 		_declspec(dllexport) float getHeight(size_t row, size_t col) const;
 		//void setHeight(size_t row, size_t col, float height);		// TO BE TESTED
 		
@@ -2627,9 +2628,19 @@ namespace TheWorld_Utils
 		{
 			return m_numVerticesPerSize;
 		}
+		_declspec(dllexport) float getStep() const
+		{
+			return m_step;
+		}
+		_declspec(dllexport) void getVertexLocalPosFromRowCol(size_t row, size_t col, float& x, float& z) const
+		{
+			x = col * m_step;
+			z = row * m_step;
+		}
 
 	private:
 		size_t m_numVerticesPerSize = 0;
+		float m_step = 0.0f;
 	};
 
 	class LevelCurve
@@ -2641,42 +2652,53 @@ namespace TheWorld_Utils
 			class Square
 			{
 			public:
-				_declspec(dllexport) Square(void);
+				_declspec(dllexport) Square(void) {}
+				_declspec(dllexport) Square(size_t squareIndex, HeightMap& heightmap);
 
-				_declspec(dllexport) void rowcolInHeightmap(size_t row, size_t col)
+				_declspec(dllexport) void squareRowColInHeightmap(size_t row, size_t col)
 				{
-					m_rowInHeightmap = row;
-					m_colInHeightmap = col;
+					m_squareRowInHeightmap = row;
+					m_squareColInHeightmap = col;
 				}
-				_declspec(dllexport) size_t rowInHeightmap(void) const
+				_declspec(dllexport) size_t squareRowInHeightmap(void) const
 				{
-					return m_rowInHeightmap;
+					return m_squareRowInHeightmap;
 				}
-				_declspec(dllexport) size_t colInHeightmap(void) const
+				_declspec(dllexport) size_t squareColInHeightmap(void) const
 				{
-					return m_colInHeightmap;
+					return m_squareColInHeightmap;
 				}
-				_declspec(dllexport) void indexInHeightmap(size_t index)
+				_declspec(dllexport) void squareIndexInHeightmap(size_t index)
 				{
-					m_indexInHeightmap = index;
+					m_squareIndexInHeightmap = index;
 				}
-				_declspec(dllexport) size_t indexInHeightmap(void) const
+				_declspec(dllexport) size_t squareIndexInHeightmap(void) const
 				{
-					return m_indexInHeightmap;
+					return m_squareIndexInHeightmap;
 				}
 
 				__declspec(dllexport) bool operator==(const Square& o) const;
 
-				_declspec(dllexport) static size_t getIndexFromRowCol(HeightMap& heightmap, size_t row, size_t col);
-				_declspec(dllexport) static void getRowColFromIndex(HeightMap& heightmap, size_t index, size_t& row, size_t& col);
+				_declspec(dllexport) static size_t getSquareIndexFromRowCol(HeightMap& heightmap, size_t row, size_t col);
+				_declspec(dllexport) static void getSquareRowColFromIndex(HeightMap& heightmap, size_t index, size_t& row, size_t& col);
 
 				_declspec(dllexport) void serializeAndTruncate(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset) const;
 				_declspec(dllexport) void deserialize(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset);
 
+				_declspec(dllexport) void vertexPositionLocalToHeightmap(float& x, float& y, float& z) const
+				{
+					x = m_vertexXLocalToHeightmap;
+					y = m_vertexHeightmap;
+					z = m_vertexZLocalToHeightmap;
+				}
+
 			private:
-				size_t m_indexInHeightmap = 0;
-				size_t m_colInHeightmap = 0;		// DEBUG ONLY to be removed later
-				size_t m_rowInHeightmap = 0;		// DEBUG ONLY to be removed later
+				size_t m_squareIndexInHeightmap = 0;
+				size_t m_squareColInHeightmap = 0;		// DEBUG ONLY to be removed later
+				size_t m_squareRowInHeightmap = 0;		// DEBUG ONLY to be removed later
+				float m_vertexXLocalToHeightmap = 0;
+				float m_vertexZLocalToHeightmap = 0;
+				float m_vertexHeightmap = 0;
 			};
 
 		public:
@@ -2692,6 +2714,26 @@ namespace TheWorld_Utils
 			_declspec(dllexport) void serializeAndTruncate(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset) const;
 			_declspec(dllexport) void deserialize(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset);
 
+			_declspec(dllexport) bool isEmpty(void) const
+			{
+				return m_squares.empty();
+			}
+
+			_declspec(dllexport) size_t size(void) const
+			{
+				return m_squares.size();
+			}
+
+			_declspec(dllexport) Square& getSquare(size_t idx)
+			{
+				return m_squares[idx];
+			}
+			
+			_declspec(dllexport) std::vector<Square>& getSquares()
+			{
+				return m_squares;
+			}
+
 		private:
 			std::vector<Square> m_squares;
 		};
@@ -2704,6 +2746,15 @@ namespace TheWorld_Utils
 		{
 			return m_height;
 		};
+
+		_declspec(dllexport) std::vector<Track>& getTracks(void)
+		{
+			return m_tracks;
+		}
+		std::time_t timestamp(void) const
+		{
+			return m_timestamp;
+		}
 
 		__declspec(dllexport) bool operator==(const LevelCurve& o) const;
 
@@ -2718,15 +2769,22 @@ namespace TheWorld_Utils
 		float m_height = 0.0f;
 		TheWorld_Utils::QuadrantPos m_quadrantPos;
 		size_t m_numSquaresPerSize = 0;
+		std::time_t m_timestamp = 0;
 		std::vector<Track> m_tracks;
 	};
 
-	class LevelCurves
+	class LevelCurvesManager
 	{
 	public:
-		_declspec(dllexport) LevelCurves(void);
+		_declspec(dllexport) LevelCurvesManager(void);
 		
 		_declspec(dllexport) void generateLevelCurve(QuadrantPos& pos, HeightMap& heightmap, float height);
+
+		_declspec(dllexport) bool isValidLevelCurve(float height)
+		{
+			//return m_levelCurves.find(height) != m_levelCurves.end();
+			return m_levelCurves.contains(height);
+		}
 
 		_declspec(dllexport) size_t getNumLevelCurves(void) const
 		{
@@ -2736,14 +2794,21 @@ namespace TheWorld_Utils
 		{
 			return m_levelCurves[height];
 		}
-
-		__declspec(dllexport) bool operator==(const LevelCurves& o) const;
+		_declspec(dllexport) std::map<float, LevelCurve>& getLevelCurves(void)
+		{
+			return m_levelCurves;
+		}
+		__declspec(dllexport) bool operator==(const LevelCurvesManager& o) const;
 
 		_declspec(dllexport) void saveToBuffer(TheWorld_Utils::NamedDataBuffer& buffer) const;
 		_declspec(dllexport) void loadFromBuffer(TheWorld_Utils::NamedDataBuffer& buffer);
 
+		_declspec(dllexport) void clear(void)
+		{
+			m_levelCurves.clear();
+		}
+
 	private:
-		// All type must have operator== defined
 		std::map<float, LevelCurve> m_levelCurves;
 	};
 
