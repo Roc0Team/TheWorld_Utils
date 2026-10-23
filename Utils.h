@@ -2617,8 +2617,8 @@ namespace TheWorld_Utils
 	{
 	public:
 		_declspec(dllexport) HeightMap(void);
-		_declspec(dllexport) HeightMap(MemoryBuffer& float32Heights, size_t numVerticesPerSize, float step);
-		_declspec(dllexport) void init(MemoryBuffer& float32Heights, size_t numVerticesPerSize, float step);
+		_declspec(dllexport) HeightMap(QuadrantPos quadrantPos, MemoryBuffer& float32Heights, size_t numVerticesPerSize, float step);
+		_declspec(dllexport) void init(QuadrantPos quadrantPos, MemoryBuffer& float32Heights, size_t numVerticesPerSize, float step);
 
 		_declspec(dllexport) float getHeight(size_t idx) const;
 		_declspec(dllexport) float getHeight(size_t row, size_t col) const;
@@ -2632,6 +2632,10 @@ namespace TheWorld_Utils
 		{
 			return m_step;
 		}
+		_declspec(dllexport) QuadrantPos getPos(void) const
+		{
+			return m_quadrantPos;
+		}
 		_declspec(dllexport) void getVertexLocalPosFromRowCol(size_t row, size_t col, float& x, float& z) const
 		{
 			x = col * m_step;
@@ -2641,7 +2645,11 @@ namespace TheWorld_Utils
 	private:
 		size_t m_numVerticesPerSize = 0;
 		float m_step = 0.0f;
+		QuadrantPos m_quadrantPos;
 	};
+
+	constexpr int squareDistanceFromContiguosSquareThreshold = 4;
+	constexpr int squareDistanceFromBorderThreshold = squareDistanceFromContiguosSquareThreshold / 2;
 
 	class LevelCurve
 	{
@@ -2682,8 +2690,8 @@ namespace TheWorld_Utils
 				_declspec(dllexport) static size_t getSquareIndexFromRowCol(HeightMap& heightmap, size_t row, size_t col);
 				_declspec(dllexport) static void getSquareRowColFromIndex(HeightMap& heightmap, size_t index, size_t& row, size_t& col);
 
-				_declspec(dllexport) void serializeAndTruncate(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset) const;
-				_declspec(dllexport) void deserialize(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset);
+				_declspec(dllexport) void serializeAndTruncate(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset, size_t version) const;
+				_declspec(dllexport) void deserialize(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset, size_t version);
 
 				_declspec(dllexport) void vertexPositionLocalToHeightmap(float& x, float& y, float& z) const
 				{
@@ -2692,10 +2700,17 @@ namespace TheWorld_Utils
 					z = m_vertexZLocalToHeightmap;
 				}
 
+				bool isAdjacentToUpperBorder(size_t numSquaresPerSize) const;
+				bool isAdjacentToLowerBorder(size_t numSquaresPerSize) const;
+				bool isAdjacentToLeftBorder(size_t numSquaresPerSize) const;
+				bool isAdjacentToRightBorder(size_t numSquaresPerSize) const;
+
+			protected:
+				size_t m_squareColInHeightmap = 0;
+				size_t m_squareRowInHeightmap = 0;
+
 			private:
 				size_t m_squareIndexInHeightmap = 0;
-				size_t m_squareColInHeightmap = 0;		// DEBUG ONLY to be removed later
-				size_t m_squareRowInHeightmap = 0;		// DEBUG ONLY to be removed later
 				float m_vertexXLocalToHeightmap = 0;
 				float m_vertexZLocalToHeightmap = 0;
 				float m_vertexHeightmap = 0;
@@ -2711,8 +2726,8 @@ namespace TheWorld_Utils
 
 			__declspec(dllexport) bool operator==(const Track& o) const;
 
-			_declspec(dllexport) void serializeAndTruncate(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset) const;
-			_declspec(dllexport) void deserialize(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset);
+			_declspec(dllexport) void serializeAndTruncate(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset, size_t version) const;
+			_declspec(dllexport) void deserialize(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset, size_t version);
 
 			_declspec(dllexport) bool isEmpty(void) const
 			{
@@ -2734,7 +2749,65 @@ namespace TheWorld_Utils
 				return m_squares;
 			}
 
+			bool isClosed(void) const
+			{
+				return (not intersectUpperBorderOfHeightmap()) and (not intersectLowerBorderOfHeightmap()) and (not intersectLeftBorderOfHeightmap()) and (not intersectRightBorderOfHeightmap());
+			}
+			bool intersectUpperBorderOfHeightmap(void) const
+			{
+				return not m_upperBorderSquares.empty();
+			}
+			void intersectUpperBorderOfHeightmap(const Square& square)
+			{
+				m_upperBorderSquares.push_back(square);
+			}
+			bool intersectLowerBorderOfHeightmap(void) const
+			{
+				return not m_lowerBorderSquares.empty();
+			}
+			void intersectLowerBorderOfHeightmap(const Square& square)
+			{
+				m_lowerBorderSquares.push_back(square);
+			}
+			bool intersectLeftBorderOfHeightmap(void) const
+			{
+				return not m_leftBorderSquares.empty();
+			}
+			void intersectLeftBorderOfHeightmap(const Square& square)
+			{
+				m_leftBorderSquares.push_back(square);
+			}
+			bool intersectRightBorderOfHeightmap(void) const
+			{
+				return not m_rightBorderSquares.empty();
+			}
+			void intersectRightBorderOfHeightmap(const Square& square)
+			{
+				m_rightBorderSquares.push_back(square);
+			}
+			_declspec(dllexport) std::vector<Square>& getUpperBordeSquares()
+			{
+				return m_upperBorderSquares;
+			}
+			_declspec(dllexport) std::vector<Square>& getLowerBordeSquares()
+			{
+				return m_lowerBorderSquares;
+			}
+			_declspec(dllexport) std::vector<Square>& getLeftBordeSquares()
+			{
+				return m_leftBorderSquares;
+			}
+			_declspec(dllexport) std::vector<Square>& getRightBordeSquares()
+			{
+				return m_rightBorderSquares;
+			}
+
 		private:
+			std::vector<Square> m_upperBorderSquares;
+			std::vector<Square> m_lowerBorderSquares;
+			std::vector<Square> m_leftBorderSquares;
+			std::vector<Square> m_rightBorderSquares;
+			
 			std::vector<Square> m_squares;
 		};
 
@@ -2759,11 +2832,65 @@ namespace TheWorld_Utils
 		__declspec(dllexport) bool operator==(const LevelCurve& o) const;
 
 		_declspec(dllexport) void generateTracks(HeightMap& heightmap);
-		_declspec(dllexport) void serializeAndTruncate(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset) const;
-		_declspec(dllexport) void deserialize(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset);
+		_declspec(dllexport) void serializeAndTruncate(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset, size_t version) const;
+		_declspec(dllexport) void deserialize(TheWorld_Utils::MemoryBuffer& buffer, size_t& offset, size_t version);
 
-		//_declspec(dllexport) std::string getLevelCurveName(void);
-		//_declspec(dllexport) static std::string getLevelCurveName(float height);
+		bool intersectUpperBorderOfHeightmap(std::vector<Track::Square>& squares, bool append = true)
+		{
+			bool intersected = false;
+			if (not append)
+				squares.clear();
+			for (auto& track : m_tracks)
+				if (track.intersectUpperBorderOfHeightmap())
+				{
+					intersected = true;
+					for (auto& square : track.getUpperBordeSquares())
+						squares.push_back(square);
+				}
+			return intersected;
+		}
+		bool intersectLowerBorderOfHeightmap(std::vector<Track::Square>& squares, bool append = true)
+		{
+			bool intersected = false;
+			if (not append)
+				squares.clear();
+			for (auto& track : m_tracks)
+				if (track.intersectLowerBorderOfHeightmap())
+				{
+					intersected = true;
+					for (auto& square : track.getLowerBordeSquares())
+						squares.push_back(square);
+				}
+			return intersected;
+		}
+		bool intersectLeftBorderOfHeightmap(std::vector<Track::Square>& squares, bool append = true)
+		{
+			bool intersected = false;
+			if (not append)
+				squares.clear();
+			for (auto& track : m_tracks)
+				if (track.intersectLeftBorderOfHeightmap())
+				{
+					intersected = true;
+					for (auto& square : track.getLeftBordeSquares())
+						squares.push_back(square);
+				}
+			return intersected;
+		}
+		bool intersectRightBorderOfHeightmap(std::vector<Track::Square>& squares, bool append = true)
+		{
+			bool intersected = false;
+			if (not append)
+				squares.clear();
+			for (auto& track : m_tracks)
+				if (track.intersectRightBorderOfHeightmap())
+				{
+					intersected = true;
+					for (auto& square : track.getRightBordeSquares())
+						squares.push_back(square);
+				}
+			return intersected;
+		}
 
 	private:
 		float m_height = 0.0f;
@@ -2800,7 +2927,7 @@ namespace TheWorld_Utils
 		}
 		__declspec(dllexport) bool operator==(const LevelCurvesManager& o) const;
 
-		_declspec(dllexport) void saveToBuffer(TheWorld_Utils::NamedDataBuffer& buffer) const;
+		_declspec(dllexport) void saveToBuffer(TheWorld_Utils::NamedDataBuffer& buffer, size_t version = 0) const;
 		_declspec(dllexport) void loadFromBuffer(TheWorld_Utils::NamedDataBuffer& buffer);
 
 		_declspec(dllexport) void clear(void)
