@@ -8599,7 +8599,7 @@ namespace TheWorld_Utils
 	void LevelCurvesManager::generateLevelCurve(QuadrantPos& pos, HeightMap& heightmap, float height)
 	{
 		LevelCurve level(pos, height);
-		height = level.levelHeight();
+		height = level.levelHeight();	// get processed height
 		m_levelCurves[height] = level;
 		m_levelCurves[height].generateTracks(heightmap);
 	}
