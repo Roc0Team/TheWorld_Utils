@@ -16,7 +16,7 @@ endif()
 set(_include_dirs
 	"${THEWORLD_EXTERNAL_ROOT}/GSL/include"
 	"${THEWORLD_EXTERNAL_ROOT}/plog/include"
-	"${THEWORLD_EXTERNAL_ROOT}/eigen-5.0.0"
+	"${THEWORLD_EXTERNAL_ROOT}/eigen"
 )
 foreach(_include_dir IN LISTS _include_dirs)
 	if(NOT IS_DIRECTORY "${_include_dir}")
